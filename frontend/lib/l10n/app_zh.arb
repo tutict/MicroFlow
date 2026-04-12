@@ -1,0 +1,204 @@
+{
+  "@@locale": "zh",
+  "appTitle": "MicroFlow",
+  "language": "语言",
+  "theme": "主题",
+  "lightMode": "亮色",
+  "darkMode": "暗色",
+  "english": "英文",
+  "simplifiedChinese": "简体中文",
+  "searchContacts": "搜索联系人",
+  "signInTitle": "登录 MicroFlow",
+  "signInDescription": "连接本地工作区，完成认证后开始实时协作。",
+  "email": "邮箱",
+  "password": "密码",
+  "signingIn": "登录中...",
+  "enterWorkspace": "进入工作区",
+  "restoreSessionError": "恢复会话失败：{error}",
+  "@restoreSessionError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "workspaceLoadError": "加载工作区失败：{error}",
+  "@workspaceLoadError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "signOutTooltip": "退出登录",
+  "workspaceDescription": "面向本地 AI 执行、加密存储和轻量部署的专注协作工作区。",
+  "workspace": "工作区",
+  "workspaceHub": "工作台",
+  "collaboration": "协作",
+  "conversations": "会话",
+  "channels": "频道",
+  "members": "成员",
+  "chatTab": "聊天",
+  "pinnedChannels": "置顶频道",
+  "automationChannels": "自动化",
+  "teamChannels": "团队频道",
+  "contacts": "联系人",
+  "membersGroup": "成员",
+  "agentsGroup": "智能体",
+  "contactsCount": "{count} 位联系人",
+  "@contactsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channelTotal": "共 {count} 个",
+  "@channelTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "conversationCountLabel": "{count} 个会话",
+  "@conversationCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unreadLabel": "未读",
+  "directMessages": "私聊",
+  "agentThreads": "智能体会话",
+  "previewLabel": "预览",
+  "memberConversationHint": "1 对 1 团队会话",
+  "agentConversationHint": "与 AI 助手的私有会话",
+  "privateConversationPreview": "私有会话入口已在界面中准备好，后端会话 API 是下一步。",
+  "localFirst": "本地优先",
+  "sqlite": "SQLite",
+  "virtualThreads": "虚拟线程",
+  "online": "在线",
+  "activeCountLabel": "{count} 人在线",
+  "@activeCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "messageCountLabel": "{count} 条消息",
+  "@messageCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentActivityLabel": "最近动态",
+  "recentInteractions": "最近互动",
+  "noRecentInteractions": "暂时还没有最近互动，团队消息和智能体回复会显示在这里。",
+  "aiCoworker": "AI 协作助手",
+  "connected": "已连接",
+  "connecting": "连接中",
+  "disconnected": "已断开",
+  "realtimeError": "实时连接异常",
+  "idle": "空闲",
+  "aiEnabled": "已启用 AI",
+  "chatPanelDescription": "面向团队协作的共享对话流，需要时可通过 @mention 调用智能体。",
+  "noMessagesTitle": "还没有消息",
+  "noMessagesDescription": "先发一条团队动态，需要时再 @ 智能体协助处理。",
+  "quickActionsLabel": "快捷操作",
+  "pressEnterToSend": "按 Enter 发送",
+  "sendingMessage": "消息发送中...",
+  "typeMessageHint": "输入团队消息，需要时使用 @assistant",
+  "membersCountLabel": "{count} 位成员",
+  "@membersCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "send": "发送",
+  "sending": "发送中",
+  "messageSendFailed": "消息发送失败：{error}",
+  "@messageSendFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "agents": "智能体",
+  "availableAgents": "可用智能体",
+  "enabledCount": "已启用 {count} 个",
+  "@enabledCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queueCountLabel": "{count} 个排队中",
+  "@queueCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enabled": "启用",
+  "disabled": "停用",
+  "runActivity": "运行记录",
+  "noAgentExecutions": "还没有智能体执行记录。在聊天中 @ 一个智能体即可开始。",
+  "queued": "排队中",
+  "running": "运行中",
+  "completed": "已完成",
+  "failed": "失败",
+  "executionLabel": "执行 {id}",
+  "@executionLabel": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "aiBadge": "AI",
+  "memberLabel": "成员 {id}",
+  "@memberLabel": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "memberYouLabel": "你",
+  "todayLabel": "今天",
+  "yesterdayLabel": "昨天",
+  "agentRunsTitle": "智能体运行",
+  "recentExecutions": "最近执行",
+  "collaborationMode": "团队模式",
+  "collaborationModeHint": "将新的频道消息自动通过 @team 路由给多 Agent 协作。",
+  "collaborationRoundStatus": "第 {round} / {total} 轮",
+  "@collaborationRoundStatus": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "collaborationRunningStatus": "{agentLabel} 正在协作处理，{roundLabel}。",
+  "@collaborationRunningStatus": {
+    "placeholders": {
+      "agentLabel": {},
+      "roundLabel": {}
+    }
+  },
+  "collaborationCompletedStatus": "已通过 {trigger} 完成团队协作，共 {totalRounds} 轮。",
+  "@collaborationCompletedStatus": {
+    "placeholders": {
+      "trigger": {},
+      "totalRounds": {
+        "type": "int"
+      }
+    }
+  },
+  "collaborationStoppedStatus": "团队协作已停止。",
+  "summarizeArchitectureChanges": "总结架构变更",
+  "nativeImagePreflightChecks": "原生镜像预检查"
+}

@@ -1,0 +1,204 @@
+{
+  "@@locale": "en",
+  "appTitle": "MicroFlow",
+  "language": "Language",
+  "theme": "Theme",
+  "lightMode": "Light",
+  "darkMode": "Dark",
+  "english": "English",
+  "simplifiedChinese": "Simplified Chinese",
+  "searchContacts": "Search contacts",
+  "signInTitle": "Sign in to MicroFlow",
+  "signInDescription": "Connect the local workspace, authenticate, then start real-time collaboration.",
+  "email": "Email",
+  "password": "Password",
+  "signingIn": "Signing in...",
+  "enterWorkspace": "Enter workspace",
+  "restoreSessionError": "Unable to restore session: {error}",
+  "@restoreSessionError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "workspaceLoadError": "Unable to load workspace: {error}",
+  "@workspaceLoadError": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "signOutTooltip": "Sign out",
+  "workspaceDescription": "Focused collaboration workspace for local AI execution, encrypted storage, and lightweight delivery.",
+  "workspace": "Workspace",
+  "workspaceHub": "Workspace hub",
+  "collaboration": "Collaboration",
+  "conversations": "Conversations",
+  "channels": "Channels",
+  "members": "Members",
+  "chatTab": "Chat",
+  "pinnedChannels": "Pinned channels",
+  "automationChannels": "Automation",
+  "teamChannels": "Team channels",
+  "contacts": "Contacts",
+  "membersGroup": "Members",
+  "agentsGroup": "Agents",
+  "contactsCount": "{count} contacts",
+  "@contactsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "channelTotal": "{count} total",
+  "@channelTotal": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "conversationCountLabel": "{count} conversations",
+  "@conversationCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unreadLabel": "Unread",
+  "directMessages": "Direct messages",
+  "agentThreads": "Agent threads",
+  "previewLabel": "Preview",
+  "memberConversationHint": "1:1 team conversation",
+  "agentConversationHint": "Private thread with AI coworker",
+  "privateConversationPreview": "Private conversation entry is ready in the UI. Backend conversation APIs are the next step.",
+  "localFirst": "Local-first",
+  "sqlite": "SQLite",
+  "virtualThreads": "Virtual Threads",
+  "online": "Online",
+  "activeCountLabel": "{count} active",
+  "@activeCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "messageCountLabel": "{count} messages",
+  "@messageCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "recentActivityLabel": "Recent activity",
+  "recentInteractions": "Recent interactions",
+  "noRecentInteractions": "No recent interactions yet. Team messages and agent replies will appear here.",
+  "aiCoworker": "AI coworker",
+  "connected": "Connected",
+  "connecting": "Connecting",
+  "disconnected": "Disconnected",
+  "realtimeError": "Realtime error",
+  "idle": "Idle",
+  "aiEnabled": "AI enabled",
+  "chatPanelDescription": "A shared team conversation with AI support available through @mention when needed.",
+  "noMessagesTitle": "No messages yet",
+  "noMessagesDescription": "Start the conversation with a team update, then mention an agent only when you need help.",
+  "quickActionsLabel": "Quick actions",
+  "pressEnterToSend": "Press Enter to send",
+  "sendingMessage": "Sending message...",
+  "typeMessageHint": "Type a message for the team, or use @assistant when needed",
+  "membersCountLabel": "{count} members",
+  "@membersCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "send": "Send",
+  "sending": "Sending",
+  "messageSendFailed": "Message send failed: {error}",
+  "@messageSendFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "agents": "Agents",
+  "availableAgents": "Available agents",
+  "enabledCount": "{count} enabled",
+  "@enabledCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "queueCountLabel": "{count} queued",
+  "@queueCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "runActivity": "Run Activity",
+  "noAgentExecutions": "No agent executions yet. Mention an agent in chat to start a run.",
+  "queued": "Queued",
+  "running": "Running",
+  "completed": "Completed",
+  "failed": "Failed",
+  "executionLabel": "Execution {id}",
+  "@executionLabel": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "aiBadge": "AI",
+  "memberLabel": "Member {id}",
+  "@memberLabel": {
+    "placeholders": {
+      "id": {}
+    }
+  },
+  "memberYouLabel": "You",
+  "todayLabel": "Today",
+  "yesterdayLabel": "Yesterday",
+  "agentRunsTitle": "Agent Runs",
+  "recentExecutions": "Recent executions",
+  "collaborationMode": "Team mode",
+  "collaborationModeHint": "Auto-route new channel messages through @team.",
+  "collaborationRoundStatus": "round {round} of {total}",
+  "@collaborationRoundStatus": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "collaborationRunningStatus": "{agentLabel} is coordinating {roundLabel}.",
+  "@collaborationRunningStatus": {
+    "placeholders": {
+      "agentLabel": {},
+      "roundLabel": {}
+    }
+  },
+  "collaborationCompletedStatus": "Team run finished via {trigger} in {totalRounds} rounds.",
+  "@collaborationCompletedStatus": {
+    "placeholders": {
+      "trigger": {},
+      "totalRounds": {
+        "type": "int"
+      }
+    }
+  },
+  "collaborationStoppedStatus": "Team run stopped.",
+  "summarizeArchitectureChanges": "Summarize architecture changes",
+  "nativeImagePreflightChecks": "Native image preflight checks"
+}

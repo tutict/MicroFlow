@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: microflow
+  threads:
+    virtual:
+      enabled: true
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/migration/V1__baseline.sql
+  datasource:
+    url: jdbc:sqlite:${MICROFLOW_DB_PATH:./microflow.db}
+    driver-class-name: org.sqlite.JDBC
+    hikari:
+      pool-name: microflow-sqlite
+      maximum-pool-size: 2
+      minimum-idle: 1
+      connection-test-query: SELECT 1
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+microflow:
+  http:
+    allowed-origin-patterns: ${MICROFLOW_HTTP_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,https://localhost:*,https://127.0.0.1:*}
+  agent:
+    poll-interval: PT3S
+    mock-delay: PT0.6S
+    config-path: ${MICROFLOW_AGENT_CONFIG_PATH:./data/agents.json}
+    config-json: ${MICROFLOW_AGENT_CONFIG_JSON:}
+    openclaw-endpoint-url: ${OPENCLAW_ENDPOINT_URL:}
+    openclaw-credential: ${OPENCLAW_CREDENTIAL:}
+    openclaw-agent-keys: ${OPENCLAW_AGENT_KEYS:assistant,reviewer}
+    fallback-mock-enabled: true
+  bootstrap:
+    instance-name: ${MICROFLOW_INSTANCE_NAME:microflow}
+    server-origin: ${MICROFLOW_SERVER_ORIGIN:}
+    api-base-url: ${MICROFLOW_API_BASE_URL:}
+    ws-base-url: ${MICROFLOW_WS_BASE_URL:}
+    pairing:
+      ttl: ${MICROFLOW_PAIRING_TTL:PT10M}
+  seed:
+    demo-enabled: ${MICROFLOW_SEED_DEMO_ENABLED:false}
+  auth:
+    login:
+      max-attempts: ${MICROFLOW_LOGIN_MAX_ATTEMPTS:5}
+      window: ${MICROFLOW_LOGIN_WINDOW:PT5M}
+  jwt:
+    secret: change-this-dev-jwt-secret-before-production
+    ttl-seconds: 28800
+  chat:
+    message:
+      max-content-length: ${MICROFLOW_MESSAGE_MAX_CONTENT_LENGTH:4000}
+      max-list-limit: ${MICROFLOW_MESSAGE_MAX_LIST_LIMIT:200}
+  crypto:
+    key-version: 1
+    secret: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+  security:
+    allow-insecure-default-secrets: ${MICROFLOW_ALLOW_INSECURE_DEFAULT_SECRETS:false}
+  websocket:
+    ticket-ttl: ${MICROFLOW_WS_TICKET_TTL:PT30S}
+    allowed-origin-patterns: ${MICROFLOW_WS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,https://localhost:*,https://127.0.0.1:*}
