@@ -1,17 +1,59 @@
-# microflow_frontend
+# MicroFlow Frontend
 
-A new Flutter project.
+这是 SoloFlow / MicroFlow 的 Flutter 客户端。
 
-## Getting Started
+它负责：
 
-This project is a starting point for a Flutter application.
+- 服务器配对
+- 用户登录
+- 工作区会话展示
+- 频道实时消息
+- Agent 列表、运行状态与诊断视图
 
-A few resources to get you started if this is your first Flutter project:
+## 开发启动
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```powershell
+flutter pub get
+flutter run -d chrome
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 可选环境变量
+
+```powershell
+flutter run -d chrome `
+  --dart-define=MICROFLOW_API_BASE_URL=http://localhost:8080/api/v1 `
+  --dart-define=MICROFLOW_WS_BASE_URL=ws://localhost:8080/ws
+```
+
+当前更推荐通过应用内配对页连接后端，而不是长期依赖固定地址。
+
+## 主要依赖
+
+- Flutter
+- Riverpod
+- `http`
+- `web_socket_channel`
+- `flutter_secure_storage`
+
+## 本地化
+
+本项目使用 Flutter `gen-l10n`。
+
+本地化源文件位于：
+
+- `lib/l10n/app_en.arb`
+- `lib/l10n/app_zh.arb`
+
+生成命令：
+
+```powershell
+flutter gen-l10n
+```
+
+## 校验
+
+```powershell
+flutter analyze
+```
+
+根目录项目说明见 [../README.md](/C:/Users/tutic/IdeaProjects/SoloFlow/README.md)。
