@@ -1,12 +1,12 @@
-# SoloFlow / MicroFlow
+# MicroFlow
 
 一个面向本地部署与内网协作场景的轻量级 AI 协作工作台。
 
-SoloFlow 将传统团队沟通、实时消息和 AI Agent 能力整合到一个本地优先的系统中，目标不是做一个臃肿的平台，而是提供一套可以快速部署、快速展示、可继续扩展的协作底座。
+MicroFlow 将传统团队沟通、实时消息和 AI Agent 能力整合到一个本地优先的系统中，目标不是做一个臃肿的平台，而是提供一套可以快速部署、快速展示、可继续扩展的协作底座。
 
 ## 项目一句话介绍
 
-SoloFlow 是一个基于 Spring Boot + Flutter 构建的全栈协作系统，支持账号登录、工作区聊天、Agent 调用、实时通信、运行诊断，以及“前后端分离配对连接”的本地部署模式。
+MicroFlow 是一个基于 Spring Boot + Flutter 构建的全栈协作系统，支持账号登录、工作区聊天、Agent 调用、实时通信、运行诊断，以及“前后端分离配对连接”的本地部署模式。
 
 ## 展示亮点
 
@@ -29,7 +29,7 @@ SoloFlow 是一个基于 Spring Boot + Flutter 构建的全栈协作系统，支
 
 ## 核心场景
 
-SoloFlow 适合以下展示场景：
+MicroFlow 适合以下展示场景：
 
 1. 本地 AI 协作原型
 2. 团队内部轻量沟通工具
@@ -103,7 +103,7 @@ SoloFlow 适合以下展示场景：
 
 很多协作系统依赖云端、部署复杂，而且 AI 工具往往只是外挂在聊天系统外面。
 
-SoloFlow 想解决的是：
+MicroFlow 想解决的是：
 
 - 能不能做一个本地优先的协作系统
 - 能不能把团队聊天和 AI Agent 能力放到一个统一工作台里
@@ -342,4 +342,4 @@ README.md   项目展示说明
 
 ## 相关文档
 
-- 前端说明见 [frontend/README.md](/C:/Users/tutic/IdeaProjects/SoloFlow/frontend/README.md)
+- 前端说明见 [frontend/README.md](frontend/README.md)

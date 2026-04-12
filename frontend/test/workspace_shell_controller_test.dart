@@ -80,7 +80,7 @@ void main() {
           workspaceRepositoryProvider.overrideWithValue(
             _FakeWorkspaceRepository(
               workspaces: const [
-                WorkspaceSummary(id: 'ws_1', name: 'SoloFlow', memberCount: 1),
+                WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 1),
               ],
               conversations: const [
                 WorkspaceConversation(
@@ -151,7 +151,7 @@ void main() {
           workspaceRepositoryProvider.overrideWithValue(
             _FakeWorkspaceRepository(
               workspaces: const [
-                WorkspaceSummary(id: 'ws_1', name: 'SoloFlow', memberCount: 1),
+                WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 1),
               ],
               channels: const [
                 ChannelSummary(id: 'chn_1', name: 'general', unreadCount: 0),
@@ -218,7 +218,7 @@ void main() {
           workspaceRepositoryProvider.overrideWithValue(
             _FakeWorkspaceRepository(
               workspaces: const [
-                WorkspaceSummary(id: 'ws_1', name: 'SoloFlow', memberCount: 1),
+                WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 1),
               ],
               channels: const [
                 ChannelSummary(id: 'chn_1', name: 'general', unreadCount: 0),

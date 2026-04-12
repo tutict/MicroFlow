@@ -1,6 +1,6 @@
 # MicroFlow Frontend
 
-这是 SoloFlow / MicroFlow 的 Flutter 客户端。
+这是 MicroFlow 的 Flutter 客户端。
 
 它负责：
 
@@ -56,4 +56,4 @@ flutter gen-l10n
 flutter analyze
 ```
 
-根目录项目说明见 [../README.md](/C:/Users/tutic/IdeaProjects/SoloFlow/README.md)。
+根目录项目说明见 [../README.md](../README.md)。

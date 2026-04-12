@@ -65,10 +65,10 @@ void main() {
         tester,
         state: _buildState(
           workspaceId: 'ws_1',
-          workspaceName: 'SoloFlow',
+          workspaceName: 'MicroFlow',
           selectedConversation: const WorkspaceSelectedConversation(
             id: '',
-            title: 'SoloFlow',
+            title: 'MicroFlow',
             kind: WorkspaceSelectedConversationKind.channel,
             isAvailable: false,
           ),
@@ -104,10 +104,10 @@ void main() {
         tester,
         state: _buildState(
           workspaceId: 'ws_1',
-          workspaceName: 'SoloFlow',
+          workspaceName: 'MicroFlow',
           selectedConversation: const WorkspaceSelectedConversation(
             id: '',
-            title: 'SoloFlow',
+            title: 'MicroFlow',
             kind: WorkspaceSelectedConversationKind.channel,
             isAvailable: false,
           ),
@@ -144,10 +144,10 @@ void main() {
         tester,
         state: _buildState(
           workspaceId: 'ws_1',
-          workspaceName: 'SoloFlow',
+          workspaceName: 'MicroFlow',
           selectedConversation: const WorkspaceSelectedConversation(
             id: '',
-            title: 'SoloFlow',
+            title: 'MicroFlow',
             kind: WorkspaceSelectedConversationKind.channel,
             isAvailable: false,
           ),
@@ -177,7 +177,7 @@ void main() {
         tester,
         state: _buildState(
           workspaceId: 'ws_1',
-          workspaceName: 'SoloFlow',
+          workspaceName: 'MicroFlow',
           selectedConversation: const WorkspaceSelectedConversation(
             id: 'chn_1',
             title: 'general',
