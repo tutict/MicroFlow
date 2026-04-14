@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,14 +13,211 @@ import 'package:microflow_frontend/features/auth/domain/entities/auth_session.da
 import 'package:microflow_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:microflow_frontend/features/chat/domain/entities/channel_summary.dart';
 import 'package:microflow_frontend/features/chat/domain/entities/chat_message.dart';
+import 'package:microflow_frontend/features/chat/domain/entities/collaboration_event.dart';
+import 'package:microflow_frontend/features/chat/domain/entities/collaboration_run.dart';
 import 'package:microflow_frontend/features/chat/domain/repositories/chat_repository.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/workspace_conversation.dart';
+import 'package:microflow_frontend/features/workspace/domain/entities/knowledge_document.dart';
+import 'package:microflow_frontend/features/workspace/domain/entities/workspace_member.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/workspace_summary.dart';
 import 'package:microflow_frontend/features/workspace/domain/repositories/workspace_repository.dart';
 import 'package:microflow_frontend/features/workspace/presentation/providers/workspace_shell_controller.dart';
 import 'package:microflow_frontend/features/workspace/presentation/state/workspace_selected_conversation.dart';
 
 void main() {
+  test(
+    'uploadKnowledgeDocument forwards the selected conversation channel scope',
+    () async {
+      final workspaceRepository = _FakeWorkspaceRepository(
+        workspaces: const [
+          WorkspaceSummary(id: 'ws_1', name: 'Core', memberCount: 1),
+        ],
+        channels: const [
+          ChannelSummary(id: 'chn_1', name: 'general', unreadCount: 0),
+        ],
+        conversations: const [
+          WorkspaceConversation(
+            id: 'chn_1',
+            title: 'general',
+            subtitle: 'Core thread',
+            kind: 'CHANNEL',
+            unreadCount: 0,
+            available: true,
+            lastActivityAt: null,
+          ),
+        ],
+      );
+      final container = ProviderContainer(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(
+            _FakeAuthRepository(
+              currentSessionValue: const AuthSession(
+                userId: 'usr_1',
+                email: 'demo@microflow.local',
+                displayName: 'Demo User',
+                accessToken: 'token',
+                refreshToken: 'refresh',
+              ),
+            ),
+          ),
+          workspaceRepositoryProvider.overrideWithValue(workspaceRepository),
+          chatRepositoryProvider.overrideWithValue(
+            _FakeChatRepository(
+              collaborationRunsByChannel: const {
+                'chn_2': [
+                  CollaborationRun(
+                    collaborationId: 'col_ops',
+                    workspaceId: 'ws_2',
+                    channelId: 'chn_2',
+                    status: 'RUNNING',
+                    round: 0,
+                    maxRounds: 2,
+                    startedAt: '2026-04-13T00:00:00Z',
+                    lastEventAt: '2026-04-13T00:00:00Z',
+                    trigger: '@team',
+                    events: [
+                      CollaborationEvent(
+                        id: 'evt_1',
+                        workspaceId: 'ws_2',
+                        channelId: 'chn_2',
+                        collaborationId: 'col_ops',
+                        eventType: 'COLLABORATION_STARTED',
+                        status: 'RUNNING',
+                        round: 0,
+                        maxRounds: 2,
+                        createdAt: '2026-04-13T00:00:00Z',
+                        trigger: '@team',
+                      ),
+                    ],
+                  ),
+                ],
+              },
+            ),
+          ),
+          agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
+          realtimeSocketServiceProvider.overrideWithValue(
+            _FakeRealtimeSocketService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(workspaceShellControllerProvider.future);
+      await container
+          .read(workspaceShellControllerProvider.notifier)
+          .uploadKnowledgeDocument(
+            fileName: 'guide.md',
+            bytes: Uint8List.fromList('hello'.codeUnits),
+          );
+
+      expect(workspaceRepository.lastUploadedWorkspaceId, 'ws_1');
+      expect(workspaceRepository.lastUploadedChannelId, 'chn_1');
+    },
+  );
+
+  test(
+    'selectWorkspace restores cached knowledge documents when switching back',
+    () async {
+      final workspaceRepository = _FakeWorkspaceRepository(
+        workspaces: const [
+          WorkspaceSummary(id: 'ws_1', name: 'Core', memberCount: 1),
+          WorkspaceSummary(id: 'ws_2', name: 'Ops', memberCount: 1),
+        ],
+        channelsByWorkspace: const {
+          'ws_1': [
+            ChannelSummary(id: 'chn_1', name: 'general', unreadCount: 0),
+          ],
+          'ws_2': [ChannelSummary(id: 'chn_2', name: 'ops', unreadCount: 0)],
+        },
+        conversationsByWorkspace: const {
+          'ws_1': [
+            WorkspaceConversation(
+              id: 'chn_1',
+              title: 'general',
+              subtitle: 'Core thread',
+              kind: 'CHANNEL',
+              unreadCount: 0,
+              available: true,
+              lastActivityAt: null,
+            ),
+          ],
+          'ws_2': [
+            WorkspaceConversation(
+              id: 'chn_2',
+              title: 'ops',
+              subtitle: 'Ops thread',
+              kind: 'CHANNEL',
+              unreadCount: 0,
+              available: true,
+              lastActivityAt: null,
+            ),
+          ],
+        },
+        knowledgeDocumentsByWorkspace: const {
+          'ws_2': [
+            KnowledgeDocument(
+              id: 'doc_ops_1',
+              workspaceId: 'ws_2',
+              channelId: 'chn_2',
+              fileName: 'ops-runbook.md',
+              contentType: 'text/markdown',
+              sizeBytes: 128,
+              summary: 'Ops runbook',
+              snippetCount: 2,
+              status: 'READY',
+              createdAt: '2026-04-13T00:00:00Z',
+            ),
+          ],
+        },
+      );
+      final container = ProviderContainer(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(
+            _FakeAuthRepository(
+              currentSessionValue: const AuthSession(
+                userId: 'usr_1',
+                email: 'demo@microflow.local',
+                displayName: 'Demo User',
+                accessToken: 'token',
+                refreshToken: 'refresh',
+              ),
+            ),
+          ),
+          workspaceRepositoryProvider.overrideWithValue(workspaceRepository),
+          chatRepositoryProvider.overrideWithValue(_FakeChatRepository()),
+          agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
+          realtimeSocketServiceProvider.overrideWithValue(
+            _FakeRealtimeSocketService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(workspaceShellControllerProvider.future);
+      await container
+          .read(workspaceShellControllerProvider.notifier)
+          .uploadKnowledgeDocument(
+            fileName: 'architecture.md',
+            bytes: Uint8List.fromList('doc'.codeUnits),
+            inheritSelectedConversation: false,
+          );
+      await container
+          .read(workspaceShellControllerProvider.notifier)
+          .selectWorkspace('ws_2');
+      await container
+          .read(workspaceShellControllerProvider.notifier)
+          .selectWorkspace('ws_1');
+
+      final state = container
+          .read(workspaceShellControllerProvider)
+          .valueOrNull;
+      expect(state, isNotNull);
+      expect(state!.workspaceId, 'ws_1');
+      expect(state.knowledgeDocuments, hasLength(1));
+      expect(state.knowledgeDocuments.first.fileName, 'architecture.md');
+    },
+  );
+
   test(
     'build returns a safe placeholder state when no workspace exists',
     () async {
@@ -264,8 +462,10 @@ void main() {
           'channelId': 'chn_1',
           'collaborationId': 'col_1',
           'round': 1,
+          'maxRounds': 2,
           'agentKey': 'assistant',
           'status': 'RUNNING',
+          'stage': 'analyze',
         },
       });
       socketService.emit({
@@ -286,9 +486,88 @@ void main() {
       expect(state!.selectedCollaborationStatus, isNotNull);
       expect(state.selectedCollaborationStatus!.status, 'COMPLETED');
       expect(state.selectedCollaborationStatus!.maxRounds, 2);
+      expect(state.selectedCollaborationStatus!.stage, 'synthesize');
       expect(state.selectedCollaborationStatus!.activeAgentKey, 'assistant');
+      expect(state.selectedCollaborationRuns, hasLength(1));
+      expect(state.selectedCollaborationRuns.first.events, hasLength(3));
+      expect(state.selectedCollaborationRuns.first.events[1].stage, 'analyze');
     },
   );
+
+  test('selectWorkspace swaps the active workspace shell payload', () async {
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(
+          _FakeAuthRepository(
+            currentSessionValue: const AuthSession(
+              userId: 'usr_1',
+              email: 'demo@microflow.local',
+              displayName: 'Demo User',
+              accessToken: 'token',
+              refreshToken: 'refresh',
+            ),
+          ),
+        ),
+        workspaceRepositoryProvider.overrideWithValue(
+          _FakeWorkspaceRepository(
+            workspaces: const [
+              WorkspaceSummary(id: 'ws_1', name: 'Core', memberCount: 1),
+              WorkspaceSummary(id: 'ws_2', name: 'Ops', memberCount: 1),
+            ],
+            channelsByWorkspace: const {
+              'ws_1': [
+                ChannelSummary(id: 'chn_1', name: 'general', unreadCount: 0),
+              ],
+              'ws_2': [
+                ChannelSummary(id: 'chn_2', name: 'knowledge', unreadCount: 0),
+              ],
+            },
+            conversationsByWorkspace: const {
+              'ws_1': [
+                WorkspaceConversation(
+                  id: 'chn_1',
+                  title: 'general',
+                  subtitle: 'Core thread',
+                  kind: 'CHANNEL',
+                  unreadCount: 0,
+                  available: true,
+                  lastActivityAt: null,
+                ),
+              ],
+              'ws_2': [
+                WorkspaceConversation(
+                  id: 'chn_2',
+                  title: 'knowledge',
+                  subtitle: 'Ops docs',
+                  kind: 'CHANNEL',
+                  unreadCount: 0,
+                  available: true,
+                  lastActivityAt: null,
+                ),
+              ],
+            },
+          ),
+        ),
+        chatRepositoryProvider.overrideWithValue(_FakeChatRepository()),
+        agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
+        realtimeSocketServiceProvider.overrideWithValue(
+          _FakeRealtimeSocketService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(workspaceShellControllerProvider.future);
+    await container
+        .read(workspaceShellControllerProvider.notifier)
+        .selectWorkspace('ws_2');
+
+    final state = container.read(workspaceShellControllerProvider).valueOrNull;
+    expect(state, isNotNull);
+    expect(state!.workspaceId, 'ws_2');
+    expect(state.workspaceName, 'Ops');
+    expect(state.selectedConversation.id, 'chn_2');
+  });
 }
 
 class _FakeAuthRepository implements AuthRepository {
@@ -313,33 +592,121 @@ class _FakeWorkspaceRepository implements WorkspaceRepository {
     this.workspaces = const [],
     this.channels = const [],
     this.conversations = const [],
+    this.channelsByWorkspace = const {},
+    this.conversationsByWorkspace = const {},
+    this.knowledgeDocumentsByWorkspace = const {},
   });
 
   final List<WorkspaceSummary> workspaces;
   final List<ChannelSummary> channels;
   final List<WorkspaceConversation> conversations;
+  final Map<String, List<ChannelSummary>> channelsByWorkspace;
+  final Map<String, List<WorkspaceConversation>> conversationsByWorkspace;
+  final Map<String, List<KnowledgeDocument>> knowledgeDocumentsByWorkspace;
+  String? lastUploadedWorkspaceId;
+  String? lastUploadedChannelId;
+
+  @override
+  Future<WorkspaceSummary> createWorkspace(String name) async =>
+      WorkspaceSummary(id: 'ws_new', name: name, memberCount: 1);
 
   @override
   Future<List<ChannelSummary>> listChannels(String workspaceId) async =>
-      channels;
+      channelsByWorkspace[workspaceId] ?? channels;
 
   @override
   Future<List<WorkspaceConversation>> listConversations(
     String workspaceId,
-  ) async => conversations;
+  ) async => conversationsByWorkspace[workspaceId] ?? conversations;
+
+  @override
+  Future<List<WorkspaceMember>> listMembers(String workspaceId) async => const [
+    WorkspaceMember(
+      userId: 'usr_1',
+      email: 'demo@microflow.local',
+      displayName: 'Demo User',
+      role: 'OWNER',
+      joinedAt: '2026-04-13T00:00:00Z',
+    ),
+  ];
+
+  @override
+  Future<List<WorkspaceMember>> addMemberByEmail({
+    required String workspaceId,
+    required String email,
+  }) async => [
+    const WorkspaceMember(
+      userId: 'usr_1',
+      email: 'demo@microflow.local',
+      displayName: 'Demo User',
+      role: 'OWNER',
+      joinedAt: '2026-04-13T00:00:00Z',
+    ),
+    WorkspaceMember(
+      userId: 'usr_2',
+      email: email,
+      displayName: 'Invited User',
+      role: 'MEMBER',
+      joinedAt: '2026-04-13T01:00:00Z',
+    ),
+  ];
+
+  @override
+  Future<List<KnowledgeDocument>> listKnowledgeDocuments(
+    String workspaceId,
+  ) async => knowledgeDocumentsByWorkspace[workspaceId] ?? const [];
 
   @override
   Future<List<WorkspaceSummary>> listWorkspaces() async => workspaces;
+
+  @override
+  Future<KnowledgeDocument> uploadKnowledgeDocument({
+    required String workspaceId,
+    required String fileName,
+    required Uint8List bytes,
+    String? channelId,
+  }) async {
+    lastUploadedWorkspaceId = workspaceId;
+    lastUploadedChannelId = channelId;
+    return KnowledgeDocument(
+      id: 'doc_1',
+      workspaceId: workspaceId,
+      channelId: channelId,
+      fileName: fileName,
+      contentType: 'text/plain',
+      sizeBytes: bytes.length,
+      summary: 'Uploaded in test',
+      snippetCount: 1,
+      status: 'READY',
+      createdAt: '2026-04-13T00:00:00Z',
+    );
+  }
 }
 
 class _FakeChatRepository implements ChatRepository {
-  _FakeChatRepository({this.messagesByChannel = const {}});
+  _FakeChatRepository({
+    this.messagesByChannel = const {},
+    this.collaborationRunsByChannel = const {},
+  });
 
   final Map<String, List<ChatMessage>> messagesByChannel;
+  final Map<String, List<CollaborationRun>> collaborationRunsByChannel;
 
   @override
   Future<List<ChatMessage>> listMessages(String channelId) async {
     return messagesByChannel[channelId] ?? const [];
+  }
+
+  @override
+  Future<List<CollaborationEvent>> listCollaborationHistory(
+    String channelId,
+  ) async {
+    return const [];
+  }
+
+  @override
+  Future<List<CollaborationRun>> listCollaborationRuns(String channelId) async {
+    return collaborationRunsByChannel[channelId] ?? const [];
   }
 
   @override

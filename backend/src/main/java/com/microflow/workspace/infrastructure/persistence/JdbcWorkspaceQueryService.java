@@ -3,6 +3,7 @@ package com.microflow.workspace.infrastructure.persistence;
 import com.microflow.workspace.application.service.WorkspaceQueryService;
 import com.microflow.workspace.domain.model.ChannelSummary;
 import com.microflow.workspace.domain.model.ConversationSummary;
+import com.microflow.workspace.domain.model.WorkspaceMemberSummary;
 import com.microflow.workspace.domain.model.WorkspaceSummary;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -29,5 +30,10 @@ public class JdbcWorkspaceQueryService implements WorkspaceQueryService {
     @Override
     public List<ConversationSummary> listConversations(String userId, String workspaceId) {
         return workspaceRepository.findConversations(workspaceId, userId);
+    }
+
+    @Override
+    public List<WorkspaceMemberSummary> listMembers(String userId, String workspaceId) {
+        return workspaceRepository.findMembers(workspaceId, userId);
     }
 }

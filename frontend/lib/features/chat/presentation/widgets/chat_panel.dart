@@ -3,6 +3,10 @@ import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../shared/widgets/app_pill.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../domain/entities/collaboration_event.dart';
+import '../../domain/entities/collaboration_run.dart';
+import '../../../workspace/domain/entities/knowledge_document.dart';
+import '../../../workspace/presentation/state/workspace_shell_state.dart';
 import '../../domain/entities/chat_message.dart';
 import 'chat_message_list.dart';
 import 'input_box.dart';
@@ -23,6 +27,8 @@ class ChatPanel extends StatelessWidget {
     required this.messages,
     required this.currentUserId,
     required this.currentUserLabel,
+    this.knowledgeDocuments = const [],
+    this.onKnowledgeCitationTap,
     required this.participants,
     required this.activeParticipantCount,
     required this.suggestedMentions,
@@ -30,6 +36,8 @@ class ChatPanel extends StatelessWidget {
     required this.collaborationModeEnabled,
     required this.onCollaborationModeChanged,
     this.collaborationStatusText,
+    this.collaborationSnapshot,
+    this.collaborationRuns = const [],
     required this.isSendingMessage,
     required this.messageError,
     required this.onSend,
@@ -49,6 +57,8 @@ class ChatPanel extends StatelessWidget {
   final List<ChatMessage> messages;
   final String currentUserId;
   final String currentUserLabel;
+  final List<KnowledgeDocument> knowledgeDocuments;
+  final ValueChanged<String>? onKnowledgeCitationTap;
   final List<ChatParticipantPreview> participants;
   final int activeParticipantCount;
   final List<String> suggestedMentions;
@@ -56,6 +66,8 @@ class ChatPanel extends StatelessWidget {
   final bool collaborationModeEnabled;
   final ValueChanged<bool>? onCollaborationModeChanged;
   final String? collaborationStatusText;
+  final CollaborationStatusSnapshot? collaborationSnapshot;
+  final List<CollaborationRun> collaborationRuns;
   final bool isSendingMessage;
   final String? messageError;
   final Future<void> Function(String value) onSend;
@@ -218,6 +230,21 @@ class ChatPanel extends StatelessWidget {
                   ),
           ),
           Divider(height: 1, color: theme.dividerColor),
+          if (collaborationSnapshot != null || collaborationRuns.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                sectionGap,
+                sectionGap,
+                sectionGap,
+                0,
+              ),
+              child: _CollaborationStatusPanel(
+                snapshot: collaborationSnapshot,
+                compact: compact,
+                statusText: collaborationStatusText,
+                runs: collaborationRuns,
+              ),
+            ),
           Expanded(
             child: Container(
               margin: EdgeInsets.all(sectionGap),
@@ -240,6 +267,8 @@ class ChatPanel extends StatelessWidget {
                 messages: messages,
                 currentUserId: currentUserId,
                 currentUserLabel: currentUserLabel,
+                knowledgeDocuments: knowledgeDocuments,
+                onKnowledgeCitationTap: onKnowledgeCitationTap,
                 compact: compact,
                 emptyIcon: emptyStateIcon,
                 emptyTitle: emptyStateTitle,
@@ -297,6 +326,8 @@ class ChatPanel extends StatelessWidget {
                       messages: messages,
                       currentUserId: currentUserId,
                       currentUserLabel: currentUserLabel,
+                      knowledgeDocuments: knowledgeDocuments,
+                      onKnowledgeCitationTap: onKnowledgeCitationTap,
                       compact: true,
                       emptyIcon: emptyStateIcon,
                       emptyTitle: emptyStateTitle,
@@ -331,6 +362,774 @@ class ChatPanel extends StatelessWidget {
         }
         return SizedBox(height: compact ? 600 : 760, child: panel);
       },
+    );
+  }
+}
+
+class _CollaborationStatusPanel extends StatefulWidget {
+  const _CollaborationStatusPanel({
+    required this.snapshot,
+    required this.compact,
+    this.statusText,
+    this.runs = const [],
+  });
+
+  final CollaborationStatusSnapshot? snapshot;
+  final bool compact;
+  final String? statusText;
+  final List<CollaborationRun> runs;
+
+  @override
+  State<_CollaborationStatusPanel> createState() =>
+      _CollaborationStatusPanelState();
+}
+
+class _CollaborationStatusPanelState extends State<_CollaborationStatusPanel> {
+  _CollaborationRunScopeFilter _runScopeFilter =
+      _CollaborationRunScopeFilter.all;
+  _CollaborationRunStatusFilter _statusFilter =
+      _CollaborationRunStatusFilter.all;
+  String? _agentFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final activeSnapshot = widget.snapshot;
+    final statusColor = activeSnapshot == null
+        ? theme.colorScheme.primary
+        : _collaborationStatusColor(activeSnapshot.status);
+    final progress = activeSnapshot == null
+        ? null
+        : _collaborationProgress(activeSnapshot);
+    final roundLabel = activeSnapshot != null && activeSnapshot.maxRounds > 0
+        ? l10n.collaborationRoundStatus(
+            activeSnapshot.round,
+            activeSnapshot.maxRounds,
+          )
+        : null;
+    final stageSequence = activeSnapshot == null
+        ? const <String>[]
+        : _collaborationStageSequence(activeSnapshot.maxRounds);
+    final availableAgents = _collaborationAgents(widget.runs);
+    final filteredRuns = widget.runs
+        .where(
+          (group) =>
+              _matchesRunScope(
+                group,
+                activeCollaborationId: activeSnapshot?.collaborationId,
+              ) &&
+              _matchesStatus(group) &&
+              _matchesAgent(group),
+        )
+        .toList(growable: false);
+    final hasActiveFilteredRun = filteredRuns.any(
+      (group) => group.collaborationId == activeSnapshot?.collaborationId,
+    );
+
+    return Container(
+      padding: EdgeInsets.all(widget.compact ? 14 : 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.14 : 0.08,
+        ),
+        borderRadius: BorderRadius.circular(widget.compact ? 18 : 20),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.collaborationMode,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (widget.statusText != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.statusText!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.72,
+                          ),
+                          height: 1.45,
+                        ),
+                      ),
+                    ] else if (widget.runs.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Persisted team runs are available for this conversation.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.72,
+                          ),
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (activeSnapshot != null)
+                StatusBadge(
+                  label: _formatCollaborationStatusLabel(
+                    l10n,
+                    activeSnapshot.status,
+                  ),
+                  color: statusColor,
+                )
+              else
+                AppPill(
+                  label: 'History',
+                  icon: Icons.history_rounded,
+                  backgroundColor: theme.colorScheme.surface.withValues(
+                    alpha: theme.brightness == Brightness.dark ? 0.32 : 0.7,
+                  ),
+                  borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                ),
+            ],
+          ),
+          if (roundLabel != null && progress != null) ...[
+            SizedBox(height: widget.compact ? 12 : 14),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: widget.compact ? 7 : 8,
+                      backgroundColor: statusColor.withValues(alpha: 0.12),
+                      valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  roundLabel,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (stageSequence.isNotEmpty) ...[
+            SizedBox(height: widget.compact ? 12 : 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: stageSequence
+                  .map(
+                    (stage) => AppPill(
+                      label: _formatCollaborationStage(stage),
+                      icon: _collaborationStageIcon(stage),
+                      backgroundColor: stage == activeSnapshot?.stage
+                          ? statusColor.withValues(alpha: 0.12)
+                          : theme.colorScheme.surface.withValues(
+                              alpha: theme.brightness == Brightness.dark
+                                  ? 0.32
+                                  : 0.7,
+                            ),
+                      borderColor: stage == activeSnapshot?.stage
+                          ? statusColor.withValues(alpha: 0.18)
+                          : theme.dividerColor.withValues(alpha: 0.82),
+                      labelColor: stage == activeSnapshot?.stage
+                          ? statusColor
+                          : null,
+                      iconColor: stage == activeSnapshot?.stage
+                          ? statusColor
+                          : null,
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+          ],
+          if (activeSnapshot != null) ...[
+            SizedBox(height: widget.compact ? 12 : 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                AppPill(
+                  label: activeSnapshot.trigger,
+                  icon: Icons.alternate_email_rounded,
+                  backgroundColor: theme.colorScheme.surface.withValues(
+                    alpha: theme.brightness == Brightness.dark ? 0.32 : 0.7,
+                  ),
+                  borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                ),
+                if (activeSnapshot.activeAgentKey != null &&
+                    activeSnapshot.activeAgentKey!.isNotEmpty)
+                  AppPill(
+                    label: '@${activeSnapshot.activeAgentKey}',
+                    icon: Icons.smart_toy_rounded,
+                    backgroundColor: statusColor.withValues(alpha: 0.12),
+                    borderColor: statusColor.withValues(alpha: 0.18),
+                    labelColor: statusColor,
+                    iconColor: statusColor,
+                  ),
+                AppPill(
+                  label: _compactCollaborationId(
+                    activeSnapshot.collaborationId,
+                  ),
+                  icon: Icons.route_rounded,
+                  backgroundColor: theme.colorScheme.surface.withValues(
+                    alpha: theme.brightness == Brightness.dark ? 0.32 : 0.7,
+                  ),
+                  borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                ),
+              ],
+            ),
+          ],
+          if (activeSnapshot != null &&
+              activeSnapshot.detail != null &&
+              activeSnapshot.detail!.trim().isNotEmpty) ...[
+            SizedBox(height: widget.compact ? 10 : 12),
+            Text(
+              activeSnapshot.detail!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.74),
+                height: 1.5,
+              ),
+            ),
+          ],
+          if (widget.runs.isNotEmpty) ...[
+            SizedBox(height: widget.compact ? 12 : 14),
+            Text(
+              activeSnapshot == null ? 'Recent runs' : 'Run history',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _CollaborationRunFilters(
+              compact: widget.compact,
+              activeSnapshot: activeSnapshot,
+              runScopeFilter: _runScopeFilter,
+              statusFilter: _statusFilter,
+              agentFilter: _agentFilter,
+              availableAgents: availableAgents,
+              onRunScopeChanged: (value) {
+                setState(() => _runScopeFilter = value);
+              },
+              onStatusChanged: (value) {
+                setState(() => _statusFilter = value);
+              },
+              onAgentChanged: (value) {
+                setState(() => _agentFilter = value);
+              },
+            ),
+            const SizedBox(height: 10),
+            if (filteredRuns.isEmpty)
+              Text(
+                'No runs match current filters.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                  height: 1.45,
+                ),
+              )
+            else
+              ...filteredRuns.asMap().entries.map((groupEntry) {
+                final group = groupEntry.value;
+                final isInitiallyExpanded =
+                    group.collaborationId == activeSnapshot?.collaborationId
+                    ? true
+                    : !hasActiveFilteredRun && groupEntry.key == 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _CollaborationRunCard(
+                    group: group,
+                    compact: widget.compact,
+                    initiallyExpanded: isInitiallyExpanded,
+                    isActiveRun:
+                        group.collaborationId ==
+                        activeSnapshot?.collaborationId,
+                  ),
+                );
+              }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  bool _matchesRunScope(
+    CollaborationRun group, {
+    required String? activeCollaborationId,
+  }) {
+    if (_runScopeFilter == _CollaborationRunScopeFilter.all) {
+      return true;
+    }
+    return activeCollaborationId != null &&
+        group.collaborationId == activeCollaborationId;
+  }
+
+  bool _matchesStatus(CollaborationRun group) {
+    return switch (_statusFilter) {
+      _CollaborationRunStatusFilter.all => true,
+      _CollaborationRunStatusFilter.running => group.status == 'RUNNING',
+      _CollaborationRunStatusFilter.completed => group.status == 'COMPLETED',
+      _CollaborationRunStatusFilter.aborted =>
+        group.status == 'ABORTED' || group.status == 'FAILED',
+    };
+  }
+
+  bool _matchesAgent(CollaborationRun group) {
+    final agent = _agentFilter;
+    if (agent == null || agent.isEmpty) {
+      return true;
+    }
+    return group.agentKeys.contains(agent) ||
+        group.events.any((entry) => entry.agentKey == agent);
+  }
+}
+
+class _CollaborationRunFilters extends StatelessWidget {
+  const _CollaborationRunFilters({
+    required this.compact,
+    required this.activeSnapshot,
+    required this.runScopeFilter,
+    required this.statusFilter,
+    required this.agentFilter,
+    required this.availableAgents,
+    required this.onRunScopeChanged,
+    required this.onStatusChanged,
+    required this.onAgentChanged,
+  });
+
+  final bool compact;
+  final CollaborationStatusSnapshot? activeSnapshot;
+  final _CollaborationRunScopeFilter runScopeFilter;
+  final _CollaborationRunStatusFilter statusFilter;
+  final String? agentFilter;
+  final List<String> availableAgents;
+  final ValueChanged<_CollaborationRunScopeFilter> onRunScopeChanged;
+  final ValueChanged<_CollaborationRunStatusFilter> onStatusChanged;
+  final ValueChanged<String?> onAgentChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final helperStyle = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+      fontWeight: FontWeight.w700,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Filter runs', style: helperStyle),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('All runs'),
+              selected: runScopeFilter == _CollaborationRunScopeFilter.all,
+              onSelected: (_) {
+                onRunScopeChanged(_CollaborationRunScopeFilter.all);
+              },
+            ),
+            if (activeSnapshot != null)
+              ChoiceChip(
+                label: const Text('Current run'),
+                selected:
+                    runScopeFilter == _CollaborationRunScopeFilter.current,
+                onSelected: (_) {
+                  onRunScopeChanged(_CollaborationRunScopeFilter.current);
+                },
+              ),
+          ],
+        ),
+        SizedBox(height: compact ? 10 : 12),
+        Text('Filter by status', style: helperStyle),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ChoiceChip(
+              label: const Text('All statuses'),
+              selected: statusFilter == _CollaborationRunStatusFilter.all,
+              onSelected: (_) {
+                onStatusChanged(_CollaborationRunStatusFilter.all);
+              },
+            ),
+            ChoiceChip(
+              label: const Text('Running'),
+              selected: statusFilter == _CollaborationRunStatusFilter.running,
+              onSelected: (_) {
+                onStatusChanged(_CollaborationRunStatusFilter.running);
+              },
+            ),
+            ChoiceChip(
+              label: const Text('Completed'),
+              selected: statusFilter == _CollaborationRunStatusFilter.completed,
+              onSelected: (_) {
+                onStatusChanged(_CollaborationRunStatusFilter.completed);
+              },
+            ),
+            ChoiceChip(
+              label: const Text('Stopped'),
+              selected: statusFilter == _CollaborationRunStatusFilter.aborted,
+              onSelected: (_) {
+                onStatusChanged(_CollaborationRunStatusFilter.aborted);
+              },
+            ),
+          ],
+        ),
+        if (availableAgents.isNotEmpty) ...[
+          SizedBox(height: compact ? 10 : 12),
+          Text('Filter by agent', style: helperStyle),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ChoiceChip(
+                label: const Text('All agents'),
+                selected: agentFilter == null,
+                onSelected: (_) => onAgentChanged(null),
+              ),
+              ...availableAgents.map(
+                (agent) => ChoiceChip(
+                  label: Text('@$agent'),
+                  selected: agentFilter == agent,
+                  onSelected: (_) => onAgentChanged(agent),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _CollaborationRunCard extends StatelessWidget {
+  const _CollaborationRunCard({
+    required this.group,
+    required this.compact,
+    required this.initiallyExpanded,
+    required this.isActiveRun,
+  });
+
+  final CollaborationRun group;
+  final bool compact;
+  final bool initiallyExpanded;
+  final bool isActiveRun;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final latestEntry = group.events.isEmpty
+        ? _fallbackRunEvent(group)
+        : group.events.last;
+    final statusColor = _collaborationStatusColor(group.status);
+    final stages = _distinctStages(group.events);
+    final agentKeys = group.agentKeys.isNotEmpty
+        ? group.agentKeys
+        : _fallbackAgentKeys(group.events, group.activeAgentKey);
+    final timestamp = DateTime.tryParse(group.lastEventAt)?.toLocal();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.3 : 0.68,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+      ),
+      child: Theme(
+        data: theme.copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: PageStorageKey<String>('collab_${group.collaborationId}'),
+          initiallyExpanded: initiallyExpanded,
+          tilePadding: EdgeInsets.fromLTRB(
+            compact ? 12 : 14,
+            compact ? 8 : 10,
+            compact ? 12 : 14,
+            compact ? 8 : 10,
+          ),
+          childrenPadding: EdgeInsets.fromLTRB(
+            compact ? 12 : 14,
+            0,
+            compact ? 12 : 14,
+            compact ? 12 : 14,
+          ),
+          leading: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _compactCollaborationId(group.collaborationId),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              StatusBadge(
+                label: _formatCollaborationStatusLabel(
+                  l10n,
+                  latestEntry.status,
+                ),
+                color: statusColor,
+              ),
+            ],
+          ),
+          subtitle: Text(
+            _collaborationTimelineTitle(latestEntry),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+              height: 1.45,
+            ),
+          ),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (isActiveRun)
+                    AppPill(
+                      label: 'Live',
+                      icon: Icons.bolt_rounded,
+                      backgroundColor: statusColor.withValues(alpha: 0.12),
+                      borderColor: statusColor.withValues(alpha: 0.18),
+                      labelColor: statusColor,
+                      iconColor: statusColor,
+                    ),
+                  AppPill(
+                    label: '${group.events.length} events',
+                    icon: Icons.timeline_rounded,
+                    backgroundColor: theme.colorScheme.surface.withValues(
+                      alpha: theme.brightness == Brightness.dark ? 0.32 : 0.74,
+                    ),
+                    borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                  ),
+                  if (group.maxRounds > 0)
+                    AppPill(
+                      label: '${group.round}/${group.maxRounds} rounds',
+                      icon: Icons.repeat_rounded,
+                      backgroundColor: theme.colorScheme.surface.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.32
+                            : 0.74,
+                      ),
+                      borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                    ),
+                  if (timestamp != null)
+                    AppPill(
+                      label: _formatClock(timestamp),
+                      icon: Icons.schedule_rounded,
+                      backgroundColor: theme.colorScheme.surface.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.32
+                            : 0.74,
+                      ),
+                      borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                    ),
+                  if (group.trigger != null && group.trigger!.isNotEmpty)
+                    AppPill(
+                      label: group.trigger!,
+                      icon: Icons.alternate_email_rounded,
+                      backgroundColor: theme.colorScheme.surface.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.32
+                            : 0.74,
+                      ),
+                      borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                    ),
+                  if (group.triggerMessageId != null &&
+                      group.triggerMessageId!.isNotEmpty)
+                    AppPill(
+                      label: _compactReference(group.triggerMessageId!),
+                      icon: Icons.link_rounded,
+                      backgroundColor: theme.colorScheme.surface.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.32
+                            : 0.74,
+                      ),
+                      borderColor: theme.dividerColor.withValues(alpha: 0.82),
+                    ),
+                  ...agentKeys.map(
+                    (agentKey) => AppPill(
+                      label: '@$agentKey',
+                      icon: Icons.smart_toy_rounded,
+                      backgroundColor: statusColor.withValues(alpha: 0.12),
+                      borderColor: statusColor.withValues(alpha: 0.18),
+                      labelColor: statusColor,
+                      iconColor: statusColor,
+                    ),
+                  ),
+                  ...stages.map(
+                    (stage) => AppPill(
+                      label: _formatCollaborationStage(stage),
+                      icon: _collaborationStageIcon(stage),
+                      backgroundColor: statusColor.withValues(alpha: 0.12),
+                      borderColor: statusColor.withValues(alpha: 0.18),
+                      labelColor: statusColor,
+                      iconColor: statusColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (group.reason != null && group.reason!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Reason: ${group.reason!}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                  height: 1.45,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            ...group.events.map(
+              (entry) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _CollaborationTimelineTile(entry: entry),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _CollaborationRunScopeFilter { all, current }
+
+enum _CollaborationRunStatusFilter { all, running, completed, aborted }
+
+class _CollaborationTimelineTile extends StatelessWidget {
+  const _CollaborationTimelineTile({required this.entry});
+
+  final CollaborationEvent entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final statusColor = _collaborationStatusColor(entry.status);
+    final timestamp = DateTime.tryParse(entry.createdAt)?.toLocal();
+    final roundLabel = entry.maxRounds > 0
+        ? 'R${entry.round}/${entry.maxRounds}'
+        : entry.round > 0
+        ? 'R${entry.round}'
+        : 'R0';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.3 : 0.68,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _collaborationTimelineTitle(entry),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (timestamp != null)
+                Text(
+                  '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              AppPill(
+                label: roundLabel,
+                icon: Icons.repeat_rounded,
+                backgroundColor: theme.colorScheme.surface.withValues(
+                  alpha: theme.brightness == Brightness.dark ? 0.32 : 0.74,
+                ),
+                borderColor: theme.dividerColor.withValues(alpha: 0.82),
+              ),
+              if (entry.stage != null && entry.stage!.isNotEmpty)
+                AppPill(
+                  label: _formatCollaborationStage(entry.stage!),
+                  icon: _collaborationStageIcon(entry.stage!),
+                  backgroundColor: statusColor.withValues(alpha: 0.12),
+                  borderColor: statusColor.withValues(alpha: 0.18),
+                  labelColor: statusColor,
+                  iconColor: statusColor,
+                ),
+              if (entry.agentKey != null && entry.agentKey!.isNotEmpty)
+                AppPill(
+                  label: '@${entry.agentKey}',
+                  icon: Icons.smart_toy_rounded,
+                ),
+            ],
+          ),
+          if (entry.detail != null && entry.detail!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              entry.detail!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+                height: 1.45,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -426,4 +1225,161 @@ String _initialsFor(String value) {
     return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
   }
   return cleaned.substring(0, cleaned.length >= 2 ? 2 : 1).toUpperCase();
+}
+
+String _formatCollaborationStatusLabel(AppLocalizations l10n, String value) {
+  return switch (value) {
+    'RUNNING' => l10n.running,
+    'COMPLETED' => l10n.completed,
+    'ABORTED' => l10n.failed,
+    _ => value,
+  };
+}
+
+Color _collaborationStatusColor(String value) {
+  return switch (value) {
+    'COMPLETED' => const Color(0xFF1F8A5C),
+    'ABORTED' => const Color(0xFFBA3B2F),
+    'RUNNING' => const Color(0xFF3D7EA6),
+    _ => const Color(0xFF6C7A89),
+  };
+}
+
+double _collaborationProgress(CollaborationStatusSnapshot snapshot) {
+  if (snapshot.maxRounds <= 0) {
+    return snapshot.status == 'COMPLETED' ? 1 : 0;
+  }
+  final value = snapshot.round / snapshot.maxRounds;
+  return value.clamp(0, 1).toDouble();
+}
+
+String _compactCollaborationId(String value) {
+  return value.length > 12 ? '${value.substring(0, 12)}...' : value;
+}
+
+String _compactReference(String value) {
+  return value.length > 14 ? '${value.substring(0, 14)}...' : value;
+}
+
+List<String> _collaborationAgents(List<CollaborationRun> groups) {
+  final agents = <String>[];
+  final seenAgents = <String>{};
+  for (final group in groups) {
+    for (final agent in group.agentKeys) {
+      if (agent.isEmpty || !seenAgents.add(agent)) {
+        continue;
+      }
+      agents.add(agent);
+    }
+    for (final entry in group.events) {
+      final agent = entry.agentKey;
+      if (agent == null || agent.isEmpty || !seenAgents.add(agent)) {
+        continue;
+      }
+      agents.add(agent);
+    }
+  }
+  return agents;
+}
+
+List<String> _fallbackAgentKeys(
+  List<CollaborationEvent> events,
+  String? activeAgentKey,
+) {
+  final agents = <String>[];
+  final seenAgents = <String>{};
+  for (final entry in events) {
+    final agent = entry.agentKey;
+    if (agent == null || agent.isEmpty || !seenAgents.add(agent)) {
+      continue;
+    }
+    agents.add(agent);
+  }
+  if (activeAgentKey != null &&
+      activeAgentKey.isNotEmpty &&
+      seenAgents.add(activeAgentKey)) {
+    agents.add(activeAgentKey);
+  }
+  return agents;
+}
+
+CollaborationEvent _fallbackRunEvent(CollaborationRun run) {
+  return CollaborationEvent(
+    id: run.collaborationId,
+    workspaceId: run.workspaceId,
+    channelId: run.channelId,
+    collaborationId: run.collaborationId,
+    eventType: 'COLLABORATION_${run.status}',
+    status: run.status,
+    round: run.round,
+    maxRounds: run.maxRounds,
+    createdAt: run.lastEventAt,
+    stage: run.stage,
+    agentKey: run.activeAgentKey,
+    trigger: run.trigger,
+    detail: run.detail,
+  );
+}
+
+List<String> _distinctStages(List<CollaborationEvent> entries) {
+  final stages = <String>[];
+  final seenStages = <String>{};
+  for (final entry in entries) {
+    final stage = entry.stage;
+    if (stage == null || stage.isEmpty || !seenStages.add(stage)) {
+      continue;
+    }
+    stages.add(stage);
+  }
+  return stages;
+}
+
+String _formatClock(DateTime timestamp) {
+  return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}';
+}
+
+List<String> _collaborationStageSequence(int maxRounds) {
+  if (maxRounds <= 0) {
+    return const [];
+  }
+  if (maxRounds == 1) {
+    return const ['deliver'];
+  }
+  if (maxRounds == 2) {
+    return const ['analyze', 'synthesize'];
+  }
+  return const ['analyze', 'critique', 'synthesize'];
+}
+
+String _formatCollaborationStage(String value) {
+  return switch (value) {
+    'analyze' => 'Analyze',
+    'critique' => 'Critique',
+    'synthesize' => 'Synthesize',
+    'deliver' => 'Deliver',
+    _ => value,
+  };
+}
+
+IconData _collaborationStageIcon(String value) {
+  return switch (value) {
+    'analyze' => Icons.search_rounded,
+    'critique' => Icons.rule_rounded,
+    'synthesize' => Icons.merge_type_rounded,
+    'deliver' => Icons.done_all_rounded,
+    _ => Icons.timeline_rounded,
+  };
+}
+
+String _collaborationTimelineTitle(CollaborationEvent entry) {
+  final stage = entry.stage == null || entry.stage!.isEmpty
+      ? entry.status
+      : _formatCollaborationStage(entry.stage!);
+  return switch (entry.status) {
+    'RUNNING' => '$stage in progress',
+    'COMPLETED' => '$stage completed',
+    'ABORTED' => '$stage stopped',
+    'FAILED' => '$stage failed',
+    _ => '$stage ${entry.status.toLowerCase()}',
+  };
 }

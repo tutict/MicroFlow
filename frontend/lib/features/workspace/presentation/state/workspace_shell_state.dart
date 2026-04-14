@@ -2,6 +2,10 @@ import '../../../agents/domain/entities/agent_descriptor.dart';
 import '../../../agents/domain/entities/agent_run.dart';
 import '../../../chat/domain/entities/channel_summary.dart';
 import '../../../chat/domain/entities/chat_message.dart';
+import '../../../chat/domain/entities/collaboration_run.dart';
+import '../../domain/entities/knowledge_document.dart';
+import '../../domain/entities/workspace_member.dart';
+import '../../domain/entities/workspace_summary.dart';
 import '../../domain/entities/workspace_conversation.dart';
 import '../../../chat/presentation/state/chat_connection_status.dart';
 import 'workspace_selected_conversation.dart';
@@ -22,7 +26,13 @@ class WorkspaceShellState {
     required this.isSendingMessage,
     required this.collaborationModeByConversation,
     required this.collaborationStatusByConversation,
+    this.collaborationRunsByConversation = const {},
+    this.workspaces = const [],
+    this.workspaceMembers = const [],
+    this.knowledgeDocuments = const [],
+    this.isUploadingKnowledgeDocument = false,
     this.messageError,
+    this.knowledgeError,
   });
 
   final String workspaceId;
@@ -40,7 +50,13 @@ class WorkspaceShellState {
   final Map<String, bool> collaborationModeByConversation;
   final Map<String, CollaborationStatusSnapshot>
   collaborationStatusByConversation;
+  final Map<String, List<CollaborationRun>> collaborationRunsByConversation;
+  final List<WorkspaceSummary> workspaces;
+  final List<WorkspaceMember> workspaceMembers;
+  final List<KnowledgeDocument> knowledgeDocuments;
+  final bool isUploadingKnowledgeDocument;
   final String? messageError;
+  final String? knowledgeError;
 
   String get selectedConversationId => selectedConversation.id;
 
@@ -52,6 +68,9 @@ class WorkspaceShellState {
 
   CollaborationStatusSnapshot? get selectedCollaborationStatus =>
       collaborationStatusByConversation[selectedConversation.id];
+
+  List<CollaborationRun> get selectedCollaborationRuns =>
+      collaborationRunsByConversation[selectedConversation.id] ?? const [];
 
   WorkspaceShellState copyWith({
     String? workspaceId,
@@ -68,8 +87,15 @@ class WorkspaceShellState {
     bool? isSendingMessage,
     Map<String, bool>? collaborationModeByConversation,
     Map<String, CollaborationStatusSnapshot>? collaborationStatusByConversation,
+    Map<String, List<CollaborationRun>>? collaborationRunsByConversation,
+    List<WorkspaceSummary>? workspaces,
+    List<WorkspaceMember>? workspaceMembers,
+    List<KnowledgeDocument>? knowledgeDocuments,
+    bool? isUploadingKnowledgeDocument,
     String? messageError,
+    String? knowledgeError,
     bool clearMessageError = false,
+    bool clearKnowledgeError = false,
   }) {
     return WorkspaceShellState(
       workspaceId: workspaceId ?? this.workspaceId,
@@ -90,9 +116,20 @@ class WorkspaceShellState {
       collaborationStatusByConversation:
           collaborationStatusByConversation ??
           this.collaborationStatusByConversation,
+      collaborationRunsByConversation:
+          collaborationRunsByConversation ??
+          this.collaborationRunsByConversation,
+      workspaces: workspaces ?? this.workspaces,
+      workspaceMembers: workspaceMembers ?? this.workspaceMembers,
+      knowledgeDocuments: knowledgeDocuments ?? this.knowledgeDocuments,
+      isUploadingKnowledgeDocument:
+          isUploadingKnowledgeDocument ?? this.isUploadingKnowledgeDocument,
       messageError: clearMessageError
           ? null
           : messageError ?? this.messageError,
+      knowledgeError: clearKnowledgeError
+          ? null
+          : knowledgeError ?? this.knowledgeError,
     );
   }
 }
@@ -104,6 +141,7 @@ class CollaborationStatusSnapshot {
     required this.trigger,
     required this.round,
     required this.maxRounds,
+    this.stage,
     this.activeAgentKey,
     this.detail,
   });
@@ -113,6 +151,7 @@ class CollaborationStatusSnapshot {
   final String trigger;
   final int round;
   final int maxRounds;
+  final String? stage;
   final String? activeAgentKey;
   final String? detail;
 
@@ -122,6 +161,7 @@ class CollaborationStatusSnapshot {
     String? trigger,
     int? round,
     int? maxRounds,
+    String? stage,
     String? activeAgentKey,
     String? detail,
   }) {
@@ -131,6 +171,7 @@ class CollaborationStatusSnapshot {
       trigger: trigger ?? this.trigger,
       round: round ?? this.round,
       maxRounds: maxRounds ?? this.maxRounds,
+      stage: stage ?? this.stage,
       activeAgentKey: activeAgentKey ?? this.activeAgentKey,
       detail: detail ?? this.detail,
     );

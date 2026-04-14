@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../core/utils/date_time_formatter.dart';
+import '../../../workspace/domain/entities/knowledge_document.dart';
 import '../../../../shared/widgets/app_pill.dart';
 import '../../domain/entities/chat_message.dart';
 import 'message_bubble.dart';
@@ -13,6 +14,8 @@ class ChatMessageList extends StatefulWidget {
     required this.messages,
     required this.currentUserId,
     required this.currentUserLabel,
+    this.knowledgeDocuments = const [],
+    this.onKnowledgeCitationTap,
     this.compact = false,
     this.emptyIcon = Icons.forum_rounded,
     this.emptyTitle,
@@ -22,6 +25,8 @@ class ChatMessageList extends StatefulWidget {
   final List<ChatMessage> messages;
   final String currentUserId;
   final String currentUserLabel;
+  final List<KnowledgeDocument> knowledgeDocuments;
+  final ValueChanged<String>? onKnowledgeCitationTap;
   final bool compact;
   final IconData emptyIcon;
   final String? emptyTitle;
@@ -100,6 +105,8 @@ class _ChatMessageListState extends State<ChatMessageList> {
                 currentUserLabel: widget.currentUserLabel,
               ),
               timestampLabel: _formatTimestamp(entry.message.createdAt),
+              knowledgeDocuments: widget.knowledgeDocuments,
+              onKnowledgeCitationTap: widget.onKnowledgeCitationTap,
               compact: widget.compact,
             ),
           ),

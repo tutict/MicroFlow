@@ -17,11 +17,27 @@ final class ApiEndpoints {
     return '/channels/$channelId/messages';
   }
 
+  static String channelCollaborationHistory(String channelId) {
+    return '/channels/$channelId/collaboration-history';
+  }
+
+  static String channelCollaborationRuns(String channelId) {
+    return '/channels/$channelId/collaboration-runs';
+  }
+
   static String workspaceChannels(String workspaceId) {
     return '/workspaces/$workspaceId/channels';
   }
 
   static String workspaceConversations(String workspaceId) {
     return '/workspaces/$workspaceId/conversations';
+  }
+
+  static String workspaceMembers(String workspaceId) {
+    return '/workspaces/$workspaceId/members';
+  }
+
+  static String workspaceKnowledgeDocuments(String workspaceId) {
+    return '/workspaces/$workspaceId/knowledge-documents';
   }
 }

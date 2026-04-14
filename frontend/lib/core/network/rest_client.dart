@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -64,6 +65,19 @@ final class RestClient {
     return _decodeMap(response);
   }
 
+  Future<List<Map<String, Object?>>> postJsonList(
+    String path, {
+    required Map<String, Object?> body,
+    bool authenticated = true,
+  }) async {
+    final response = await http.post(
+      await buildUrl(path),
+      headers: await _headers(authenticated: authenticated),
+      body: jsonEncode(body),
+    );
+    return _decodeList(response);
+  }
+
   Future<Map<String, Object?>> putJson(
     String path, {
     required Map<String, Object?> body,
@@ -78,11 +92,37 @@ final class RestClient {
     return _decodeMap(response);
   }
 
-  Future<Map<String, String>> _headers({required bool authenticated}) async {
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+  Future<Map<String, Object?>> postMultipart(
+    String path, {
+    required String fileField,
+    required String fileName,
+    required Uint8List fileBytes,
+    Map<String, String>? fields,
+    bool authenticated = true,
+  }) async {
+    final request = http.MultipartRequest('POST', await buildUrl(path));
+    request.headers.addAll(
+      await _headers(authenticated: authenticated, json: false),
+    );
+    if (fields != null) {
+      request.fields.addAll(fields);
+    }
+    request.files.add(
+      http.MultipartFile.fromBytes(fileField, fileBytes, filename: fileName),
+    );
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    return _decodeMap(response);
+  }
+
+  Future<Map<String, String>> _headers({
+    required bool authenticated,
+    bool json = true,
+  }) async {
+    final headers = <String, String>{'Accept': 'application/json'};
+    if (json) {
+      headers['Content-Type'] = 'application/json';
+    }
     if (authenticated) {
       final token = await _localStore.readString(_accessTokenKey);
       if (token == null || token.isEmpty) {

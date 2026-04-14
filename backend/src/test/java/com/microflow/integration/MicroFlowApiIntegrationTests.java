@@ -604,6 +604,37 @@ class MicroFlowApiIntegrationTests {
                     .containsExactlyInAnyOrder("assistant", "assistant", "reviewer", "reviewer");
             assertThat(runs).allSatisfy(run -> assertThat(run.get("status")).isEqualTo("COMPLETED"));
 
+            var collaborationHistoryResponse = restTemplate.exchange(
+                    "/api/v1/channels/" + channel.id() + "/collaboration-history",
+                    HttpMethod.GET,
+                    authenticatedEntity(session.accessToken()),
+                    String.class
+            );
+            var collaborationHistory = readJsonList(collaborationHistoryResponse);
+            assertThat(collaborationHistory).isNotEmpty();
+            assertThat(collaborationHistory).anySatisfy(event -> {
+                assertThat(event.get("eventType")).isEqualTo("COLLABORATION_STEP");
+                assertThat(event.get("stage")).isEqualTo("analyze");
+            });
+            assertThat(collaborationHistory).anySatisfy(event ->
+                    assertThat(event.get("eventType")).isEqualTo("COLLABORATION_COMPLETED"));
+
+            var collaborationRunsResponse = restTemplate.exchange(
+                    "/api/v1/channels/" + channel.id() + "/collaboration-runs",
+                    HttpMethod.GET,
+                    authenticatedEntity(session.accessToken()),
+                    String.class
+            );
+            var collaborationRuns = readJsonList(collaborationRunsResponse);
+            assertThat(collaborationRuns).isNotEmpty();
+            assertThat(collaborationRuns.get(0).get("status")).isEqualTo("COMPLETED");
+            assertThat(collaborationRuns.get(0).get("trigger")).isEqualTo("@team");
+            assertThat(collaborationRuns.get(0).get("triggerMessageId")).isEqualTo(triggerMessage.get("id"));
+            assertThat(collaborationRuns.get(0).get("agentKeys")).asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.LIST)
+                    .contains("assistant", "reviewer");
+            assertThat(collaborationRuns.get(0).get("events")).asInstanceOf(org.assertj.core.api.InstanceOfAssertFactories.LIST)
+                    .isNotEmpty();
+
             assertThat(storedMessages).anySatisfy(message -> {
                 assertThat(message.get("senderUserId")).isEqualTo("agent:assistant");
                 assertThat(((String) message.get("content"))).contains("Role strategy: You are the synthesizer.");
@@ -686,6 +717,37 @@ class MicroFlowApiIntegrationTests {
                 socket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join();
             }
         }
+    }
+
+    @Test
+    void workspaceOwnerCanAddRegisteredMemberAndListWorkspaceMembers() throws Exception {
+        var session = loginDemoUser();
+        var teammateEmail = "member-" + System.nanoTime() + "@microflow.local";
+        registerUser(teammateEmail);
+        var workspace = firstWorkspace(session.accessToken());
+
+        var addMemberResponse = restTemplate.exchange(
+                "/api/v1/workspaces/" + workspace.id() + "/members",
+                HttpMethod.POST,
+                authenticatedJsonEntity(session.accessToken(), Map.of("email", teammateEmail)),
+                String.class
+        );
+
+        assertThat(addMemberResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var members = readJsonList(addMemberResponse);
+        assertThat(members).extracting(member -> member.get("email"))
+                .contains(teammateEmail);
+
+        var membersResponse = restTemplate.exchange(
+                "/api/v1/workspaces/" + workspace.id() + "/members",
+                HttpMethod.GET,
+                authenticatedEntity(session.accessToken()),
+                String.class
+        );
+
+        assertThat(membersResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(readJsonList(membersResponse)).extracting(member -> member.get("email"))
+                .contains("demo@microflow.local", teammateEmail);
     }
 
     private AuthSession loginDemoUser() throws Exception {

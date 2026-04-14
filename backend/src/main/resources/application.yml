@@ -7,7 +7,7 @@ spring:
   sql:
     init:
       mode: always
-      schema-locations: classpath:db/migration/V1__baseline.sql
+      schema-locations: classpath:db/migration/V1__baseline.sql,classpath:db/migration/V2__knowledge_and_workspace_management.sql,classpath:db/migration/V3__collaboration_event_history.sql
   datasource:
     url: jdbc:sqlite:${MICROFLOW_DB_PATH:./microflow.db}
     driver-class-name: org.sqlite.JDBC
@@ -72,3 +72,10 @@ microflow:
   websocket:
     ticket-ttl: ${MICROFLOW_WS_TICKET_TTL:PT30S}
     allowed-origin-patterns: ${MICROFLOW_WS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,https://localhost:*,https://127.0.0.1:*}
+  knowledge:
+    max-upload-size-bytes: ${MICROFLOW_KNOWLEDGE_MAX_UPLOAD_SIZE_BYTES:5242880}
+    retrieval-max-snippets: ${MICROFLOW_KNOWLEDGE_RETRIEVAL_MAX_SNIPPETS:3}
+
+spring.servlet.multipart:
+  max-file-size: 5MB
+  max-request-size: 5MB

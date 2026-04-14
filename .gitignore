@@ -21,3 +21,9 @@
 /frontend/android/app/debug/
 /frontend/android/app/profile/
 /frontend/android/app/release/
+
+/.env
+/ops/docker/backend/data/*
+!/ops/docker/backend/data/.gitkeep
+/ops/docker/backend/db/*
+!/ops/docker/backend/db/.gitkeep

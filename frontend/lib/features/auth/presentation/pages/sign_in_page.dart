@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../app/router.dart';
+import '../../../../core/providers/locale_controller.dart';
+import '../../../../core/providers/theme_mode_controller.dart';
 import '../../../bootstrap/presentation/providers/server_connection_controller.dart';
 import '../../../../shared/widgets/language_switcher.dart';
 import '../../../../shared/widgets/theme_mode_switcher.dart';
@@ -81,6 +83,31 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     ).pushNamedAndRemoveUntil(AppRoutes.connect, (route) => false);
   }
 
+  void _handleSettingsSelection(int value) {
+    switch (value) {
+      case 1:
+        ref
+            .read(themeModeControllerProvider.notifier)
+            .setThemeMode(ThemeMode.light);
+        break;
+      case 2:
+        ref
+            .read(themeModeControllerProvider.notifier)
+            .setThemeMode(ThemeMode.dark);
+        break;
+      case 3:
+        ref
+            .read(localeControllerProvider.notifier)
+            .setLocale(const Locale('zh'));
+        break;
+      case 4:
+        ref
+            .read(localeControllerProvider.notifier)
+            .setLocale(const Locale('en'));
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -92,15 +119,23 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final isLoading = authAsync.isLoading;
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     final isWide = width >= 980;
+    final isCompactHeader = width < 560;
+    final isCondensedMobile = !isWide && (height < 800 || keyboardVisible);
     final sidePadding = width < 640 ? 18.0 : 28.0;
     final titleStyle =
-        (isWide ? theme.textTheme.displayMedium : theme.textTheme.headlineLarge)
+        ((isWide || !isCondensedMobile)
+                ? (isWide
+                      ? theme.textTheme.displayMedium
+                      : theme.textTheme.headlineLarge)
+                : theme.textTheme.headlineMedium)
             ?.copyWith(
-              fontSize: isWide ? 76 : 48,
+              fontSize: isWide ? 76 : (isCondensedMobile ? 40 : 48),
               height: 0.95,
               fontWeight: FontWeight.w800,
-              letterSpacing: isWide ? -3 : -1.8,
+              letterSpacing: isWide ? -3 : (isCondensedMobile ? -1.2 : -1.8),
               color: theme.colorScheme.onSurface,
             );
 
@@ -136,7 +171,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: isCondensedMobile ? 12 : 16),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -170,11 +205,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               ),
           ],
         ),
-        SizedBox(height: isWide ? 28 : 20),
-        SizedBox(
-          height: isWide ? 500 : 320,
-          child: _HeroStage(isWide: isWide, l10n: l10n),
-        ),
+        if (!isCondensedMobile) ...[
+          SizedBox(height: isWide ? 28 : 20),
+          SizedBox(
+            height: isWide ? 500 : 320,
+            child: _HeroStage(isWide: isWide, l10n: l10n),
+          ),
+        ],
       ],
     );
 
@@ -484,9 +521,35 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                           ),
                         ),
                         const Spacer(),
-                        const ThemeModeSwitcher(),
-                        const SizedBox(width: 8),
-                        const LanguageSwitcher(),
+                        if (isCompactHeader)
+                          PopupMenuButton<int>(
+                            tooltip: l10n.language,
+                            onSelected: _handleSettingsSelection,
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 1,
+                                child: Text(l10n.lightMode),
+                              ),
+                              PopupMenuItem(
+                                value: 2,
+                                child: Text(l10n.darkMode),
+                              ),
+                              PopupMenuItem(
+                                value: 3,
+                                child: Text(l10n.simplifiedChinese),
+                              ),
+                              PopupMenuItem(
+                                value: 4,
+                                child: Text(l10n.english),
+                              ),
+                            ],
+                            icon: const Icon(Icons.tune_rounded),
+                          )
+                        else ...[
+                          const ThemeModeSwitcher(),
+                          const SizedBox(width: 8),
+                          const LanguageSwitcher(),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -518,6 +581,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                                   ],
                                 )
                               : SingleChildScrollView(
+                                  keyboardDismissBehavior:
+                                      ScrollViewKeyboardDismissBehavior.onDrag,
                                   padding: EdgeInsets.only(
                                     bottom:
                                         MediaQuery.viewInsetsOf(

@@ -84,7 +84,10 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
     final copy = _ConnectCopy.of(context);
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
     final isWide = width >= 960;
+    final isCondensedMobile = !isWide && (height < 760 || keyboardVisible);
     final pairingAsync = ref.watch(serverConnectionControllerProvider);
     final isLoading = pairingAsync.isLoading;
 
@@ -120,7 +123,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
                             child: _Reveal(
                               ready: _ready,
                               offset: const Offset(-0.08, 0),
-                              child: _ConnectHero(copy: copy),
+                              child: _ConnectHero(copy: copy, condensed: false),
                             ),
                           ),
                           const SizedBox(width: 28),
@@ -142,12 +145,20 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
                         ],
                       )
                     : SingleChildScrollView(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.viewInsetsOf(context).bottom + 20,
+                        ),
                         child: Column(
                           children: [
                             _Reveal(
                               ready: _ready,
                               offset: const Offset(0, 0.05),
-                              child: _ConnectHero(copy: copy),
+                              child: _ConnectHero(
+                                copy: copy,
+                                condensed: isCondensedMobile,
+                              ),
                             ),
                             const SizedBox(height: 22),
                             _Reveal(
@@ -175,9 +186,10 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
 }
 
 class _ConnectHero extends StatelessWidget {
-  const _ConnectHero({required this.copy});
+  const _ConnectHero({required this.copy, required this.condensed});
 
   final _ConnectCopy copy;
+  final bool condensed;
 
   @override
   Widget build(BuildContext context) {
@@ -204,27 +216,39 @@ class _ConnectHero extends StatelessWidget {
           const SizedBox(height: 22),
           Text(
             copy.title,
-            style: theme.textTheme.displaySmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1.2,
-            ),
+            style:
+                (condensed
+                        ? theme.textTheme.headlineMedium
+                        : theme.textTheme.displaySmall)
+                    ?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: condensed ? -0.6 : -1.2,
+                    ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: condensed ? 10 : 14),
           Text(
             copy.description,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-              height: 1.5,
-            ),
+            style:
+                (condensed
+                        ? theme.textTheme.bodyMedium
+                        : theme.textTheme.bodyLarge)
+                    ?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.72,
+                      ),
+                      height: 1.5,
+                    ),
           ),
-          const SizedBox(height: 22),
-          for (final step in copy.steps) ...[
-            _InfoRow(label: step),
-            const SizedBox(height: 12),
+          SizedBox(height: condensed ? 16 : 22),
+          if (!condensed) ...[
+            for (final step in copy.steps) ...[
+              _InfoRow(label: step),
+              const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 24),
           ],
-          const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: EdgeInsets.all(condensed ? 16 : 18),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.7),
               borderRadius: BorderRadius.circular(22),

@@ -5,15 +5,19 @@ import com.microflow.agent.domain.model.AgentExecutionRequest;
 import com.microflow.agent.infrastructure.persistence.JdbcAgentRepository;
 import com.microflow.chat.domain.model.ChatMessage;
 import com.microflow.chat.infrastructure.persistence.JdbcMessageRepository;
+import com.microflow.knowledge.application.service.KnowledgeBaseService;
 import com.microflow.realtime.broadcaster.RealtimeBroadcaster;
 import com.microflow.realtime.protocol.RealtimeEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MentionDrivenMessageProcessor implements MessageProcessor {
+    private static final Logger log = LoggerFactory.getLogger(MentionDrivenMessageProcessor.class);
 
     private static final String TEAM_TRIGGER = "team";
     private static final String ALL_AGENTS_TRIGGER = "all-agents";
@@ -25,6 +29,7 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
     private final ExecutorService virtualThreadExecutorService;
     private final MentionParser mentionParser;
     private final AgentCollaborationOrchestrator collaborationOrchestrator;
+    private final KnowledgeBaseService knowledgeBaseService;
 
     public MentionDrivenMessageProcessor(
             JdbcAgentRepository agentRepository,
@@ -33,7 +38,8 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
             RealtimeBroadcaster realtimeBroadcaster,
             ExecutorService virtualThreadExecutorService,
             MentionParser mentionParser,
-            AgentCollaborationOrchestrator collaborationOrchestrator
+            AgentCollaborationOrchestrator collaborationOrchestrator,
+            KnowledgeBaseService knowledgeBaseService
     ) {
         this.agentRepository = agentRepository;
         this.messageRepository = messageRepository;
@@ -42,6 +48,7 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
         this.virtualThreadExecutorService = virtualThreadExecutorService;
         this.mentionParser = mentionParser;
         this.collaborationOrchestrator = collaborationOrchestrator;
+        this.knowledgeBaseService = knowledgeBaseService;
     }
 
     @Override
@@ -70,11 +77,17 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
             if (teamAgentKeys.isEmpty()) {
                 return MessageProcessorResult.empty();
             }
-            virtualThreadExecutorService.submit(() -> collaborationOrchestrator.orchestrate(
-                    message,
-                    teamAgentKeys,
-                    collaborationTrigger
-            ));
+            virtualThreadExecutorService.submit(() -> {
+                try {
+                    collaborationOrchestrator.orchestrate(
+                            message,
+                            teamAgentKeys,
+                            collaborationTrigger
+                    );
+                } catch (Exception ex) {
+                    log.error("Collaboration orchestration failed for channel {}", message.channelId(), ex);
+                }
+            });
             return new MessageProcessorResult(teamAgentKeys, List.of());
         }
         return queueAgentRuns(message, mentionedAgentKeys, true);
@@ -133,7 +146,7 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
                     message.workspaceId(),
                     message.channelId(),
                     agentKey,
-                    message.content(),
+                    buildPrompt(message, agentKey),
                     Map.of("triggerMessageId", message.id())
             ));
             if (!result.success()) {
@@ -159,5 +172,28 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
                     new RealtimeEvent("AGENT_RUN_UPDATED", Map.of("runId", runId, "status", "FAILED", "error", errorMessage))
             );
         }
+    }
+
+    private String buildPrompt(ChatMessage message, String agentKey) {
+        var prompt = new StringBuilder();
+        prompt.append("You are responding in a MicroFlow workspace channel.\n");
+        prompt.append("Agent identity: @").append(agentKey).append("\n");
+        prompt.append("Workspace id: ").append(message.workspaceId()).append("\n");
+        prompt.append("Channel id: ").append(message.channelId()).append("\n\n");
+        var knowledgeContext = knowledgeBaseService.buildContextBlock(
+                message.workspaceId(),
+                message.channelId(),
+                message.content()
+        );
+        if (!knowledgeContext.isBlank()) {
+            prompt.append(knowledgeContext).append("\n\n");
+        }
+        prompt.append("User request:\n");
+        prompt.append(message.content()).append("\n\n");
+        prompt.append("Response rules:\n");
+        prompt.append("- Use uploaded workspace knowledge when it is relevant.\n");
+        prompt.append("- Cite workspace sources inline as [kb:documentId] when you rely on them.\n");
+        prompt.append("- Keep the answer actionable for the shared team thread.");
+        return prompt.toString();
     }
 }

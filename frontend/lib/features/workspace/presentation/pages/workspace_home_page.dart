@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../app/router.dart';
@@ -11,9 +12,12 @@ import '../../../../shared/widgets/language_switcher.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/theme_mode_switcher.dart';
 import '../../../agents/domain/entities/agent_descriptor.dart';
+import '../../../agents/domain/entities/agent_run.dart';
 import '../../../agents/presentation/widgets/agent_panel.dart';
 import '../../../auth/presentation/providers/auth_session_controller.dart';
 import '../../../chat/domain/entities/chat_message.dart';
+import '../../domain/entities/knowledge_document.dart';
+import '../../domain/entities/workspace_member.dart';
 import '../../domain/entities/workspace_conversation.dart';
 import '../../../chat/presentation/state/chat_connection_status.dart';
 import '../../../chat/presentation/widgets/chat_panel.dart';
@@ -46,20 +50,247 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
     ).pushNamedAndRemoveUntil(AppRoutes.signIn, (route) => false);
   }
 
+  Future<void> _openAgentSheet({
+    required List<AgentDescriptor> agents,
+    required List<AgentRun> runs,
+  }) async {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.92,
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
+              ),
+              border: Border.all(color: theme.dividerColor),
+            ),
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 12, 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.agents,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: MaterialLocalizations.of(
+                          sheetContext,
+                        ).closeButtonTooltip,
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: theme.dividerColor),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: AgentPanel(
+                      agents: agents,
+                      runs: runs,
+                      compact: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _promptCreateWorkspace() async {
+    final controller = TextEditingController();
+    final createdName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        return AlertDialog(
+          title: const Text('New workspace'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Workspace name',
+              hintText: 'Platform Ops',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+              ),
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || createdName == null || createdName.trim().isEmpty) {
+      return;
+    }
+    try {
+      await ref
+          .read(workspaceShellControllerProvider.notifier)
+          .createWorkspace(createdName);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  Future<void> _openKnowledgeSheet(
+    WorkspaceShellState shell, {
+    String? initialDocumentId,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Consumer(
+          builder: (context, ref, _) {
+            final latestShell =
+                ref.watch(workspaceShellControllerProvider).valueOrNull ??
+                shell;
+            final theme = Theme.of(sheetContext);
+            return FractionallySizedBox(
+              heightFactor: 0.92,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(28),
+                  ),
+                  border: Border.all(color: theme.dividerColor),
+                ),
+                child: _KnowledgeSheet(
+                  shell: latestShell,
+                  initialDocumentId: initialDocumentId,
+                  onRefresh: () {
+                    return ref
+                        .read(workspaceShellControllerProvider.notifier)
+                        .refreshKnowledgeDocuments();
+                  },
+                  onUpload: (targetChannelId) async {
+                    final result = await FilePicker.platform.pickFiles(
+                      withData: true,
+                    );
+                    if (result == null ||
+                        result.files.isEmpty ||
+                        result.files.first.bytes == null) {
+                      return;
+                    }
+                    await ref
+                        .read(workspaceShellControllerProvider.notifier)
+                        .uploadKnowledgeDocument(
+                          fileName: result.files.first.name,
+                          bytes: result.files.first.bytes!,
+                          channelId: targetChannelId,
+                          inheritSelectedConversation:
+                              targetChannelId != null &&
+                              targetChannelId.isNotEmpty,
+                        );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _promptAddMember() async {
+    final controller = TextEditingController();
+    final email = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Add workspace member'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'User email',
+              hintText: 'teammate@microflow.local',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || email == null || email.trim().isEmpty) {
+      return;
+    }
+    try {
+      await ref
+          .read(workspaceShellControllerProvider.notifier)
+          .addMemberByEmail(email);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final shellAsync = ref.watch(workspaceShellControllerProvider);
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final isWide = width >= 1100;
-    final isCompactMobile = !isWide && width < 640;
-    final isMobileChatTab = !isWide && _mobileTabIndex == 0;
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final isDesktop = width >= 1280;
+    final isTablet = width >= 820 && !isDesktop;
+    final isPhone = !isDesktop && !isTablet;
+    final isCompactPhone = isPhone && width < 640;
+    final isPhoneChatTab = isPhone && _mobileTabIndex == 0;
     final bodyPadding = EdgeInsets.fromLTRB(
-      isMobileChatTab ? 8 : (isCompactMobile ? 14 : 18),
-      isMobileChatTab ? 6 : (isCompactMobile ? 10 : 14),
-      isMobileChatTab ? 8 : (isCompactMobile ? 14 : 18),
-      isMobileChatTab ? 6 : (isCompactMobile ? 12 : 16),
+      isPhoneChatTab ? 8 : (isCompactPhone ? 14 : 18),
+      isPhoneChatTab ? 6 : (isCompactPhone ? 10 : 14),
+      isPhoneChatTab ? 8 : (isCompactPhone ? 14 : 18),
+      isPhoneChatTab ? 6 : (isCompactPhone ? 12 : 16),
     );
     final appBarStatus = StatusBadge(
       label: _connectionLabel(l10n, shellAsync.valueOrNull?.connectionStatus),
@@ -72,16 +303,23 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
       l10n,
       shellAsync.valueOrNull?.connectionStatus,
     );
+    final canManageMembers =
+        shellAsync.valueOrNull?.workspaceMembers.any(
+          (member) =>
+              member.userId == shellAsync.valueOrNull?.currentUserId &&
+              member.role == 'OWNER',
+        ) ??
+        false;
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: isCompactMobile ? 64 : 72,
-        titleSpacing: isCompactMobile ? 12 : 16,
+        toolbarHeight: isCompactPhone ? 64 : 72,
+        titleSpacing: isCompactPhone ? 12 : 16,
         title: Row(
           children: [
             Container(
-              width: isCompactMobile ? 34 : 38,
-              height: isCompactMobile ? 34 : 38,
+              width: isCompactPhone ? 34 : 38,
+              height: isCompactPhone ? 34 : 38,
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(14),
@@ -96,7 +334,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                 ),
               ),
             ),
-            SizedBox(width: isCompactMobile ? 10 : 12),
+            SizedBox(width: isCompactPhone ? 10 : 12),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -111,11 +349,13 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     ),
                   ),
                   Text(
-                    isWide ? l10n.workspaceHub : mobileStatusLabel,
+                    isDesktop || isTablet
+                        ? l10n.workspaceHub
+                        : mobileStatusLabel,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: isWide
+                      color: isDesktop || isTablet
                           ? theme.colorScheme.onSurface.withValues(alpha: 0.62)
                           : mobileStatusColor,
                       fontWeight: FontWeight.w700,
@@ -127,6 +367,73 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           ],
         ),
         actions: [
+          if ((shellAsync.valueOrNull?.workspaces.length ?? 0) > 1)
+            PopupMenuButton<String>(
+              tooltip: 'Switch workspace',
+              onSelected: (workspaceId) {
+                ref
+                    .read(workspaceShellControllerProvider.notifier)
+                    .selectWorkspace(workspaceId);
+              },
+              itemBuilder: (context) {
+                final shell = shellAsync.valueOrNull!;
+                return shell.workspaces
+                    .map(
+                      (workspace) => PopupMenuItem<String>(
+                        value: workspace.id,
+                        child: Row(
+                          children: [
+                            Icon(
+                              workspace.id == shell.workspaceId
+                                  ? Icons.check_circle_rounded
+                                  : Icons.workspaces_outline,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(child: Text(workspace.name)),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(growable: false);
+              },
+              icon: const Icon(Icons.workspaces_outline),
+            ),
+          IconButton(
+            tooltip: 'New workspace',
+            onPressed: _promptCreateWorkspace,
+            icon: const Icon(Icons.add_business_rounded),
+          ),
+          IconButton(
+            tooltip: 'Knowledge',
+            onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
+                ? null
+                : () => _openKnowledgeSheet(shellAsync.valueOrNull!),
+            icon: const Icon(Icons.library_books_rounded),
+          ),
+          IconButton(
+            tooltip: 'Add member',
+            onPressed:
+                (shellAsync.valueOrNull?.workspaceId.isEmpty ?? true) ||
+                    !canManageMembers
+                ? null
+                : _promptAddMember,
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+          ),
+          if (isTablet)
+            IconButton(
+              tooltip: l10n.agents,
+              onPressed: shellAsync.valueOrNull == null
+                  ? null
+                  : () {
+                      final shell = shellAsync.valueOrNull!;
+                      _openAgentSheet(
+                        agents: shell.agents,
+                        runs: shell.agentRuns,
+                      );
+                    },
+              icon: const Icon(Icons.smart_toy_rounded),
+            ),
           IconButton(
             tooltip: Localizations.localeOf(context).languageCode == 'zh'
                 ? 'Agent 诊断'
@@ -141,13 +448,13 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   },
             icon: const Icon(Icons.health_and_safety_rounded),
           ),
-          if (isWide) ...[
+          if (isDesktop || isTablet) ...[
             const ThemeModeSwitcher(),
             const SizedBox(width: 8),
             const LanguageSwitcher(),
             const SizedBox(width: 8),
           ],
-          if (isWide)
+          if (isDesktop || isTablet)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Center(child: appBarStatus),
@@ -157,7 +464,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
             onPressed: _signOut,
             icon: const Icon(Icons.logout_rounded),
           ),
-          if (!isWide) ...[
+          if (isPhone) ...[
             const SizedBox(width: 4),
             PopupMenuButton<int>(
               tooltip: l10n.language,
@@ -229,7 +536,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   l10n: l10n,
                   currentUserId: shell.currentUserId,
                   currentUserLabel: shell.currentUserLabel,
-                  conversations: shell.conversations,
+                  members: shell.workspaceMembers,
                 );
                 final recentInteractions = _buildRecentInteractions(
                   l10n: l10n,
@@ -248,7 +555,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     shell.workspaceId.isEmpty && conversations.isEmpty;
                 final needsConversationSetup =
                     !isWorkspaceBootstrap && conversations.isEmpty;
-                final desktopSidebarWidth = width >= 1440 ? 320.0 : 300.0;
+                final sidebarWidth = width >= 1440 ? 320.0 : 300.0;
                 final desktopAgentWidth = width >= 1440 ? 300.0 : 272.0;
 
                 final chatPanel = ChatPanel(
@@ -287,6 +594,10 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   messages: shell.messages,
                   currentUserId: shell.currentUserId,
                   currentUserLabel: shell.currentUserLabel,
+                  knowledgeDocuments: shell.knowledgeDocuments,
+                  onKnowledgeCitationTap: (documentId) {
+                    _openKnowledgeSheet(shell, initialDocumentId: documentId);
+                  },
                   participants: _buildConversationParticipants(
                     l10n: l10n,
                     currentUserId: shell.currentUserId,
@@ -315,12 +626,14 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     l10n,
                     shell.selectedCollaborationStatus,
                   ),
+                  collaborationSnapshot: shell.selectedCollaborationStatus,
+                  collaborationRuns: shell.selectedCollaborationRuns,
                   onCollaborationModeChanged: (enabled) {
                     ref
                         .read(workspaceShellControllerProvider.notifier)
                         .setCollaborationModeForSelectedConversation(enabled);
                   },
-                  compact: isCompactMobile,
+                  compact: isCompactPhone,
                   isSendingMessage: shell.isSendingMessage,
                   messageError: shell.messageError,
                   onSend: (value) {
@@ -332,7 +645,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
 
                 if (isWorkspaceBootstrap) {
                   return _WorkspaceSetupPanel(
-                    compact: !isWide,
+                    compact: isPhone,
                     title: shell.workspaceName,
                     eyebrow: l10n.workspaceHub,
                     description: l10n.workspaceDescription,
@@ -341,8 +654,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     secondaryStatValue: '$enabledAgents',
                     secondaryStatLabel: l10n.availableAgents,
                     note: l10n.privateConversationPreview,
-                    primaryActionLabel: !isWide ? l10n.agents : null,
-                    onPrimaryAction: !isWide
+                    primaryActionLabel: isPhone ? l10n.agents : null,
+                    onPrimaryAction: isPhone
                         ? () {
                             setState(() {
                               _mobileTabIndex = 2;
@@ -357,7 +670,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                 }
 
                 final setupPanel = _WorkspaceSetupPanel(
-                  compact: !isWide,
+                  compact: isPhone,
                   title: l10n.noMessagesTitle,
                   eyebrow: shell.workspaceName,
                   description: l10n.noMessagesDescription,
@@ -366,8 +679,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   secondaryStatValue: '$enabledAgents',
                   secondaryStatLabel: l10n.availableAgents,
                   note: l10n.agentConversationHint,
-                  primaryActionLabel: !isWide ? l10n.collaboration : null,
-                  onPrimaryAction: !isWide
+                  primaryActionLabel: isPhone ? l10n.collaboration : null,
+                  onPrimaryAction: isPhone
                       ? () {
                           setState(() {
                             _mobileTabIndex = 1;
@@ -375,8 +688,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                         }
                       : null,
                   primaryActionIcon: Icons.grid_view_rounded,
-                  secondaryActionLabel: !isWide ? l10n.agents : null,
-                  onSecondaryAction: !isWide
+                  secondaryActionLabel: isPhone ? l10n.agents : null,
+                  onSecondaryAction: isPhone
                       ? () {
                           setState(() {
                             _mobileTabIndex = 2;
@@ -386,7 +699,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   secondaryActionIcon: Icons.smart_toy_rounded,
                 );
 
-                return isWide
+                return isDesktop
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -418,7 +731,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 SizedBox(
-                                  width: desktopSidebarWidth,
+                                  width: sidebarWidth,
                                   child: _ScrollablePanel(
                                     child: WorkspacePanel(
                                       workspaceName: shell.workspaceName,
@@ -464,6 +777,73 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                           ),
                         ],
                       )
+                    : isTablet
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _DesktopWorkspaceLead(
+                            workspaceName: shell.workspaceName,
+                            selectedConversationTitle:
+                                shell.selectedConversation.title,
+                            selectedConversationLabel: _conversationLabel(
+                              l10n,
+                              shell.selectedConversation,
+                            ),
+                            statusLabel: _conversationStatusLabel(
+                              l10n,
+                              shell.selectedConversation,
+                            ),
+                            statusColor: _conversationStatusColor(
+                              shell.selectedConversation,
+                            ),
+                            conversationCount: conversations.length,
+                            unreadCount: unreadTotal,
+                            agentCount: enabledAgents,
+                            conversationsLabel: l10n.conversations,
+                            unreadLabel: l10n.unreadLabel,
+                            agentsLabel: l10n.availableAgents,
+                          ),
+                          const SizedBox(height: 12),
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SizedBox(
+                                  width: sidebarWidth,
+                                  child: _ScrollablePanel(
+                                    child: WorkspacePanel(
+                                      workspaceName: shell.workspaceName,
+                                      description: l10n.workspaceDescription,
+                                      channels: _filterConversationSummaries(
+                                        shell.conversations,
+                                        WorkspaceConversationKind.channel,
+                                      ),
+                                      conversations: conversations,
+                                      members: members,
+                                      recentInteractions: recentInteractions,
+                                      selectedConversationId:
+                                          shell.selectedConversationId,
+                                      compact: false,
+                                      onOpenConversation: (conversation) {
+                                        _openConversation(
+                                          ref: ref,
+                                          conversation: conversation,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: needsConversationSetup
+                                      ? setupPanel
+                                      : chatPanel,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -495,7 +875,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                                         _openConversation(
                                           ref: ref,
                                           conversation: conversation,
-                                          onChannelOpened: () {
+                                          onConversationOpened: () {
                                             setState(() {
                                               _mobileTabIndex = 0;
                                             });
@@ -532,7 +912,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           ),
         ),
       ),
-      bottomNavigationBar: !isWide
+      bottomNavigationBar: isPhone && !keyboardVisible
           ? _MobileBottomNav(
               currentIndex: _mobileTabIndex,
               onSelected: (index) {
@@ -563,7 +943,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
 Future<void> _openConversation({
   required WidgetRef ref,
   required WorkspaceConversationSummary conversation,
-  VoidCallback? onChannelOpened,
+  VoidCallback? onConversationOpened,
 }) async {
   await ref
       .read(workspaceShellControllerProvider.notifier)
@@ -573,9 +953,7 @@ Future<void> _openConversation({
         kind: _toSelectedConversationKind(conversation.kind),
         isAvailable: conversation.isAvailable,
       );
-  if (conversation.kind == WorkspaceConversationKind.channel) {
-    onChannelOpened?.call();
-  }
+  onConversationOpened?.call();
 }
 
 List<WorkspaceConversationSummary> _mapConversationSummaries(
@@ -647,37 +1025,39 @@ List<WorkspaceMemberSummary> _buildWorkspaceMembers({
   required AppLocalizations l10n,
   required String currentUserId,
   required String currentUserLabel,
-  required List<WorkspaceConversation> conversations,
+  required List<WorkspaceMember> members,
 }) {
-  final members = <WorkspaceMemberSummary>[
-    WorkspaceMemberSummary(
-      id: currentUserId,
-      displayName: currentUserLabel,
-      subtitle: l10n.online,
-      accent: const Color(0xFF3D7EA6),
-      isCurrentUser: true,
-    ),
-  ];
-  final seen = <String>{currentUserId};
-
-  for (final conversation in conversations) {
-    if (_mapConversationKind(conversation.kind) !=
-            WorkspaceConversationKind.directMessage ||
-        !seen.add(conversation.id)) {
-      continue;
-    }
-    members.add(
+  if (members.isEmpty) {
+    return [
       WorkspaceMemberSummary(
-        id: conversation.id,
-        displayName: conversation.title,
+        id: currentUserId,
+        displayName: currentUserLabel,
         subtitle: l10n.online,
-        accent: const Color(0xFF52796F),
-        isCurrentUser: false,
+        accent: const Color(0xFF3D7EA6),
+        isCurrentUser: true,
       ),
-    );
+    ];
   }
 
-  return members;
+  return members
+      .map(
+        (member) => WorkspaceMemberSummary(
+          id: member.userId,
+          displayName: member.displayName,
+          subtitle: member.role == 'OWNER'
+              ? 'Owner'
+              : member.email.isEmpty
+              ? l10n.online
+              : member.email,
+          accent: member.userId == currentUserId
+              ? const Color(0xFF3D7EA6)
+              : member.role == 'OWNER'
+              ? const Color(0xFF1F8A5C)
+              : const Color(0xFF52796F),
+          isCurrentUser: member.userId == currentUserId,
+        ),
+      )
+      .toList(growable: false);
 }
 
 List<WorkspaceRecentInteractionSummary> _buildRecentInteractions({
@@ -1001,6 +1381,449 @@ IconData _emptyConversationIcon(
     WorkspaceSelectedConversationKind.directMessage => Icons.person_rounded,
     WorkspaceSelectedConversationKind.agentThread => Icons.smart_toy_rounded,
   };
+}
+
+enum _KnowledgeUploadTarget { workspace, currentConversation }
+
+enum _KnowledgeScopeFilter { all, currentConversation, workspaceOnly }
+
+class _KnowledgeSheet extends StatefulWidget {
+  const _KnowledgeSheet({
+    required this.shell,
+    this.initialDocumentId,
+    required this.onRefresh,
+    required this.onUpload,
+  });
+
+  final WorkspaceShellState shell;
+  final String? initialDocumentId;
+  final Future<void> Function() onRefresh;
+  final Future<void> Function(String? channelId) onUpload;
+
+  @override
+  State<_KnowledgeSheet> createState() => _KnowledgeSheetState();
+}
+
+class _KnowledgeSheetState extends State<_KnowledgeSheet> {
+  String _query = '';
+  late _KnowledgeUploadTarget _uploadTarget;
+  _KnowledgeScopeFilter _scopeFilter = _KnowledgeScopeFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    _uploadTarget = widget.shell.selectedChannelIdOrNull == null
+        ? _KnowledgeUploadTarget.workspace
+        : _KnowledgeUploadTarget.currentConversation;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalizedQuery = _query.trim().toLowerCase();
+    final activeChannelId = widget.shell.selectedChannelIdOrNull;
+    final hasChannelScopedTarget = activeChannelId != null;
+    final currentConversationLabel = widget.shell.selectedConversation.title;
+    KnowledgeDocument? highlightedDocument;
+    final remainingDocuments = <KnowledgeDocument>[];
+
+    for (final document in widget.shell.knowledgeDocuments) {
+      final matchesScope = switch (_scopeFilter) {
+        _KnowledgeScopeFilter.all => true,
+        _KnowledgeScopeFilter.currentConversation =>
+          activeChannelId != null && document.channelId == activeChannelId,
+        _KnowledgeScopeFilter.workspaceOnly =>
+          document.channelId == null || document.channelId!.isEmpty,
+      };
+      if (!matchesScope) {
+        continue;
+      }
+      final matchesQuery =
+          normalizedQuery.isEmpty ||
+          document.fileName.toLowerCase().contains(normalizedQuery) ||
+          document.summary.toLowerCase().contains(normalizedQuery) ||
+          document.contentType.toLowerCase().contains(normalizedQuery);
+      if (!matchesQuery) {
+        continue;
+      }
+      if (document.id == widget.initialDocumentId) {
+        highlightedDocument = document;
+        continue;
+      }
+      remainingDocuments.add(document);
+    }
+
+    final filteredDocuments = <KnowledgeDocument>[...remainingDocuments];
+    if (highlightedDocument != null) {
+      filteredDocuments.insert(0, highlightedDocument);
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 12, 12, 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Knowledge base',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.shell.workspaceName,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.64,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Refresh',
+                onPressed: widget.onRefresh,
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+              IconButton(
+                tooltip: 'Upload file',
+                onPressed: widget.shell.isUploadingKnowledgeDocument
+                    ? null
+                    : () => widget.onUpload(
+                        _uploadTarget ==
+                                _KnowledgeUploadTarget.currentConversation
+                            ? activeChannelId
+                            : null,
+                      ),
+                icon: widget.shell.isUploadingKnowledgeDocument
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.upload_file_rounded),
+              ),
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+        ),
+        Divider(height: 1, color: theme.dividerColor),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: theme.dividerColor),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Upload target',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Workspace library'),
+                      selected:
+                          _uploadTarget == _KnowledgeUploadTarget.workspace,
+                      onSelected: (_) {
+                        setState(
+                          () =>
+                              _uploadTarget = _KnowledgeUploadTarget.workspace,
+                        );
+                      },
+                    ),
+                    if (hasChannelScopedTarget)
+                      ChoiceChip(
+                        label: Text(currentConversationLabel),
+                        selected:
+                            _uploadTarget ==
+                            _KnowledgeUploadTarget.currentConversation,
+                        onSelected: (_) {
+                          setState(
+                            () => _uploadTarget =
+                                _KnowledgeUploadTarget.currentConversation,
+                          );
+                        },
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _uploadTarget == _KnowledgeUploadTarget.currentConversation &&
+                          hasChannelScopedTarget
+                      ? 'New files will be attached to $currentConversationLabel and prioritized there during retrieval.'
+                      : 'New files will be available as workspace-wide knowledge across conversations.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: const Text('All documents'),
+                    selected: _scopeFilter == _KnowledgeScopeFilter.all,
+                    onSelected: (_) {
+                      setState(() => _scopeFilter = _KnowledgeScopeFilter.all);
+                    },
+                  ),
+                  if (hasChannelScopedTarget)
+                    ChoiceChip(
+                      label: Text(currentConversationLabel),
+                      selected:
+                          _scopeFilter ==
+                          _KnowledgeScopeFilter.currentConversation,
+                      onSelected: (_) {
+                        setState(
+                          () => _scopeFilter =
+                              _KnowledgeScopeFilter.currentConversation,
+                        );
+                      },
+                    ),
+                  ChoiceChip(
+                    label: const Text('Workspace-wide'),
+                    selected:
+                        _scopeFilter == _KnowledgeScopeFilter.workspaceOnly,
+                    onSelected: (_) {
+                      setState(
+                        () =>
+                            _scopeFilter = _KnowledgeScopeFilter.workspaceOnly,
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                onChanged: (value) => setState(() => _query = value),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search_rounded),
+                  hintText: 'Search documents',
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (widget.shell.knowledgeError != null &&
+            widget.shell.knowledgeError!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8E7E5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(widget.shell.knowledgeError!),
+            ),
+          ),
+        if (highlightedDocument != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(
+                  alpha: theme.brightness == Brightness.dark ? 0.16 : 0.08,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.link_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Referenced source highlighted from chat citation.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        Expanded(
+          child: filteredDocuments.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      widget.shell.knowledgeDocuments.isEmpty
+                          ? 'Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.'
+                          : 'No knowledge documents match the current search.',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.68,
+                        ),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredDocuments.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final document = filteredDocuments[index];
+                    return _KnowledgeDocumentTile(
+                      document: document,
+                      scopeLabel: _knowledgeScopeLabel(widget.shell, document),
+                      highlighted: document.id == widget.initialDocumentId,
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _KnowledgeDocumentTile extends StatelessWidget {
+  const _KnowledgeDocumentTile({
+    required this.document,
+    required this.scopeLabel,
+    this.highlighted = false,
+  });
+
+  final KnowledgeDocument document;
+  final String scopeLabel;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final createdAt = DateTime.tryParse(document.createdAt)?.toLocal();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: highlighted
+            ? theme.colorScheme.primary.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.14 : 0.08,
+              )
+            : theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: highlighted
+              ? theme.colorScheme.primary.withValues(alpha: 0.28)
+              : theme.dividerColor,
+          width: highlighted ? 1.4 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  document.fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              StatusBadge(
+                label: '${document.snippetCount} snippets',
+                color: const Color(0xFF3D7EA6),
+              ),
+            ],
+          ),
+          if (highlighted) ...[
+            const SizedBox(height: 8),
+            AppPill(
+              label: 'Referenced source',
+              icon: Icons.bookmark_added_rounded,
+              backgroundColor: theme.colorScheme.primary.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.2 : 0.1,
+              ),
+              borderColor: theme.colorScheme.primary.withValues(alpha: 0.18),
+              labelColor: theme.colorScheme.primary,
+              iconColor: theme.colorScheme.primary,
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            document.summary.isEmpty ? document.contentType : document.summary,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              AppPill(
+                label: scopeLabel,
+                icon: document.channelId == null || document.channelId!.isEmpty
+                    ? Icons.public_rounded
+                    : Icons.forum_rounded,
+              ),
+              AppPill(label: _formatBytes(document.sizeBytes)),
+              AppPill(label: document.status),
+              if (createdAt != null)
+                AppPill(
+                  label:
+                      '${createdAt.year}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')}',
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ScrollablePanel extends StatelessWidget {
@@ -1468,4 +2291,35 @@ Color _connectionColor(ChatConnectionStatus? status) {
     ChatConnectionStatus.error => const Color(0xFFBA3B2F),
     _ => const Color(0xFF6C7A89),
   };
+}
+
+String _formatBytes(int bytes) {
+  if (bytes < 1024) {
+    return '$bytes B';
+  }
+  if (bytes < 1024 * 1024) {
+    return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  }
+  return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
+
+String _knowledgeScopeLabel(
+  WorkspaceShellState shell,
+  KnowledgeDocument document,
+) {
+  final channelId = document.channelId;
+  if (channelId == null || channelId.isEmpty) {
+    return 'Workspace';
+  }
+  for (final conversation in shell.conversations) {
+    if (conversation.id == channelId) {
+      return conversation.title;
+    }
+  }
+  for (final channel in shell.channels) {
+    if (channel.id == channelId) {
+      return channel.name;
+    }
+  }
+  return 'Scoped';
 }

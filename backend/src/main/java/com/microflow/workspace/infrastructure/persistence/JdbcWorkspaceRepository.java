@@ -4,6 +4,7 @@ import com.microflow.agent.config.DiscoveredAgentBinding;
 import com.microflow.workspace.domain.model.ChannelSummary;
 import com.microflow.workspace.domain.model.ConversationKind;
 import com.microflow.workspace.domain.model.ConversationSummary;
+import com.microflow.workspace.domain.model.WorkspaceMemberSummary;
 import com.microflow.workspace.domain.model.WorkspaceSummary;
 import com.microflow.chat.infrastructure.encryption.CipherService;
 import com.microflow.common.crypto.EncryptedPayload;
@@ -23,6 +24,7 @@ public class JdbcWorkspaceRepository {
 
     private static final RowMapper<WorkspaceSummary> WORKSPACE_MAPPER = JdbcWorkspaceRepository::mapWorkspace;
     private static final RowMapper<ChannelSummary> CHANNEL_MAPPER = JdbcWorkspaceRepository::mapChannel;
+    private static final RowMapper<WorkspaceMemberSummary> MEMBER_MAPPER = JdbcWorkspaceRepository::mapMember;
 
     private final JdbcTemplate jdbcTemplate;
     private final CipherService cipherService;
@@ -39,18 +41,27 @@ public class JdbcWorkspaceRepository {
             String ownerDisplayName,
             List<DiscoveredAgentBinding> discoveredAgents
     ) {
+        return createWorkspace(ownerUserId, ownerDisplayName + "'s Workspace", discoveredAgents);
+    }
+
+    public String createWorkspace(
+            String ownerUserId,
+            String workspaceName,
+            List<DiscoveredAgentBinding> discoveredAgents
+    ) {
         var workspaceId = "ws_" + UUID.randomUUID();
         var now = Instant.now(clock).toString();
         jdbcTemplate.update("""
                 INSERT INTO workspaces(id, name, owner_user_id, created_at)
                 VALUES (?, ?, ?, ?)
-                """, workspaceId, ownerDisplayName + "'s Workspace", ownerUserId, now);
+                """, workspaceId, workspaceName, ownerUserId, now);
         jdbcTemplate.update("""
                 INSERT INTO workspace_members(workspace_id, user_id, role, joined_at)
                 VALUES (?, ?, 'OWNER', ?)
                 """, workspaceId, ownerUserId, now);
         createChannel(workspaceId, "general", now);
         createChannel(workspaceId, "build-and-release", now);
+        createChannel(workspaceId, "knowledge", now);
         createChannel(workspaceId, "agent-runs", now);
         syncConfiguredAgents(workspaceId, discoveredAgents);
         return workspaceId;
@@ -96,6 +107,16 @@ public class JdbcWorkspaceRepository {
                 """, WORKSPACE_MAPPER, userId);
     }
 
+    public java.util.Optional<WorkspaceSummary> findSummaryById(String workspaceId) {
+        return jdbcTemplate.query("""
+                SELECT w.id, w.name, COUNT(wm.user_id) AS member_count
+                FROM workspaces w
+                LEFT JOIN workspace_members wm ON wm.workspace_id = w.id
+                WHERE w.id = ?
+                GROUP BY w.id, w.name
+                """, WORKSPACE_MAPPER, workspaceId).stream().findFirst();
+    }
+
     public List<ChannelSummary> findChannels(String workspaceId, String userId) {
         return jdbcTemplate.query("""
                 SELECT c.id, c.name, 0 AS unread_count
@@ -104,6 +125,19 @@ public class JdbcWorkspaceRepository {
                 WHERE c.workspace_id = ? AND wm.user_id = ? AND c.type = 'ROOM'
                 ORDER BY c.created_at ASC
                 """, CHANNEL_MAPPER, workspaceId, userId);
+    }
+
+    public List<WorkspaceMemberSummary> findMembers(String workspaceId, String userId) {
+        if (!isWorkspaceMember(workspaceId, userId)) {
+            return List.of();
+        }
+        return jdbcTemplate.query("""
+                SELECT u.id AS user_id, u.email, u.display_name, wm.role, wm.joined_at
+                FROM workspace_members wm
+                JOIN users u ON u.id = wm.user_id
+                WHERE wm.workspace_id = ?
+                ORDER BY CASE WHEN wm.role = 'OWNER' THEN 0 ELSE 1 END, u.display_name ASC
+                """, MEMBER_MAPPER, workspaceId);
     }
 
     public List<ConversationSummary> findConversations(String workspaceId, String userId) {
@@ -125,6 +159,15 @@ public class JdbcWorkspaceRepository {
                 SELECT COUNT(1)
                 FROM workspace_members
                 WHERE workspace_id = ? AND user_id = ?
+                """, Integer.class, workspaceId, userId);
+        return count != null && count > 0;
+    }
+
+    public boolean isWorkspaceOwner(String workspaceId, String userId) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(1)
+                FROM workspace_members
+                WHERE workspace_id = ? AND user_id = ? AND role = 'OWNER'
                 """, Integer.class, workspaceId, userId);
         return count != null && count > 0;
     }
@@ -162,6 +205,28 @@ public class JdbcWorkspaceRepository {
                 FROM channels
                 WHERE id = ?
                 """, String.class, channelId);
+    }
+
+    public boolean isChannelInWorkspace(String workspaceId, String channelId) {
+        Integer count = jdbcTemplate.queryForObject("""
+                SELECT COUNT(1)
+                FROM channels
+                WHERE workspace_id = ? AND id = ?
+                """, Integer.class, workspaceId, channelId);
+        return count != null && count > 0;
+    }
+
+    public String findChannelIdByWorkspaceAndName(String workspaceId, String channelName) {
+        return jdbcTemplate.query("""
+                SELECT id
+                FROM channels
+                WHERE workspace_id = ? AND name = ?
+                ORDER BY created_at ASC
+                LIMIT 1
+                """, (rs, rowNum) -> rs.getString("id"), workspaceId, channelName)
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
     public void syncConfiguredAgents(String workspaceId, List<DiscoveredAgentBinding> discoveredAgents) {
@@ -429,6 +494,16 @@ public class JdbcWorkspaceRepository {
                 rs.getString("id"),
                 rs.getString("name"),
                 rs.getInt("unread_count")
+        );
+    }
+
+    private static WorkspaceMemberSummary mapMember(ResultSet rs, int rowNum) throws SQLException {
+        return new WorkspaceMemberSummary(
+                rs.getString("user_id"),
+                rs.getString("email"),
+                rs.getString("display_name"),
+                rs.getString("role"),
+                rs.getString("joined_at")
         );
     }
 }
