@@ -327,4 +327,195 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nativeImagePreflightChecks => 'Native image preflight checks';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get newWorkspaceTitle => 'New workspace';
+
+  @override
+  String get workspaceNameLabel => 'Workspace name';
+
+  @override
+  String get workspaceNameHint => 'Platform Ops';
+
+  @override
+  String get addWorkspaceMemberTitle => 'Add workspace member';
+
+  @override
+  String get userEmailLabel => 'User email';
+
+  @override
+  String get userEmailHint => 'teammate@microflow.local';
+
+  @override
+  String get switchWorkspaceTooltip => 'Switch workspace';
+
+  @override
+  String get knowledgeTooltip => 'Knowledge';
+
+  @override
+  String get addMemberTooltip => 'Add member';
+
+  @override
+  String get agentDiagnosticsTooltip => 'Agent diagnostics';
+
+  @override
+  String get ownerRole => 'Owner';
+
+  @override
+  String get knowledgeBaseTitle => 'Knowledge base';
+
+  @override
+  String get refreshTooltip => 'Refresh';
+
+  @override
+  String get uploadFileTooltip => 'Upload file';
+
+  @override
+  String get uploadTargetLabel => 'Upload target';
+
+  @override
+  String get workspaceLibrary => 'Workspace library';
+
+  @override
+  String uploadTargetConversationDescription(Object conversation) {
+    return 'New files will be attached to $conversation and prioritized there during retrieval.';
+  }
+
+  @override
+  String get uploadTargetWorkspaceDescription => 'New files will be available as workspace-wide knowledge across conversations.';
+
+  @override
+  String get allDocuments => 'All documents';
+
+  @override
+  String get workspaceWide => 'Workspace-wide';
+
+  @override
+  String get searchDocumentsHint => 'Search documents';
+
+  @override
+  String get referencedSourceNotice => 'Referenced source highlighted from chat citation.';
+
+  @override
+  String get knowledgeEmptyDescription => 'Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.';
+
+  @override
+  String get knowledgeEmptySearchDescription => 'No knowledge documents match the current search.';
+
+  @override
+  String snippetsCount(int count) {
+    return '$count snippets';
+  }
+
+  @override
+  String get referencedSource => 'Referenced source';
+
+  @override
+  String get teamRunsAvailable => 'Persisted team runs are available for this conversation.';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get recentRuns => 'Recent runs';
+
+  @override
+  String get runHistory => 'Run history';
+
+  @override
+  String get noRunsMatchFilters => 'No runs match current filters.';
+
+  @override
+  String get filterRuns => 'Filter runs';
+
+  @override
+  String get allRuns => 'All runs';
+
+  @override
+  String get currentRun => 'Current run';
+
+  @override
+  String get filterByStatus => 'Filter by status';
+
+  @override
+  String get allStatuses => 'All statuses';
+
+  @override
+  String get stopped => 'Stopped';
+
+  @override
+  String get filterByAgent => 'Filter by agent';
+
+  @override
+  String get allAgents => 'All agents';
+
+  @override
+  String get live => 'Live';
+
+  @override
+  String eventsCount(int count) {
+    return '$count events';
+  }
+
+  @override
+  String roundsCount(int round, int total) {
+    return '$round of $total rounds';
+  }
+
+  @override
+  String reasonLabel(Object reason) {
+    return 'Reason: $reason';
+  }
+
+  @override
+  String get analyzeStage => 'Analyze';
+
+  @override
+  String get critiqueStage => 'Critique';
+
+  @override
+  String get synthesizeStage => 'Synthesize';
+
+  @override
+  String get deliverStage => 'Deliver';
+
+  @override
+  String collaborationStageInProgress(Object stage) {
+    return '$stage in progress';
+  }
+
+  @override
+  String collaborationStageCompleted(Object stage) {
+    return '$stage completed';
+  }
+
+  @override
+  String collaborationStageStopped(Object stage) {
+    return '$stage stopped';
+  }
+
+  @override
+  String collaborationStageFailed(Object stage) {
+    return '$stage failed';
+  }
+
+  @override
+  String collaborationStageStatus(Object stage, Object status) {
+    return '$stage $status';
+  }
+
+  @override
+  String get workspaceScopeLabel => 'Workspace';
+
+  @override
+  String get scopedScopeLabel => 'Scoped';
 }

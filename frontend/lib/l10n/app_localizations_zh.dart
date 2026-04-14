@@ -18,10 +18,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get theme => '主题';
 
   @override
-  String get lightMode => '亮色';
+  String get lightMode => '浅色';
 
   @override
-  String get darkMode => '暗色';
+  String get darkMode => '深色';
 
   @override
   String get english => '英文';
@@ -136,7 +136,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memberConversationHint => '1 对 1 团队会话';
 
   @override
-  String get agentConversationHint => '与 AI 助手的私有会话';
+  String get agentConversationHint => '与 AI 协作者的私有会话';
 
   @override
   String get privateConversationPreview => '私有会话入口已在界面中准备好，后端会话 API 是下一步。';
@@ -173,7 +173,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noRecentInteractions => '暂时还没有最近互动，团队消息和智能体回复会显示在这里。';
 
   @override
-  String get aiCoworker => 'AI 协作助手';
+  String get aiCoworker => 'AI 协作者';
 
   @override
   String get connected => '已连接';
@@ -327,4 +327,195 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nativeImagePreflightChecks => '原生镜像预检查';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get create => '创建';
+
+  @override
+  String get add => '添加';
+
+  @override
+  String get newWorkspaceTitle => '新建工作区';
+
+  @override
+  String get workspaceNameLabel => '工作区名称';
+
+  @override
+  String get workspaceNameHint => 'Platform Ops';
+
+  @override
+  String get addWorkspaceMemberTitle => '添加工作区成员';
+
+  @override
+  String get userEmailLabel => '用户邮箱';
+
+  @override
+  String get userEmailHint => 'teammate@microflow.local';
+
+  @override
+  String get switchWorkspaceTooltip => '切换工作区';
+
+  @override
+  String get knowledgeTooltip => '知识库';
+
+  @override
+  String get addMemberTooltip => '添加成员';
+
+  @override
+  String get agentDiagnosticsTooltip => '智能体诊断';
+
+  @override
+  String get ownerRole => '所有者';
+
+  @override
+  String get knowledgeBaseTitle => '知识库';
+
+  @override
+  String get refreshTooltip => '刷新';
+
+  @override
+  String get uploadFileTooltip => '上传文件';
+
+  @override
+  String get uploadTargetLabel => '上传目标';
+
+  @override
+  String get workspaceLibrary => '工作区知识库';
+
+  @override
+  String uploadTargetConversationDescription(Object conversation) {
+    return '新文件会绑定到 $conversation，检索时优先在该会话中使用。';
+  }
+
+  @override
+  String get uploadTargetWorkspaceDescription => '新文件会作为工作区级知识，在各会话间共享使用。';
+
+  @override
+  String get allDocuments => '全部文档';
+
+  @override
+  String get workspaceWide => '仅工作区级';
+
+  @override
+  String get searchDocumentsHint => '搜索文档';
+
+  @override
+  String get referencedSourceNotice => '已高亮显示聊天引用对应的知识来源。';
+
+  @override
+  String get knowledgeEmptyDescription => '上传文本、Markdown、JSON 或笔记，为智能体回复提供工作区知识支撑。';
+
+  @override
+  String get knowledgeEmptySearchDescription => '当前搜索条件下没有匹配的知识文档。';
+
+  @override
+  String snippetsCount(int count) {
+    return '$count 个片段';
+  }
+
+  @override
+  String get referencedSource => '已引用来源';
+
+  @override
+  String get teamRunsAvailable => '该会话存在已持久化的团队协作运行记录。';
+
+  @override
+  String get history => '历史';
+
+  @override
+  String get recentRuns => '最近运行';
+
+  @override
+  String get runHistory => '运行历史';
+
+  @override
+  String get noRunsMatchFilters => '当前筛选条件下没有匹配的运行记录。';
+
+  @override
+  String get filterRuns => '筛选运行';
+
+  @override
+  String get allRuns => '全部运行';
+
+  @override
+  String get currentRun => '当前运行';
+
+  @override
+  String get filterByStatus => '按状态筛选';
+
+  @override
+  String get allStatuses => '全部状态';
+
+  @override
+  String get stopped => '已停止';
+
+  @override
+  String get filterByAgent => '按智能体筛选';
+
+  @override
+  String get allAgents => '全部智能体';
+
+  @override
+  String get live => '进行中';
+
+  @override
+  String eventsCount(int count) {
+    return '$count 个事件';
+  }
+
+  @override
+  String roundsCount(int round, int total) {
+    return '第 $round / $total 轮';
+  }
+
+  @override
+  String reasonLabel(Object reason) {
+    return '原因：$reason';
+  }
+
+  @override
+  String get analyzeStage => '分析';
+
+  @override
+  String get critiqueStage => '评审';
+
+  @override
+  String get synthesizeStage => '整合';
+
+  @override
+  String get deliverStage => '交付';
+
+  @override
+  String collaborationStageInProgress(Object stage) {
+    return '$stage 进行中';
+  }
+
+  @override
+  String collaborationStageCompleted(Object stage) {
+    return '$stage 已完成';
+  }
+
+  @override
+  String collaborationStageStopped(Object stage) {
+    return '$stage 已停止';
+  }
+
+  @override
+  String collaborationStageFailed(Object stage) {
+    return '$stage 失败';
+  }
+
+  @override
+  String collaborationStageStatus(Object stage, Object status) {
+    return '$stage $status';
+  }
+
+  @override
+  String get workspaceScopeLabel => '工作区';
+
+  @override
+  String get scopedScopeLabel => '局部';
 }

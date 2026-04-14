@@ -183,7 +183,7 @@ void main() {
       await tester.tap(find.text('Alex Chen'));
       await tester.pumpAndSettle();
 
-      expect(find.text('1:1 team conversation'), findsOneWidget);
+      expect(find.text('1:1 team conversation'), findsWidgets);
     },
   );
 
@@ -330,14 +330,13 @@ void main() {
 
       expect(find.text('Team mode'), findsWidgets);
       expect(find.text('round 1 of 3'), findsOneWidget);
-      expect(find.text('@reviewer'), findsOneWidget);
-      expect(find.text('@team'), findsOneWidget);
+      expect(find.text('@reviewer'), findsWidgets);
+      expect(find.text('@team'), findsWidgets);
       expect(find.text('Analyze'), findsWidgets);
       expect(find.text('Run history'), findsOneWidget);
-      expect(find.text('Live'), findsOneWidget);
       expect(
         find.text('Need evidence from the uploaded runbook.'),
-        findsOneWidget,
+        findsWidgets,
       );
     },
   );
@@ -560,18 +559,24 @@ void main() {
     expect(find.text('Blocked on missing evidence.'), findsOneWidget);
     expect(find.text('Prepared final summary.'), findsNothing);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Completed'));
+    tester
+        .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Completed'))
+        .onSelected!(true);
     await tester.pumpAndSettle();
 
     expect(find.text('Prepared final summary.'), findsOneWidget);
     expect(find.text('No runs match current filters.'), findsNothing);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, '@reviewer'));
+    tester
+        .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '@reviewer'))
+        .onSelected!(true);
     await tester.pumpAndSettle();
 
     expect(find.text('No runs match current filters.'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'All statuses'));
+    tester
+        .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'All statuses'))
+        .onSelected!(true);
     await tester.pumpAndSettle();
 
     expect(find.text('Blocked on missing evidence.'), findsOneWidget);

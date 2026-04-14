@@ -3,8 +3,8 @@
   "appTitle": "MicroFlow",
   "language": "语言",
   "theme": "主题",
-  "lightMode": "亮色",
-  "darkMode": "暗色",
+  "lightMode": "浅色",
+  "darkMode": "深色",
   "english": "英文",
   "simplifiedChinese": "简体中文",
   "searchContacts": "搜索联系人",
@@ -70,7 +70,7 @@
   "agentThreads": "智能体会话",
   "previewLabel": "预览",
   "memberConversationHint": "1 对 1 团队会话",
-  "agentConversationHint": "与 AI 助手的私有会话",
+  "agentConversationHint": "与 AI 协作者的私有会话",
   "privateConversationPreview": "私有会话入口已在界面中准备好，后端会话 API 是下一步。",
   "localFirst": "本地优先",
   "sqlite": "SQLite",
@@ -95,7 +95,7 @@
   "recentActivityLabel": "最近动态",
   "recentInteractions": "最近互动",
   "noRecentInteractions": "暂时还没有最近互动，团队消息和智能体回复会显示在这里。",
-  "aiCoworker": "AI 协作助手",
+  "aiCoworker": "AI 协作者",
   "connected": "已连接",
   "connecting": "连接中",
   "disconnected": "已断开",
@@ -200,5 +200,122 @@
   },
   "collaborationStoppedStatus": "团队协作已停止。",
   "summarizeArchitectureChanges": "总结架构变更",
-  "nativeImagePreflightChecks": "原生镜像预检查"
+  "nativeImagePreflightChecks": "原生镜像预检查",
+  "cancel": "取消",
+  "create": "创建",
+  "add": "添加",
+  "newWorkspaceTitle": "新建工作区",
+  "workspaceNameLabel": "工作区名称",
+  "workspaceNameHint": "Platform Ops",
+  "addWorkspaceMemberTitle": "添加工作区成员",
+  "userEmailLabel": "用户邮箱",
+  "userEmailHint": "teammate@microflow.local",
+  "switchWorkspaceTooltip": "切换工作区",
+  "knowledgeTooltip": "知识库",
+  "addMemberTooltip": "添加成员",
+  "agentDiagnosticsTooltip": "智能体诊断",
+  "ownerRole": "所有者",
+  "knowledgeBaseTitle": "知识库",
+  "refreshTooltip": "刷新",
+  "uploadFileTooltip": "上传文件",
+  "uploadTargetLabel": "上传目标",
+  "workspaceLibrary": "工作区知识库",
+  "uploadTargetConversationDescription": "新文件会绑定到 {conversation}，检索时优先在该会话中使用。",
+  "@uploadTargetConversationDescription": {
+    "placeholders": {
+      "conversation": {}
+    }
+  },
+  "uploadTargetWorkspaceDescription": "新文件会作为工作区级知识，在各会话间共享使用。",
+  "allDocuments": "全部文档",
+  "workspaceWide": "仅工作区级",
+  "searchDocumentsHint": "搜索文档",
+  "referencedSourceNotice": "已高亮显示聊天引用对应的知识来源。",
+  "knowledgeEmptyDescription": "上传文本、Markdown、JSON 或笔记，为智能体回复提供工作区知识支撑。",
+  "knowledgeEmptySearchDescription": "当前搜索条件下没有匹配的知识文档。",
+  "snippetsCount": "{count} 个片段",
+  "@snippetsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referencedSource": "已引用来源",
+  "teamRunsAvailable": "该会话存在已持久化的团队协作运行记录。",
+  "history": "历史",
+  "recentRuns": "最近运行",
+  "runHistory": "运行历史",
+  "noRunsMatchFilters": "当前筛选条件下没有匹配的运行记录。",
+  "filterRuns": "筛选运行",
+  "allRuns": "全部运行",
+  "currentRun": "当前运行",
+  "filterByStatus": "按状态筛选",
+  "allStatuses": "全部状态",
+  "stopped": "已停止",
+  "filterByAgent": "按智能体筛选",
+  "allAgents": "全部智能体",
+  "live": "进行中",
+  "eventsCount": "{count} 个事件",
+  "@eventsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "roundsCount": "第 {round} / {total} 轮",
+  "@roundsCount": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonLabel": "原因：{reason}",
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
+  "analyzeStage": "分析",
+  "critiqueStage": "评审",
+  "synthesizeStage": "整合",
+  "deliverStage": "交付",
+  "collaborationStageInProgress": "{stage} 进行中",
+  "@collaborationStageInProgress": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageCompleted": "{stage} 已完成",
+  "@collaborationStageCompleted": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageStopped": "{stage} 已停止",
+  "@collaborationStageStopped": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageFailed": "{stage} 失败",
+  "@collaborationStageFailed": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageStatus": "{stage} {status}",
+  "@collaborationStageStatus": {
+    "placeholders": {
+      "stage": {},
+      "status": {}
+    }
+  },
+  "workspaceScopeLabel": "工作区",
+  "scopedScopeLabel": "局部"
 }

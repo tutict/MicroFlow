@@ -670,6 +670,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Native image preflight checks'**
   String get nativeImagePreflightChecks;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @newWorkspaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New workspace'**
+  String get newWorkspaceTitle;
+
+  /// No description provided for @workspaceNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace name'**
+  String get workspaceNameLabel;
+
+  /// No description provided for @workspaceNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform Ops'**
+  String get workspaceNameHint;
+
+  /// No description provided for @addWorkspaceMemberTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add workspace member'**
+  String get addWorkspaceMemberTitle;
+
+  /// No description provided for @userEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'User email'**
+  String get userEmailLabel;
+
+  /// No description provided for @userEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'teammate@microflow.local'**
+  String get userEmailHint;
+
+  /// No description provided for @switchWorkspaceTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch workspace'**
+  String get switchWorkspaceTooltip;
+
+  /// No description provided for @knowledgeTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge'**
+  String get knowledgeTooltip;
+
+  /// No description provided for @addMemberTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add member'**
+  String get addMemberTooltip;
+
+  /// No description provided for @agentDiagnosticsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent diagnostics'**
+  String get agentDiagnosticsTooltip;
+
+  /// No description provided for @ownerRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get ownerRole;
+
+  /// No description provided for @knowledgeBaseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge base'**
+  String get knowledgeBaseTitle;
+
+  /// No description provided for @refreshTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refreshTooltip;
+
+  /// No description provided for @uploadFileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload file'**
+  String get uploadFileTooltip;
+
+  /// No description provided for @uploadTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload target'**
+  String get uploadTargetLabel;
+
+  /// No description provided for @workspaceLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace library'**
+  String get workspaceLibrary;
+
+  /// No description provided for @uploadTargetConversationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'New files will be attached to {conversation} and prioritized there during retrieval.'**
+  String uploadTargetConversationDescription(Object conversation);
+
+  /// No description provided for @uploadTargetWorkspaceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'New files will be available as workspace-wide knowledge across conversations.'**
+  String get uploadTargetWorkspaceDescription;
+
+  /// No description provided for @allDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'All documents'**
+  String get allDocuments;
+
+  /// No description provided for @workspaceWide.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace-wide'**
+  String get workspaceWide;
+
+  /// No description provided for @searchDocumentsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search documents'**
+  String get searchDocumentsHint;
+
+  /// No description provided for @referencedSourceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Referenced source highlighted from chat citation.'**
+  String get referencedSourceNotice;
+
+  /// No description provided for @knowledgeEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.'**
+  String get knowledgeEmptyDescription;
+
+  /// No description provided for @knowledgeEmptySearchDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No knowledge documents match the current search.'**
+  String get knowledgeEmptySearchDescription;
+
+  /// No description provided for @snippetsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} snippets'**
+  String snippetsCount(int count);
+
+  /// No description provided for @referencedSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Referenced source'**
+  String get referencedSource;
+
+  /// No description provided for @teamRunsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Persisted team runs are available for this conversation.'**
+  String get teamRunsAvailable;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @recentRuns.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent runs'**
+  String get recentRuns;
+
+  /// No description provided for @runHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Run history'**
+  String get runHistory;
+
+  /// No description provided for @noRunsMatchFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No runs match current filters.'**
+  String get noRunsMatchFilters;
+
+  /// No description provided for @filterRuns.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter runs'**
+  String get filterRuns;
+
+  /// No description provided for @allRuns.
+  ///
+  /// In en, this message translates to:
+  /// **'All runs'**
+  String get allRuns;
+
+  /// No description provided for @currentRun.
+  ///
+  /// In en, this message translates to:
+  /// **'Current run'**
+  String get currentRun;
+
+  /// No description provided for @filterByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by status'**
+  String get filterByStatus;
+
+  /// No description provided for @allStatuses.
+  ///
+  /// In en, this message translates to:
+  /// **'All statuses'**
+  String get allStatuses;
+
+  /// No description provided for @stopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get stopped;
+
+  /// No description provided for @filterByAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by agent'**
+  String get filterByAgent;
+
+  /// No description provided for @allAgents.
+  ///
+  /// In en, this message translates to:
+  /// **'All agents'**
+  String get allAgents;
+
+  /// No description provided for @live.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get live;
+
+  /// No description provided for @eventsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} events'**
+  String eventsCount(int count);
+
+  /// No description provided for @roundsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{round} of {total} rounds'**
+  String roundsCount(int round, int total);
+
+  /// No description provided for @reasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason: {reason}'**
+  String reasonLabel(Object reason);
+
+  /// No description provided for @analyzeStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get analyzeStage;
+
+  /// No description provided for @critiqueStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Critique'**
+  String get critiqueStage;
+
+  /// No description provided for @synthesizeStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Synthesize'**
+  String get synthesizeStage;
+
+  /// No description provided for @deliverStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver'**
+  String get deliverStage;
+
+  /// No description provided for @collaborationStageInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{stage} in progress'**
+  String collaborationStageInProgress(Object stage);
+
+  /// No description provided for @collaborationStageCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{stage} completed'**
+  String collaborationStageCompleted(Object stage);
+
+  /// No description provided for @collaborationStageStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'{stage} stopped'**
+  String collaborationStageStopped(Object stage);
+
+  /// No description provided for @collaborationStageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{stage} failed'**
+  String collaborationStageFailed(Object stage);
+
+  /// No description provided for @collaborationStageStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{stage} {status}'**
+  String collaborationStageStatus(Object stage, Object status);
+
+  /// No description provided for @workspaceScopeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace'**
+  String get workspaceScopeLabel;
+
+  /// No description provided for @scopedScopeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Scoped'**
+  String get scopedScopeLabel;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

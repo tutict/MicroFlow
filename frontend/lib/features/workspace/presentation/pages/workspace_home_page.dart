@@ -117,32 +117,33 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
   }
 
   Future<void> _promptCreateWorkspace() async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final createdName = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
         return AlertDialog(
-          title: const Text('New workspace'),
+          title: Text(l10n.newWorkspaceTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(
-              labelText: 'Workspace name',
-              hintText: 'Platform Ops',
+            decoration: InputDecoration(
+              labelText: l10n.workspaceNameLabel,
+              hintText: l10n.workspaceNameHint,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(controller.text),
               style: FilledButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
               ),
-              child: const Text('Create'),
+              child: Text(l10n.create),
             ),
           ],
         );
@@ -229,29 +230,30 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
   }
 
   Future<void> _promptAddMember() async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final email = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Add workspace member'),
+          title: Text(l10n.addWorkspaceMemberTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'User email',
-              hintText: 'teammate@microflow.local',
+            decoration: InputDecoration(
+              labelText: l10n.userEmailLabel,
+              hintText: l10n.userEmailHint,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-              child: const Text('Add'),
+              child: Text(l10n.add),
             ),
           ],
         );
@@ -369,7 +371,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
         actions: [
           if ((shellAsync.valueOrNull?.workspaces.length ?? 0) > 1)
             PopupMenuButton<String>(
-              tooltip: 'Switch workspace',
+              tooltip: l10n.switchWorkspaceTooltip,
               onSelected: (workspaceId) {
                 ref
                     .read(workspaceShellControllerProvider.notifier)
@@ -400,19 +402,19 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               icon: const Icon(Icons.workspaces_outline),
             ),
           IconButton(
-            tooltip: 'New workspace',
+            tooltip: l10n.newWorkspaceTitle,
             onPressed: _promptCreateWorkspace,
             icon: const Icon(Icons.add_business_rounded),
           ),
           IconButton(
-            tooltip: 'Knowledge',
+            tooltip: l10n.knowledgeTooltip,
             onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
                 ? null
                 : () => _openKnowledgeSheet(shellAsync.valueOrNull!),
             icon: const Icon(Icons.library_books_rounded),
           ),
           IconButton(
-            tooltip: 'Add member',
+            tooltip: l10n.addMemberTooltip,
             onPressed:
                 (shellAsync.valueOrNull?.workspaceId.isEmpty ?? true) ||
                     !canManageMembers
@@ -435,9 +437,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               icon: const Icon(Icons.smart_toy_rounded),
             ),
           IconButton(
-            tooltip: Localizations.localeOf(context).languageCode == 'zh'
-                ? 'Agent 诊断'
-                : 'Agent diagnostics',
+            tooltip: l10n.agentDiagnosticsTooltip,
             onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
                 ? null
                 : () {
@@ -1045,7 +1045,7 @@ List<WorkspaceMemberSummary> _buildWorkspaceMembers({
           id: member.userId,
           displayName: member.displayName,
           subtitle: member.role == 'OWNER'
-              ? 'Owner'
+              ? l10n.ownerRole
               : member.email.isEmpty
               ? l10n.online
               : member.email,
@@ -1420,6 +1420,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final normalizedQuery = _query.trim().toLowerCase();
     final activeChannelId = widget.shell.selectedChannelIdOrNull;
     final hasChannelScopedTarget = activeChannelId != null;
@@ -1469,7 +1470,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Knowledge base',
+                      l10n.knowledgeBaseTitle,
                       style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -1487,12 +1488,12 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                 ),
               ),
               IconButton(
-                tooltip: 'Refresh',
+                tooltip: l10n.refreshTooltip,
                 onPressed: widget.onRefresh,
                 icon: const Icon(Icons.refresh_rounded),
               ),
               IconButton(
-                tooltip: 'Upload file',
+                tooltip: l10n.uploadFileTooltip,
                 onPressed: widget.shell.isUploadingKnowledgeDocument
                     ? null
                     : () => widget.onUpload(
@@ -1532,7 +1533,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Upload target',
+                  l10n.uploadTargetLabel,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -1543,7 +1544,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                   runSpacing: 8,
                   children: [
                     ChoiceChip(
-                      label: const Text('Workspace library'),
+                      label: Text(l10n.workspaceLibrary),
                       selected:
                           _uploadTarget == _KnowledgeUploadTarget.workspace,
                       onSelected: (_) {
@@ -1572,8 +1573,10 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                 Text(
                   _uploadTarget == _KnowledgeUploadTarget.currentConversation &&
                           hasChannelScopedTarget
-                      ? 'New files will be attached to $currentConversationLabel and prioritized there during retrieval.'
-                      : 'New files will be available as workspace-wide knowledge across conversations.',
+                      ? l10n.uploadTargetConversationDescription(
+                          currentConversationLabel,
+                        )
+                      : l10n.uploadTargetWorkspaceDescription,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
                     height: 1.45,
@@ -1593,7 +1596,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                 runSpacing: 8,
                 children: [
                   ChoiceChip(
-                    label: const Text('All documents'),
+                    label: Text(l10n.allDocuments),
                     selected: _scopeFilter == _KnowledgeScopeFilter.all,
                     onSelected: (_) {
                       setState(() => _scopeFilter = _KnowledgeScopeFilter.all);
@@ -1613,7 +1616,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                       },
                     ),
                   ChoiceChip(
-                    label: const Text('Workspace-wide'),
+                    label: Text(l10n.workspaceWide),
                     selected:
                         _scopeFilter == _KnowledgeScopeFilter.workspaceOnly,
                     onSelected: (_) {
@@ -1628,9 +1631,9 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
               const SizedBox(height: 12),
               TextField(
                 onChanged: (value) => setState(() => _query = value),
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search_rounded),
-                  hintText: 'Search documents',
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  hintText: l10n.searchDocumentsHint,
                 ),
               ),
             ],
@@ -1675,7 +1678,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Referenced source highlighted from chat citation.',
+                      l10n.referencedSourceNotice,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w600,
@@ -1693,8 +1696,8 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       widget.shell.knowledgeDocuments.isEmpty
-                          ? 'Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.'
-                          : 'No knowledge documents match the current search.',
+                          ? l10n.knowledgeEmptyDescription
+                          : l10n.knowledgeEmptySearchDescription,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
@@ -1713,7 +1716,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                     final document = filteredDocuments[index];
                     return _KnowledgeDocumentTile(
                       document: document,
-                      scopeLabel: _knowledgeScopeLabel(widget.shell, document),
+                      scopeLabel: _knowledgeScopeLabel(widget.shell, document, l10n),
                       highlighted: document.id == widget.initialDocumentId,
                     );
                   },
@@ -1738,6 +1741,7 @@ class _KnowledgeDocumentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final createdAt = DateTime.tryParse(document.createdAt)?.toLocal();
 
     return Container(
@@ -1771,23 +1775,33 @@ class _KnowledgeDocumentTile extends StatelessWidget {
                   ),
                 ),
               ),
-              StatusBadge(
-                label: '${document.snippetCount} snippets',
-                color: const Color(0xFF3D7EA6),
+              Text(
+                l10n.snippetsCount(document.snippetCount),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: const Color(0xFF3D7EA6),
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
           if (highlighted) ...[
             const SizedBox(height: 8),
-            AppPill(
-              label: 'Referenced source',
-              icon: Icons.bookmark_added_rounded,
-              backgroundColor: theme.colorScheme.primary.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.2 : 0.1,
-              ),
-              borderColor: theme.colorScheme.primary.withValues(alpha: 0.18),
-              labelColor: theme.colorScheme.primary,
-              iconColor: theme.colorScheme.primary,
+            Row(
+              children: [
+                Icon(
+                  Icons.bookmark_added_rounded,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.referencedSource,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ],
           const SizedBox(height: 8),
@@ -1812,11 +1826,20 @@ class _KnowledgeDocumentTile extends StatelessWidget {
                     : Icons.forum_rounded,
               ),
               AppPill(label: _formatBytes(document.sizeBytes)),
-              AppPill(label: document.status),
+              Text(
+                document.status,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               if (createdAt != null)
-                AppPill(
-                  label:
-                      '${createdAt.year}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')}',
+                Text(
+                  '${createdAt.year}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
             ],
           ),
@@ -1904,25 +1927,30 @@ class _DesktopWorkspaceLead extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                Row(
                   children: [
-                    AppPill(
-                      label: selectedConversationLabel,
-                      backgroundColor: theme.colorScheme.primary.withValues(
-                        alpha: theme.brightness == Brightness.dark ? 0.18 : 0.1,
-                      ),
-                      borderColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.16,
-                      ),
-                      labelColor: theme.colorScheme.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    StatusBadge(label: statusLabel, color: statusColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '$selectedConversationLabel · $statusLabel',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.72,
+                          ),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -1959,17 +1987,25 @@ class _DesktopMetricPill extends StatelessWidget {
 
     return SizedBox(
       width: 108,
-      child: AppPill(
-        value: value,
-        label: label,
-        backgroundColor: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.38 : 0.88,
-        ),
-        borderColor: theme.dividerColor.withValues(alpha: 0.82),
-        valueColor: theme.colorScheme.onSurface,
-        labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.62),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        borderRadius: BorderRadius.circular(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2306,10 +2342,11 @@ String _formatBytes(int bytes) {
 String _knowledgeScopeLabel(
   WorkspaceShellState shell,
   KnowledgeDocument document,
+  AppLocalizations l10n,
 ) {
   final channelId = document.channelId;
   if (channelId == null || channelId.isEmpty) {
-    return 'Workspace';
+    return l10n.workspaceScopeLabel;
   }
   for (final conversation in shell.conversations) {
     if (conversation.id == channelId) {
@@ -2321,5 +2358,6 @@ String _knowledgeScopeLabel(
       return channel.name;
     }
   }
-  return 'Scoped';
+  return l10n.scopedScopeLabel;
 }
+

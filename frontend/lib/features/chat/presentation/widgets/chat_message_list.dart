@@ -213,12 +213,11 @@ class _EmptyChatState extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
             Container(
               width: compact ? 52 : 64,
               height: compact ? 52 : 64,
@@ -265,8 +264,7 @@ class _EmptyChatState extends StatelessWidget {
               labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.72),
               iconColor: theme.colorScheme.onSurface.withValues(alpha: 0.62),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -200,5 +200,122 @@
   },
   "collaborationStoppedStatus": "Team run stopped.",
   "summarizeArchitectureChanges": "Summarize architecture changes",
-  "nativeImagePreflightChecks": "Native image preflight checks"
+  "nativeImagePreflightChecks": "Native image preflight checks",
+  "cancel": "Cancel",
+  "create": "Create",
+  "add": "Add",
+  "newWorkspaceTitle": "New workspace",
+  "workspaceNameLabel": "Workspace name",
+  "workspaceNameHint": "Platform Ops",
+  "addWorkspaceMemberTitle": "Add workspace member",
+  "userEmailLabel": "User email",
+  "userEmailHint": "teammate@microflow.local",
+  "switchWorkspaceTooltip": "Switch workspace",
+  "knowledgeTooltip": "Knowledge",
+  "addMemberTooltip": "Add member",
+  "agentDiagnosticsTooltip": "Agent diagnostics",
+  "ownerRole": "Owner",
+  "knowledgeBaseTitle": "Knowledge base",
+  "refreshTooltip": "Refresh",
+  "uploadFileTooltip": "Upload file",
+  "uploadTargetLabel": "Upload target",
+  "workspaceLibrary": "Workspace library",
+  "uploadTargetConversationDescription": "New files will be attached to {conversation} and prioritized there during retrieval.",
+  "@uploadTargetConversationDescription": {
+    "placeholders": {
+      "conversation": {}
+    }
+  },
+  "uploadTargetWorkspaceDescription": "New files will be available as workspace-wide knowledge across conversations.",
+  "allDocuments": "All documents",
+  "workspaceWide": "Workspace-wide",
+  "searchDocumentsHint": "Search documents",
+  "referencedSourceNotice": "Referenced source highlighted from chat citation.",
+  "knowledgeEmptyDescription": "Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.",
+  "knowledgeEmptySearchDescription": "No knowledge documents match the current search.",
+  "snippetsCount": "{count} snippets",
+  "@snippetsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "referencedSource": "Referenced source",
+  "teamRunsAvailable": "Persisted team runs are available for this conversation.",
+  "history": "History",
+  "recentRuns": "Recent runs",
+  "runHistory": "Run history",
+  "noRunsMatchFilters": "No runs match current filters.",
+  "filterRuns": "Filter runs",
+  "allRuns": "All runs",
+  "currentRun": "Current run",
+  "filterByStatus": "Filter by status",
+  "allStatuses": "All statuses",
+  "stopped": "Stopped",
+  "filterByAgent": "Filter by agent",
+  "allAgents": "All agents",
+  "live": "Live",
+  "eventsCount": "{count} events",
+  "@eventsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "roundsCount": "{round} of {total} rounds",
+  "@roundsCount": {
+    "placeholders": {
+      "round": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonLabel": "Reason: {reason}",
+  "@reasonLabel": {
+    "placeholders": {
+      "reason": {}
+    }
+  },
+  "analyzeStage": "Analyze",
+  "critiqueStage": "Critique",
+  "synthesizeStage": "Synthesize",
+  "deliverStage": "Deliver",
+  "collaborationStageInProgress": "{stage} in progress",
+  "@collaborationStageInProgress": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageCompleted": "{stage} completed",
+  "@collaborationStageCompleted": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageStopped": "{stage} stopped",
+  "@collaborationStageStopped": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageFailed": "{stage} failed",
+  "@collaborationStageFailed": {
+    "placeholders": {
+      "stage": {}
+    }
+  },
+  "collaborationStageStatus": "{stage} {status}",
+  "@collaborationStageStatus": {
+    "placeholders": {
+      "stage": {},
+      "status": {}
+    }
+  },
+  "workspaceScopeLabel": "Workspace",
+  "scopedScopeLabel": "Scoped"
 }
