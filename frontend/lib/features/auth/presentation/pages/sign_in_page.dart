@@ -72,9 +72,6 @@ class _SignInPageState extends ConsumerState<SignInPage> {
 
   Future<void> _changeServer() async {
     await ref.read(authSessionControllerProvider.notifier).signOut();
-    await ref
-        .read(serverConnectionControllerProvider.notifier)
-        .clearConnection();
     if (!mounted) {
       return;
     }
@@ -115,7 +112,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final authAsync = ref.watch(authSessionControllerProvider);
     final serverConnection = ref
         .watch(serverConnectionControllerProvider)
-        .valueOrNull;
+        .valueOrNull
+        ?.currentConnection;
     final isLoading = authAsync.isLoading;
     final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
@@ -126,16 +124,16 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final isCondensedMobile = !isWide && (height < 800 || keyboardVisible);
     final sidePadding = width < 640 ? 18.0 : 28.0;
     final titleStyle =
-        ((isWide || !isCondensedMobile)
-                ? (isWide
-                      ? theme.textTheme.displayMedium
-                      : theme.textTheme.headlineLarge)
-                : theme.textTheme.headlineMedium)
+        (isWide
+                ? theme.textTheme.displayLarge
+                : (isCondensedMobile
+                      ? theme.textTheme.displaySmall
+                      : theme.textTheme.displayMedium))
             ?.copyWith(
-              fontSize: isWide ? 76 : (isCondensedMobile ? 40 : 48),
-              height: 0.95,
+              fontSize: isWide ? 64 : (isCondensedMobile ? 34 : 42),
+              height: 1,
               fontWeight: FontWeight.w800,
-              letterSpacing: isWide ? -3 : (isCondensedMobile ? -1.2 : -1.8),
+              letterSpacing: isWide ? -2.2 : (isCondensedMobile ? -0.8 : -1.2),
               color: theme.colorScheme.onSurface,
             );
 
@@ -166,7 +164,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
           child: Text(
             l10n.workspaceDescription,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
               height: 1.5,
             ),
           ),
@@ -198,7 +196,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 child: Text(
                   label,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -250,7 +248,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
           Text(
             l10n.signInDescription,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
               height: 1.5,
             ),
           ),
@@ -298,7 +296,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                     serverConnection.serverOrigin,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.68,
+                        alpha: 0.76,
                       ),
                     ),
                   ),
@@ -374,10 +372,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.15 : 0.08,
+              color: theme.colorScheme.surface.withValues(
+                alpha: theme.brightness == Brightness.dark ? 0.56 : 0.92,
               ),
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: theme.colorScheme.outline.withValues(alpha: 0.78),
+              ),
             ),
             child: Row(
               children: [
@@ -394,9 +395,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                   child: Text(
                     l10n.workspaceDescription,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.72,
-                      ),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       height: 1.45,
                     ),
                   ),
@@ -417,13 +416,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             colors: theme.brightness == Brightness.dark
                 ? const [
                     Color(0xFF081015),
-                    Color(0xFF0F171C),
-                    Color(0xFF142129),
+                    Color(0xFF10191F),
+                    Color(0xFF152229),
                   ]
                 : const [
-                    Color(0xFFF4F7F7),
-                    Color(0xFFE8EFF0),
-                    Color(0xFFDDE7E8),
+                    Color(0xFFF7F9F9),
+                    Color(0xFFEEF2F3),
+                    Color(0xFFE3EAEC),
                   ],
           ),
         ),
@@ -434,7 +433,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               top: -100,
               child: _Orb(
                 size: 320,
-                color: theme.colorScheme.primary.withValues(alpha: 0.22),
+                color: theme.colorScheme.primary.withValues(alpha: 0.16),
               ),
             ),
             Positioned(
@@ -442,7 +441,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               top: 120,
               child: _Orb(
                 size: 260,
-                color: const Color(0xFF3D7EA6).withValues(alpha: 0.16),
+                color: const Color(0xFF3D7EA6).withValues(alpha: 0.1),
               ),
             ),
             Positioned(
@@ -511,7 +510,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                                     l10n.workspaceHub,
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.62),
+                                          .withValues(alpha: 0.74),
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -667,7 +666,7 @@ class _GlassPanel extends StatelessWidget {
           padding: padding,
           decoration: BoxDecoration(
             color: theme.colorScheme.surface.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.72 : 0.8,
+              alpha: theme.brightness == Brightness.dark ? 0.78 : 0.92,
             ),
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(
@@ -676,10 +675,10 @@ class _GlassPanel extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: theme.brightness == Brightness.dark
-                    ? const Color(0x33000000)
-                    : const Color(0x140E1A22),
-                blurRadius: 28,
-                offset: const Offset(0, 18),
+                    ? const Color(0x22000000)
+                    : const Color(0x100E1A22),
+                blurRadius: 24,
+                offset: const Offset(0, 14),
               ),
             ],
           ),
@@ -845,7 +844,7 @@ class _StageCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.46 : 0.68,
+          alpha: theme.brightness == Brightness.dark ? 0.58 : 0.9,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.72)),
@@ -877,7 +876,7 @@ class _StageCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
                     height: 1.4,
                   ),
                 ),
@@ -906,7 +905,7 @@ class _MetricPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.52 : 0.76,
+          alpha: theme.brightness == Brightness.dark ? 0.64 : 0.92,
         ),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.84)),
@@ -961,7 +960,7 @@ class _Field extends StatelessWidget {
         prefixIcon: Icon(
           icon,
           size: 18,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
         ),
         suffixIcon: suffix,
         contentPadding: const EdgeInsets.symmetric(
@@ -969,7 +968,7 @@ class _Field extends StatelessWidget {
           vertical: 18,
         ),
         fillColor: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.8 : 0.94,
+          alpha: theme.brightness == Brightness.dark ? 0.84 : 0.98,
         ),
       ),
     );
@@ -1019,13 +1018,13 @@ class _SignInPageCopy {
     final isChinese = Localizations.localeOf(context).languageCode == 'zh';
     if (isChinese) {
       return const _SignInPageCopy(
-        connectedServer: '已连接服务器',
-        changeServer: '更换',
+        connectedServer: '当前设备',
+        changeServer: '管理设备',
       );
     }
     return const _SignInPageCopy(
-      connectedServer: 'Connected server',
-      changeServer: 'Change',
+      connectedServer: 'Current device',
+      changeServer: 'Manage devices',
     );
   }
 }

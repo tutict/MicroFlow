@@ -276,6 +276,59 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
     }
   }
 
+  Future<void> _handlePhoneMenuSelection(
+    _PhoneMenuAction action,
+    WorkspaceShellState? shell,
+    bool canManageMembers,
+  ) async {
+    switch (action) {
+      case _PhoneMenuAction.newWorkspace:
+        await _promptCreateWorkspace();
+        return;
+      case _PhoneMenuAction.knowledge:
+        if (shell != null && shell.workspaceId.isNotEmpty) {
+          await _openKnowledgeSheet(shell);
+        }
+        return;
+      case _PhoneMenuAction.addMember:
+        if (canManageMembers) {
+          await _promptAddMember();
+        }
+        return;
+      case _PhoneMenuAction.diagnostics:
+        if (!mounted || shell == null || shell.workspaceId.isEmpty) {
+          return;
+        }
+        Navigator.of(
+          context,
+        ).pushNamed(AppRoutes.agents, arguments: shell.workspaceId);
+        return;
+      case _PhoneMenuAction.lightMode:
+        ref
+            .read(themeModeControllerProvider.notifier)
+            .setThemeMode(ThemeMode.light);
+        return;
+      case _PhoneMenuAction.darkMode:
+        ref
+            .read(themeModeControllerProvider.notifier)
+            .setThemeMode(ThemeMode.dark);
+        return;
+      case _PhoneMenuAction.chinese:
+        ref
+            .read(localeControllerProvider.notifier)
+            .setLocale(const Locale('zh'));
+        return;
+      case _PhoneMenuAction.english:
+        ref
+            .read(localeControllerProvider.notifier)
+            .setLocale(const Locale('en'));
+        return;
+      case _PhoneMenuAction.signOut:
+        await _signOut();
+        return;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -401,27 +454,30 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               },
               icon: const Icon(Icons.workspaces_outline),
             ),
-          IconButton(
-            tooltip: l10n.newWorkspaceTitle,
-            onPressed: _promptCreateWorkspace,
-            icon: const Icon(Icons.add_business_rounded),
-          ),
-          IconButton(
-            tooltip: l10n.knowledgeTooltip,
-            onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
-                ? null
-                : () => _openKnowledgeSheet(shellAsync.valueOrNull!),
-            icon: const Icon(Icons.library_books_rounded),
-          ),
-          IconButton(
-            tooltip: l10n.addMemberTooltip,
-            onPressed:
-                (shellAsync.valueOrNull?.workspaceId.isEmpty ?? true) ||
-                    !canManageMembers
-                ? null
-                : _promptAddMember,
-            icon: const Icon(Icons.person_add_alt_1_rounded),
-          ),
+          if (!isPhone)
+            IconButton(
+              tooltip: l10n.newWorkspaceTitle,
+              onPressed: _promptCreateWorkspace,
+              icon: const Icon(Icons.add_business_rounded),
+            ),
+          if (!isPhone)
+            IconButton(
+              tooltip: l10n.knowledgeTooltip,
+              onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
+                  ? null
+                  : () => _openKnowledgeSheet(shellAsync.valueOrNull!),
+              icon: const Icon(Icons.library_books_rounded),
+            ),
+          if (!isPhone)
+            IconButton(
+              tooltip: l10n.addMemberTooltip,
+              onPressed:
+                  (shellAsync.valueOrNull?.workspaceId.isEmpty ?? true) ||
+                      !canManageMembers
+                  ? null
+                  : _promptAddMember,
+              icon: const Icon(Icons.person_add_alt_1_rounded),
+            ),
           if (isTablet)
             IconButton(
               tooltip: l10n.agents,
@@ -459,50 +515,74 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               padding: const EdgeInsets.only(right: 8),
               child: Center(child: appBarStatus),
             ),
-          IconButton(
-            tooltip: l10n.signOutTooltip,
-            onPressed: _signOut,
-            icon: const Icon(Icons.logout_rounded),
-          ),
           if (isPhone) ...[
-            const SizedBox(width: 4),
-            PopupMenuButton<int>(
+            PopupMenuButton<_PhoneMenuAction>(
               tooltip: l10n.language,
-              onSelected: (value) {
-                switch (value) {
-                  case 1:
-                    ref
-                        .read(themeModeControllerProvider.notifier)
-                        .setThemeMode(ThemeMode.light);
-                    break;
-                  case 2:
-                    ref
-                        .read(themeModeControllerProvider.notifier)
-                        .setThemeMode(ThemeMode.dark);
-                    break;
-                  case 3:
-                    ref
-                        .read(localeControllerProvider.notifier)
-                        .setLocale(const Locale('zh'));
-                    break;
-                  case 4:
-                    ref
-                        .read(localeControllerProvider.notifier)
-                        .setLocale(const Locale('en'));
-                    break;
-                }
+              onSelected: (action) {
+                _handlePhoneMenuSelection(
+                  action,
+                  shellAsync.valueOrNull,
+                  canManageMembers,
+                );
               },
-              itemBuilder: (context) => [
-                PopupMenuItem(value: 1, child: Text(l10n.lightMode)),
-                PopupMenuItem(value: 2, child: Text(l10n.darkMode)),
-                PopupMenuItem(value: 3, child: Text(l10n.simplifiedChinese)),
-                PopupMenuItem(value: 4, child: Text(l10n.english)),
-              ],
-              icon: const Icon(Icons.tune_rounded),
+              itemBuilder: (context) {
+                final shell = shellAsync.valueOrNull;
+                final hasWorkspace = shell?.workspaceId.isNotEmpty ?? false;
+                return [
+                  PopupMenuItem(
+                    value: _PhoneMenuAction.newWorkspace,
+                    child: Text(l10n.newWorkspaceTitle),
+                  ),
+                  if (hasWorkspace)
+                    PopupMenuItem(
+                      value: _PhoneMenuAction.knowledge,
+                      child: Text(l10n.knowledgeTooltip),
+                    ),
+                  if (hasWorkspace && canManageMembers)
+                    PopupMenuItem(
+                      value: _PhoneMenuAction.addMember,
+                      child: Text(l10n.addMemberTooltip),
+                    ),
+                  if (hasWorkspace)
+                    PopupMenuItem(
+                      value: _PhoneMenuAction.diagnostics,
+                      child: Text(l10n.agentDiagnosticsTooltip),
+                    ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: _PhoneMenuAction.lightMode,
+                    child: Text(l10n.lightMode),
+                  ),
+                  PopupMenuItem(
+                    value: _PhoneMenuAction.darkMode,
+                    child: Text(l10n.darkMode),
+                  ),
+                  PopupMenuItem(
+                    value: _PhoneMenuAction.chinese,
+                    child: Text(l10n.simplifiedChinese),
+                  ),
+                  PopupMenuItem(
+                    value: _PhoneMenuAction.english,
+                    child: Text(l10n.english),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    value: _PhoneMenuAction.signOut,
+                    child: Text(l10n.signOutTooltip),
+                  ),
+                ];
+              },
+              icon: const Icon(Icons.more_horiz_rounded),
             ),
             const SizedBox(width: 12),
-          ] else
+          ] else ...[
+            IconButton(
+              tooltip: l10n.signOutTooltip,
+              onPressed: _signOut,
+              icon: const Icon(Icons.logout_rounded),
+            ),
             const SizedBox(width: 8),
+          ],
         ],
       ),
       body: Container(
@@ -517,7 +597,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     Color(0xFF152229),
                   ]
                 : const [
-                    Color(0xFFF7F9F9),
+                    Color(0xFFF8FAFA),
                     Color(0xFFEEF2F3),
                     Color(0xFFE3EAEC),
                   ],
@@ -1383,6 +1463,18 @@ IconData _emptyConversationIcon(
   };
 }
 
+enum _PhoneMenuAction {
+  newWorkspace,
+  knowledge,
+  addMember,
+  diagnostics,
+  lightMode,
+  darkMode,
+  chinese,
+  english,
+  signOut,
+}
+
 enum _KnowledgeUploadTarget { workspace, currentConversation }
 
 enum _KnowledgeScopeFilter { all, currentConversation, workspaceOnly }
@@ -1716,7 +1808,11 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                     final document = filteredDocuments[index];
                     return _KnowledgeDocumentTile(
                       document: document,
-                      scopeLabel: _knowledgeScopeLabel(widget.shell, document, l10n),
+                      scopeLabel: _knowledgeScopeLabel(
+                        widget.shell,
+                        document,
+                        l10n,
+                      ),
                       highlighted: document.id == widget.initialDocumentId,
                     );
                   },
@@ -2360,4 +2456,3 @@ String _knowledgeScopeLabel(
   }
   return l10n.scopedScopeLabel;
 }
-

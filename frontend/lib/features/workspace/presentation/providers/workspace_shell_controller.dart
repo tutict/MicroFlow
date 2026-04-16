@@ -710,6 +710,9 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
       return current;
     }
     final existing = current.collaborationStatusByConversation[channelId];
+    final round = (payload['round'] as num?)?.toInt() ?? existing?.round ?? 0;
+    final maxRounds =
+        (payload['maxRounds'] as num?)?.toInt() ?? existing?.maxRounds ?? 0;
     final nextStatus = CollaborationStatusSnapshot(
       collaborationId:
           payload['collaborationId'] as String? ??
@@ -721,19 +724,12 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
           existing?.status ??
           'RUNNING',
       trigger: payload['trigger'] as String? ?? existing?.trigger ?? '@team',
-      round: (payload['round'] as num?)?.toInt() ?? existing?.round ?? 0,
-      maxRounds:
-          (payload['maxRounds'] as num?)?.toInt() ?? existing?.maxRounds ?? 0,
+      round: round,
+      maxRounds: maxRounds,
       stage:
           payload['stage'] as String? ??
-          existing?.stage ??
-          _inferCollaborationStage(
-            round: (payload['round'] as num?)?.toInt() ?? existing?.round ?? 0,
-            maxRounds:
-                (payload['maxRounds'] as num?)?.toInt() ??
-                existing?.maxRounds ??
-                0,
-          ),
+          _inferCollaborationStage(round: round, maxRounds: maxRounds) ??
+          existing?.stage,
       activeAgentKey:
           payload['agentKey'] as String? ?? existing?.activeAgentKey,
       detail:
@@ -758,21 +754,21 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
       return current;
     }
     final existingStatus = current.collaborationStatusByConversation[channelId];
-    final status =
-        payload['status'] as String? ??
-        fallbackStatus ??
-        existingStatus?.status ??
-        'RUNNING';
     final round =
         (payload['round'] as num?)?.toInt() ?? existingStatus?.round ?? 0;
     final maxRounds =
         (payload['maxRounds'] as num?)?.toInt() ??
         existingStatus?.maxRounds ??
         0;
+    final status =
+        payload['status'] as String? ??
+        fallbackStatus ??
+        existingStatus?.status ??
+        'RUNNING';
     final stage =
         payload['stage'] as String? ??
-        existingStatus?.stage ??
-        _inferCollaborationStage(round: round, maxRounds: maxRounds);
+        _inferCollaborationStage(round: round, maxRounds: maxRounds) ??
+        existingStatus?.stage;
     final nextEntry = CollaborationEvent(
       id:
           payload['eventId'] as String? ??

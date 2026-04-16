@@ -29,7 +29,7 @@ class SessionGate extends ConsumerWidget {
         ),
       );
     }
-    if (serverConnection.valueOrNull == null) {
+    if (serverConnection.valueOrNull?.currentConnection == null) {
       return const ConnectServerPage();
     }
 

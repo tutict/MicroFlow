@@ -10,7 +10,8 @@ class LanguageSwitcher extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final currentLocale = ref.watch(localeControllerProvider).valueOrNull ?? const Locale('zh');
+    final currentLocale =
+        ref.watch(localeControllerProvider).valueOrNull ?? const Locale('zh');
     final theme = Theme.of(context);
 
     return PopupMenuButton<Locale>(
@@ -20,10 +21,7 @@ class LanguageSwitcher extends ConsumerWidget {
         ref.read(localeControllerProvider.notifier).setLocale(locale);
       },
       itemBuilder: (context) => [
-        PopupMenuItem(
-          value: const Locale('en'),
-          child: Text(l10n.english),
-        ),
+        PopupMenuItem(value: const Locale('en'), child: Text(l10n.english)),
         PopupMenuItem(
           value: const Locale('zh'),
           child: Text(l10n.simplifiedChinese),
@@ -32,9 +30,13 @@ class LanguageSwitcher extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: theme.cardColor,
+          color: theme.colorScheme.surface.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.44 : 0.9,
+          ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.82),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -46,7 +48,9 @@ class LanguageSwitcher extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              currentLocale.languageCode == 'zh' ? l10n.simplifiedChinese : l10n.english,
+              currentLocale.languageCode == 'zh'
+                  ? l10n.simplifiedChinese
+                  : l10n.english,
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,

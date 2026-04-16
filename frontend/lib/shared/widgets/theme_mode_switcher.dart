@@ -10,8 +10,10 @@ class ThemeModeSwitcher extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final themeMode = ref.watch(themeModeControllerProvider).valueOrNull ?? ThemeMode.light;
+    final themeMode =
+        ref.watch(themeModeControllerProvider).valueOrNull ?? ThemeMode.light;
     final isDark = themeMode == ThemeMode.dark;
+    final theme = Theme.of(context);
 
     return PopupMenuButton<ThemeMode>(
       tooltip: l10n.theme,
@@ -20,21 +22,19 @@ class ThemeModeSwitcher extends ConsumerWidget {
         ref.read(themeModeControllerProvider.notifier).setThemeMode(mode);
       },
       itemBuilder: (context) => [
-        PopupMenuItem(
-          value: ThemeMode.light,
-          child: Text(l10n.lightMode),
-        ),
-        PopupMenuItem(
-          value: ThemeMode.dark,
-          child: Text(l10n.darkMode),
-        ),
+        PopupMenuItem(value: ThemeMode.light, child: Text(l10n.lightMode)),
+        PopupMenuItem(value: ThemeMode.dark, child: Text(l10n.darkMode)),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
+          color: theme.colorScheme.surface.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.44 : 0.9,
+          ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).dividerColor),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.82),
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -47,8 +47,8 @@ class ThemeModeSwitcher extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               isDark ? l10n.darkMode : l10n.lightMode,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),

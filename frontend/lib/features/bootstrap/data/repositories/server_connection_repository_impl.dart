@@ -12,7 +12,7 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
   const ServerConnectionRepositoryImpl(this._localStore);
 
   final LocalStore _localStore;
-  static const _connectionKeys = <String>[
+  static const _legacyConnectionKeys = <String>[
     ServerConnectionKeys.serverOrigin,
     ServerConnectionKeys.apiBaseUrl,
     ServerConnectionKeys.wsBaseUrl,
@@ -22,36 +22,40 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
 
   @override
   Future<ServerConnection?> currentConnection() async {
-    await _localStore.migrateFromPreferences(_connectionKeys);
-    final serverOrigin = await _localStore.readString(
-      ServerConnectionKeys.serverOrigin,
+    await _ensureMigrated();
+    final currentId = await _localStore.readString(
+      ServerConnectionKeys.currentConnectionId,
     );
-    final apiBaseUrl = await _localStore.readString(
-      ServerConnectionKeys.apiBaseUrl,
-    );
-    final wsBaseUrl = await _localStore.readString(
-      ServerConnectionKeys.wsBaseUrl,
-    );
-    final instanceName = await _localStore.readString(
-      ServerConnectionKeys.instanceName,
-    );
-    final pairedAt = await _localStore.readString(
-      ServerConnectionKeys.pairedAt,
-    );
-    if (serverOrigin == null ||
-        apiBaseUrl == null ||
-        wsBaseUrl == null ||
-        instanceName == null ||
-        pairedAt == null) {
-      return null;
+    if (currentId == null || currentId.isEmpty) {
+      return _readLegacyCurrentConnection();
     }
-    return ServerConnection(
-      serverOrigin: serverOrigin,
-      apiBaseUrl: apiBaseUrl,
-      wsBaseUrl: wsBaseUrl,
-      instanceName: instanceName,
-      pairedAt: pairedAt,
+    final connections = await listConnections();
+    for (final connection in connections) {
+      if (connection.id == currentId) {
+        return connection;
+      }
+    }
+    return _readLegacyCurrentConnection();
+  }
+
+  @override
+  Future<List<ServerConnection>> listConnections() async {
+    await _ensureMigrated();
+    final encoded = await _localStore.readString(
+      ServerConnectionKeys.savedConnections,
     );
+    if (encoded == null || encoded.isEmpty) {
+      final current = await _readLegacyCurrentConnection();
+      return current == null ? const [] : [current];
+    }
+    final decoded = jsonDecode(encoded);
+    if (decoded is! List) {
+      return const [];
+    }
+    return decoded
+        .cast<Map>()
+        .map((entry) => ServerConnection.fromJson(entry.cast<String, Object?>()))
+        .toList(growable: false);
   }
 
   @override
@@ -83,27 +87,121 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
       throw const AppException('Invalid pairing response');
     }
 
+    final serverOrigin = payload['serverOrigin'] as String? ?? origin;
     final connection = ServerConnection(
-      serverOrigin: payload['serverOrigin'] as String? ?? origin,
+      id: serverOrigin,
+      serverOrigin: serverOrigin,
       apiBaseUrl: payload['apiBaseUrl'] as String? ?? '$origin/api/v1',
       wsBaseUrl: payload['wsBaseUrl'] as String? ?? _defaultWsBaseUrl(origin),
       instanceName: payload['instanceName'] as String? ?? 'MicroFlow',
       pairedAt: payload['pairedAt'] as String? ?? '',
     );
-    await _persist(connection);
+    final connections = await listConnections();
+    final updatedConnections = <ServerConnection>[
+      connection,
+      ...connections.where((item) => item.id != connection.id),
+    ];
+    await _saveConnections(updatedConnections);
+    await _persistActive(connection);
     return connection;
   }
 
   @override
-  Future<void> clearConnection() async {
-    await _localStore.remove(ServerConnectionKeys.serverOrigin);
-    await _localStore.remove(ServerConnectionKeys.apiBaseUrl);
-    await _localStore.remove(ServerConnectionKeys.wsBaseUrl);
-    await _localStore.remove(ServerConnectionKeys.instanceName);
-    await _localStore.remove(ServerConnectionKeys.pairedAt);
+  Future<ServerConnection?> activateConnection(String connectionId) async {
+    final connections = await listConnections();
+    for (final connection in connections) {
+      if (connection.id == connectionId) {
+        await _persistActive(connection);
+        return connection;
+      }
+    }
+    return null;
   }
 
-  Future<void> _persist(ServerConnection connection) async {
+  @override
+  Future<void> clearCurrentConnection() async {
+    for (final key in _legacyConnectionKeys) {
+      await _localStore.remove(key);
+    }
+    await _localStore.remove(ServerConnectionKeys.currentConnectionId);
+  }
+
+  @override
+  Future<void> removeConnection(String connectionId) async {
+    final connections = await listConnections();
+    final updatedConnections = connections
+        .where((connection) => connection.id != connectionId)
+        .toList(growable: false);
+    await _saveConnections(updatedConnections);
+    final currentId = await _localStore.readString(
+      ServerConnectionKeys.currentConnectionId,
+    );
+    if (currentId != connectionId) {
+      return;
+    }
+    if (updatedConnections.isEmpty) {
+      await clearCurrentConnection();
+      return;
+    }
+    await _persistActive(updatedConnections.first);
+  }
+
+  Future<void> _ensureMigrated() async {
+    await _localStore.migrateFromPreferences(_legacyConnectionKeys);
+    final encoded = await _localStore.readString(ServerConnectionKeys.savedConnections);
+    if (encoded != null && encoded.isNotEmpty) {
+      return;
+    }
+    final current = await _readLegacyCurrentConnection();
+    if (current == null) {
+      return;
+    }
+    await _saveConnections([current]);
+    await _localStore.saveString(
+      ServerConnectionKeys.currentConnectionId,
+      current.id,
+    );
+  }
+
+  Future<ServerConnection?> _readLegacyCurrentConnection() async {
+    final serverOrigin = await _localStore.readString(
+      ServerConnectionKeys.serverOrigin,
+    );
+    final apiBaseUrl = await _localStore.readString(
+      ServerConnectionKeys.apiBaseUrl,
+    );
+    final wsBaseUrl = await _localStore.readString(
+      ServerConnectionKeys.wsBaseUrl,
+    );
+    final instanceName = await _localStore.readString(
+      ServerConnectionKeys.instanceName,
+    );
+    final pairedAt = await _localStore.readString(ServerConnectionKeys.pairedAt);
+    if (serverOrigin == null ||
+        apiBaseUrl == null ||
+        wsBaseUrl == null ||
+        instanceName == null ||
+        pairedAt == null) {
+      return null;
+    }
+    return ServerConnection(
+      id: serverOrigin,
+      serverOrigin: serverOrigin,
+      apiBaseUrl: apiBaseUrl,
+      wsBaseUrl: wsBaseUrl,
+      instanceName: instanceName,
+      pairedAt: pairedAt,
+    );
+  }
+
+  Future<void> _saveConnections(List<ServerConnection> connections) async {
+    final encoded = jsonEncode(
+      connections.map((connection) => connection.toJson()).toList(growable: false),
+    );
+    await _localStore.saveString(ServerConnectionKeys.savedConnections, encoded);
+  }
+
+  Future<void> _persistActive(ServerConnection connection) async {
     await _localStore.saveString(
       ServerConnectionKeys.serverOrigin,
       connection.serverOrigin,
@@ -123,6 +221,10 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
     await _localStore.saveString(
       ServerConnectionKeys.pairedAt,
       connection.pairedAt,
+    );
+    await _localStore.saveString(
+      ServerConnectionKeys.currentConnectionId,
+      connection.id,
     );
   }
 
