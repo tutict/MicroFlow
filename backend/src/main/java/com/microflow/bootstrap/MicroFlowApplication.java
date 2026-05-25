@@ -1,15 +1,12 @@
 package com.microflow.bootstrap;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportRuntimeHints;
+import io.quarkus.runtime.Quarkus;
+import io.quarkus.runtime.annotations.QuarkusMain;
 
-@SpringBootApplication(scanBasePackages = "com.microflow")
-@ImportRuntimeHints(MicroFlowRuntimeHints.class)
+@QuarkusMain
 public class MicroFlowApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(MicroFlowApplication.class, args);
+        Quarkus.run(args);
     }
 }
-

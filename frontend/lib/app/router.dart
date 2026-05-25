@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/accounting/presentation/pages/accounting_page.dart';
 import '../features/agents/presentation/pages/agent_diagnostics_page.dart';
 import '../features/bootstrap/presentation/pages/connect_server_page.dart';
 import '../features/auth/presentation/widgets/session_gate.dart';
@@ -10,6 +11,7 @@ final class AppRoutes {
   static const signIn = '/sign-in';
   static const workspace = '/';
   static const agents = '/agents';
+  static const accounting = '/accounting';
 }
 
 final class AppRouter {
@@ -29,6 +31,12 @@ final class AppRouter {
         final workspaceId = settings.arguments as String? ?? '';
         return MaterialPageRoute<void>(
           builder: (_) => AgentDiagnosticsPage(workspaceId: workspaceId),
+          settings: settings,
+        );
+      case AppRoutes.accounting:
+        final workspaceId = settings.arguments as String? ?? '';
+        return MaterialPageRoute<void>(
+          builder: (_) => AccountingPage(workspaceId: workspaceId),
           settings: settings,
         );
       case AppRoutes.workspace:

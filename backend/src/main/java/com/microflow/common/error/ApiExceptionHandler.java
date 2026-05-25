@@ -1,61 +1,57 @@
 package com.microflow.common.error;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 import java.util.Map;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-@RestControllerAdvice
-public class ApiExceptionHandler {
+final class ApiExceptionPayload {
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
-        return ResponseEntity.badRequest().body(Map.of(
-                "error", "bad_request",
-                "message", safeMessage(ex)
-        ));
+    private ApiExceptionPayload() {
     }
 
-    @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<Map<String, Object>> handleRateLimit(RateLimitExceededException ex) {
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
-                "error", "rate_limited",
-                "message", safeMessage(ex)
-        ));
+    static Map<String, Object> body(String error, String message) {
+        return Map.of(
+                "error", error,
+                "message", message == null || message.isBlank() ? error : message
+        );
     }
+}
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
-        var firstError = ex.getBindingResult().getFieldErrors().stream()
-                .findFirst()
-                .map(error -> error.getField() + " " + error.getDefaultMessage())
-                .orElse("Validation failed");
-        return ResponseEntity.badRequest().body(Map.of(
-                "error", "validation_error",
-                "message", firstError
-        ));
-    }
+@Provider
+public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<Map<String, Object>> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
-        return ResponseEntity.badRequest().body(Map.of(
-                "error", "payload_too_large",
-                "message", "Uploaded file exceeds the configured size limit"
-        ));
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleUnexpected(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                "error", "internal_error",
-                "message", safeMessage(ex)
-        ));
+    @Override
+    public Response toResponse(Exception exception) {
+        if (exception instanceof IllegalArgumentException) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiExceptionPayload.body("bad_request", exception.getMessage()))
+                    .build();
+        }
+        if (exception instanceof RateLimitExceededException) {
+            return Response.status(Response.Status.TOO_MANY_REQUESTS)
+                    .entity(ApiExceptionPayload.body("rate_limited", exception.getMessage()))
+                    .build();
+        }
+        if (exception instanceof ConstraintViolationException validationException) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(ApiExceptionPayload.body("validation_error", firstValidationError(validationException)))
+                    .build();
+        }
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(ApiExceptionPayload.body("internal_error", safeMessage(exception)))
+                .build();
     }
 
     private String safeMessage(Exception ex) {
         return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
+    }
+
+    private String firstValidationError(ConstraintViolationException exception) {
+        return exception.getConstraintViolations().stream()
+                .findFirst()
+                .map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
+                .orElse("Validation failed");
     }
 }

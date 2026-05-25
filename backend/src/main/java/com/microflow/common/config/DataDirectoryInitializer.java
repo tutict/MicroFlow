@@ -1,14 +1,19 @@
 package com.microflow.common.config;
 
+import io.quarkus.runtime.StartupEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-@Configuration(proxyBeanMethods = false)
+@ApplicationScoped
 public class DataDirectoryInitializer {
 
-    public DataDirectoryInitializer(@Value("${MICROFLOW_DATA_DIR:./data}") String dataDir) {
+    @ConfigProperty(name = "MICROFLOW_DATA_DIR", defaultValue = "./data")
+    String dataDir;
+
+    void initialize(@Observes StartupEvent event) {
         try {
             Files.createDirectories(Path.of(dataDir));
         } catch (Exception ex) {

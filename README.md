@@ -22,26 +22,26 @@
 ## 承担内容
 
 - 完成协作系统的业务边界设计与后端模块划分
-- 完成 Spring Boot 后端、Flutter 客户端与本地部署链路实现
+- 完成 Quarkus 后端、Flutter 客户端与本地部署链路实现
 - 完成配对码连接机制、登录流程和实时消息能力设计
 - 完成 Agent 运行记录、诊断页和角色策略相关功能
 - 完成登录限流、Host 校验、输入边界与本地安全存储等安全收敛工作
 
 ## 关键技术实现
 
-- 使用 `Spring Boot + WebSocket + JDBC` 构建本地优先协作后端
+- 使用 `Quarkus + WebSocket + JDBC` 构建本地优先协作后端
 - 使用 `SQLite` 降低部署门槛，支持单机和内网快速启动
 - 使用一次性 `pairing code` 完成前后端动态配对，不依赖写死地址
 - 使用 `Flutter + Riverpod` 实现跨平台客户端和状态管理
 - 使用 `web_socket_channel` 支撑实时消息与 Agent 状态同步
 - 使用 `flutter_secure_storage` 管理敏感连接信息与认证数据
-- 通过 Actuator、诊断页和运行记录增强可观测性与问题定位能力
+- 通过健康检查、诊断页和运行记录增强可观测性与问题定位能力
 
 ## 技术栈
 
 | 分层 | 技术方案 |
 | --- | --- |
-| 后端 | Spring Boot 3.5、Spring Web、Spring WebSocket、Spring Validation、JDBC |
+| 后端 | Quarkus 3.35、RESTEasy、Quarkus WebSockets、Hibernate Validator、JDBC |
 | 数据存储 | SQLite |
 | 客户端 | Flutter、Dart 3、Riverpod |
 | 通信 | HTTP API、WebSocket |
@@ -52,7 +52,7 @@
 
 ```text
 MicroFlow
-├─ backend/              # Spring Boot 后端
+├─ backend/              # Quarkus 后端
 ├─ frontend/             # Flutter 跨平台客户端
 ├─ ops/                  # 运维与辅助脚本
 ├─ docker-compose.yml    # 本地部署编排
@@ -67,7 +67,7 @@ MicroFlow
 负责认证、配对连接、工作区协作、消息处理和 Agent 运行支撑。
 
 - 路径：`backend/`
-- 技术关键词：`Spring Boot`、`WebSocket`、`SQLite`
+- 技术关键词：`Quarkus`、`WebSocket`、`SQLite`
 - 主要能力：
   - Auth / JWT
   - Bootstrap Pairing
@@ -111,7 +111,7 @@ MicroFlow
 
 ```powershell
 cd backend
-./mvnw spring-boot:run
+./mvnw quarkus:dev
 ```
 
 默认地址：
@@ -161,7 +161,7 @@ flutter run -d chrome `
 - Agent provider 配置支持以下加载顺序：
   1. `MICROFLOW_AGENT_CONFIG_JSON`
   2. `MICROFLOW_AGENT_CONFIG_PATH`
-  3. Spring 配置 `microflow.agent.providers`
+  3. Quarkus 配置 `microflow.agent.openclaw-*`
   4. `OPENCLAW_ENDPOINT_URL` + `OPENCLAW_AGENT_KEYS`
   5. fallback `mock-openclaw`
 - 是否生成演示账号由 `MICROFLOW_SEED_DEMO_ENABLED` 控制
@@ -180,4 +180,3 @@ flutter run -d chrome `
 
 - 部署文档：[DEPLOYMENT.md](DEPLOYMENT.md)
 - 前端说明：[frontend/README.md](frontend/README.md)
-

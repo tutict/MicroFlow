@@ -8,6 +8,7 @@ import com.microflow.agent.api.mapper.AgentApiMapper;
 import com.microflow.agent.application.service.AgentRunService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -62,7 +63,7 @@ public class AgentController {
     }
 
     @PutMapping("/agents/{agentKey}/role-strategy")
-    public void updateRoleStrategy(
+    public ResponseEntity<Void> updateRoleStrategy(
             @PathVariable String agentKey,
             @RequestParam String workspaceId,
             @RequestBody UpdateAgentRoleStrategyRequest body,
@@ -70,5 +71,6 @@ public class AgentController {
     ) {
         var userId = (String) request.getAttribute("currentUserId");
         agentRunService.updateRoleStrategy(userId, workspaceId, agentKey, body == null ? null : body.roleStrategy());
+        return ResponseEntity.ok().build();
     }
 }

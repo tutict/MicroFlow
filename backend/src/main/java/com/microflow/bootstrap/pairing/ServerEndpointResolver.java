@@ -2,7 +2,7 @@ package com.microflow.bootstrap.pairing;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Locale;
-import org.springframework.beans.factory.annotation.Value;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,13 +13,16 @@ public class ServerEndpointResolver {
     private final String configuredWsBaseUrl;
 
     public ServerEndpointResolver(
-            @Value("${microflow.bootstrap.server-origin:}") String configuredServerOrigin,
-            @Value("${microflow.bootstrap.api-base-url:}") String configuredApiBaseUrl,
-            @Value("${microflow.bootstrap.ws-base-url:}") String configuredWsBaseUrl
+            @ConfigProperty(name = "microflow.bootstrap.server-origin", defaultValue = " ") String configuredServerOrigin,
+            @ConfigProperty(name = "microflow.bootstrap.api-base-url", defaultValue = " ") String configuredApiBaseUrl,
+            @ConfigProperty(name = "microflow.bootstrap.ws-base-url", defaultValue = " ") String configuredWsBaseUrl,
+            @ConfigProperty(name = "MICROFLOW_SERVER_ORIGIN", defaultValue = " ") String legacyServerOrigin,
+            @ConfigProperty(name = "MICROFLOW_API_BASE_URL", defaultValue = " ") String legacyApiBaseUrl,
+            @ConfigProperty(name = "MICROFLOW_WS_BASE_URL", defaultValue = " ") String legacyWsBaseUrl
     ) {
-        this.configuredServerOrigin = configuredServerOrigin;
-        this.configuredApiBaseUrl = configuredApiBaseUrl;
-        this.configuredWsBaseUrl = configuredWsBaseUrl;
+        this.configuredServerOrigin = firstConfigured(configuredServerOrigin, legacyServerOrigin);
+        this.configuredApiBaseUrl = firstConfigured(configuredApiBaseUrl, legacyApiBaseUrl);
+        this.configuredWsBaseUrl = firstConfigured(configuredWsBaseUrl, legacyWsBaseUrl);
     }
 
     public ResolvedEndpoints resolve(HttpServletRequest request) {
@@ -121,6 +124,10 @@ public class ServerEndpointResolver {
             throw new IllegalStateException("Configured MicroFlow endpoint URLs must include an explicit scheme");
         }
         return normalized;
+    }
+
+    private String firstConfigured(String primary, String fallback) {
+        return primary != null && !primary.isBlank() ? primary : fallback;
     }
 
     private String toWebSocketOrigin(String httpOrigin) {

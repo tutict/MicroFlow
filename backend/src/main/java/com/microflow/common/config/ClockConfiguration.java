@@ -1,15 +1,16 @@
 package com.microflow.common.config;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Singleton;
 import java.time.Clock;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
-@Configuration(proxyBeanMethods = false)
+@ApplicationScoped
 public class ClockConfiguration {
 
-    @Bean
+    @Produces
+    @Singleton
     Clock systemClock() {
         return Clock.systemUTC();
     }
 }
-

@@ -1,23 +1,27 @@
 package com.microflow.common.config;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import jakarta.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.AsyncTaskExecutor;
-import org.springframework.core.task.support.TaskExecutorAdapter;
 
-@Configuration(proxyBeanMethods = false)
+@ApplicationScoped
 public class VirtualThreadConfiguration {
 
-    @Bean(destroyMethod = "close")
+    private final ExecutorService virtualThreadExecutorService = Executors.newVirtualThreadPerTaskExecutor();
+
+    @Produces
+    @Singleton
+    @Named("microflowVirtualThreadExecutor")
     ExecutorService virtualThreadExecutorService() {
-        return Executors.newVirtualThreadPerTaskExecutor();
+        return virtualThreadExecutorService;
     }
 
-    @Bean
-    AsyncTaskExecutor applicationTaskExecutor(ExecutorService virtualThreadExecutorService) {
-        return new TaskExecutorAdapter(virtualThreadExecutorService);
+    @PreDestroy
+    void close() {
+        virtualThreadExecutorService.close();
     }
 }
-

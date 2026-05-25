@@ -22,11 +22,14 @@ ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75" \
 
 RUN mkdir -p /opt/microflow/data /opt/microflow/db
 
-COPY --from=build /workspace/target/*.jar /opt/microflow/app.jar
+COPY --from=build /workspace/target/quarkus-app/lib/ /opt/microflow/lib/
+COPY --from=build /workspace/target/quarkus-app/*.jar /opt/microflow/
+COPY --from=build /workspace/target/quarkus-app/app/ /opt/microflow/app/
+COPY --from=build /workspace/target/quarkus-app/quarkus/ /opt/microflow/quarkus/
 
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD curl --fail --silent http://127.0.0.1:8080/api/v1/system/health > /dev/null || exit 1
 
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_TOOL_OPTIONS -jar /opt/microflow/app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_TOOL_OPTIONS -jar /opt/microflow/quarkus-run.jar"]

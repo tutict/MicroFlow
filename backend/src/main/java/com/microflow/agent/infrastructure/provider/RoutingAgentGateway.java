@@ -6,11 +6,9 @@ import com.microflow.agent.domain.model.AgentExecutionResult;
 import com.microflow.agent.infrastructure.persistence.JdbcAgentRepository;
 import com.microflow.agent.infrastructure.provider.openclaw.MockOpenClawAgentGateway;
 import com.microflow.agent.infrastructure.provider.openclaw.OpenClawHttpAgentGateway;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 @Component
-@Primary
 public class RoutingAgentGateway implements AgentGateway {
 
     private final JdbcAgentRepository agentRepository;

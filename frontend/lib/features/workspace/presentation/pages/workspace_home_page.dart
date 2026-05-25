@@ -290,6 +290,14 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           await _openKnowledgeSheet(shell);
         }
         return;
+      case _PhoneMenuAction.accounting:
+        if (!mounted || shell == null || shell.workspaceId.isEmpty) {
+          return;
+        }
+        Navigator.of(
+          context,
+        ).pushNamed(AppRoutes.accounting, arguments: shell.workspaceId);
+        return;
       case _PhoneMenuAction.addMember:
         if (canManageMembers) {
           await _promptAddMember();
@@ -470,6 +478,19 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
             ),
           if (!isPhone)
             IconButton(
+              tooltip: _accountingLabel(context),
+              onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
+                  ? null
+                  : () {
+                      Navigator.of(context).pushNamed(
+                        AppRoutes.accounting,
+                        arguments: shellAsync.valueOrNull!.workspaceId,
+                      );
+                    },
+              icon: const Icon(Icons.account_balance_rounded),
+            ),
+          if (!isPhone)
+            IconButton(
               tooltip: l10n.addMemberTooltip,
               onPressed:
                   (shellAsync.valueOrNull?.workspaceId.isEmpty ?? true) ||
@@ -537,6 +558,11 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     PopupMenuItem(
                       value: _PhoneMenuAction.knowledge,
                       child: Text(l10n.knowledgeTooltip),
+                    ),
+                  if (hasWorkspace)
+                    PopupMenuItem(
+                      value: _PhoneMenuAction.accounting,
+                      child: Text(_accountingLabel(context)),
                     ),
                   if (hasWorkspace && canManageMembers)
                     PopupMenuItem(
@@ -1466,6 +1492,7 @@ IconData _emptyConversationIcon(
 enum _PhoneMenuAction {
   newWorkspace,
   knowledge,
+  accounting,
   addMember,
   diagnostics,
   lightMode,
@@ -1473,6 +1500,12 @@ enum _PhoneMenuAction {
   chinese,
   english,
   signOut,
+}
+
+String _accountingLabel(BuildContext context) {
+  return Localizations.localeOf(context).languageCode == 'zh'
+      ? '\u4f1a\u8ba1'
+      : 'Accounting';
 }
 
 enum _KnowledgeUploadTarget { workspace, currentConversation }

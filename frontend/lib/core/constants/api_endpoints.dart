@@ -40,4 +40,23 @@ final class ApiEndpoints {
   static String workspaceKnowledgeDocuments(String workspaceId) {
     return '/workspaces/$workspaceId/knowledge-documents';
   }
+
+  static String workspaceAccountingAccounts(String workspaceId) {
+    return '/workspaces/$workspaceId/accounting/accounts';
+  }
+
+  static String workspaceAccountingVouchers(String workspaceId) {
+    return '/workspaces/$workspaceId/accounting/vouchers';
+  }
+
+  static String workspaceAccountingVoucherPost(
+    String workspaceId,
+    String voucherId,
+  ) {
+    return '/workspaces/$workspaceId/accounting/vouchers/$voucherId/post';
+  }
+
+  static String workspaceAccountingTrialBalance(String workspaceId) {
+    return '/workspaces/$workspaceId/accounting/trial-balance';
+  }
 }

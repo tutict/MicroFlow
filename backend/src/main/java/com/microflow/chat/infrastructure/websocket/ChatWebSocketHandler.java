@@ -1,91 +1,113 @@
 package com.microflow.chat.infrastructure.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microflow.auth.infrastructure.security.JwtPrincipal;
+import com.microflow.auth.infrastructure.security.WebSocketTicketService;
 import com.microflow.chat.api.ws.SocketSendMessagePayload;
 import com.microflow.chat.api.ws.SocketSubscribePayload;
 import com.microflow.chat.application.service.MessageApplicationService;
 import com.microflow.realtime.session.WebSocketSessionRegistry;
 import com.microflow.workspace.infrastructure.persistence.JdbcWorkspaceRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnMessage;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-@Component
-public class ChatWebSocketHandler extends TextWebSocketHandler {
+@ApplicationScoped
+@ServerEndpoint("/ws")
+public class ChatWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ChatWebSocketHandler.class);
 
-    private final ObjectMapper objectMapper;
-    private final MessageApplicationService messageApplicationService;
-    private final WebSocketSessionRegistry sessionRegistry;
-    private final ExecutorService virtualThreadExecutorService;
-    private final JdbcWorkspaceRepository workspaceRepository;
+    @Inject
+    ObjectMapper objectMapper;
 
-    public ChatWebSocketHandler(
-            ObjectMapper objectMapper,
-            MessageApplicationService messageApplicationService,
-            WebSocketSessionRegistry sessionRegistry,
-            ExecutorService virtualThreadExecutorService,
-            JdbcWorkspaceRepository workspaceRepository
-    ) {
-        this.objectMapper = objectMapper;
-        this.messageApplicationService = messageApplicationService;
-        this.sessionRegistry = sessionRegistry;
-        this.virtualThreadExecutorService = virtualThreadExecutorService;
-        this.workspaceRepository = workspaceRepository;
+    @Inject
+    MessageApplicationService messageApplicationService;
+
+    @Inject
+    WebSocketSessionRegistry sessionRegistry;
+
+    @Inject
+    @Named("microflowVirtualThreadExecutor")
+    ExecutorService virtualThreadExecutorService;
+
+    @Inject
+    JdbcWorkspaceRepository workspaceRepository;
+
+    @Inject
+    WebSocketTicketService webSocketTicketService;
+
+    @OnOpen
+    public void onOpen(Session session) throws IOException {
+        try {
+            var principal = authenticate(session);
+            session.getUserProperties().put("currentUserId", principal.userId());
+            session.getUserProperties().put("currentUserEmail", principal.email());
+            session.getUserProperties().put("currentDisplayName", principal.displayName());
+            sessionRegistry.register(session, principal.userId());
+            log.info("WebSocket connected: {}", session.getId());
+        } catch (IllegalArgumentException ex) {
+            session.close(new CloseReason(CloseReason.CloseCodes.VIOLATED_POLICY, "Unauthorized"));
+        }
     }
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        var userId = (String) session.getAttributes().get("currentUserId");
-        sessionRegistry.register(session, userId);
-        log.info("WebSocket connected: {}", session.getId());
-    }
-
-    @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
+    @OnMessage
+    public void onMessage(Session session, String message) {
         virtualThreadExecutorService.submit(() -> processMessage(session, message));
     }
 
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+    @OnClose
+    public void onClose(Session session, CloseReason closeReason) {
         sessionRegistry.unregister(session);
-        log.info("WebSocket disconnected: {} ({})", session.getId(), status);
+        log.info("WebSocket disconnected: {} ({})", session.getId(), closeReason);
     }
 
-    private void processMessage(WebSocketSession session, TextMessage message) {
+    private JwtPrincipal authenticate(Session session) {
+        var tickets = session.getRequestParameterMap().get("ticket");
+        var ticket = tickets == null || tickets.isEmpty() ? null : tickets.getFirst();
+        if (ticket == null || ticket.isBlank()) {
+            throw new IllegalArgumentException("Missing WebSocket ticket");
+        }
+        return webSocketTicketService.consume(ticket);
+    }
+
+    private void processMessage(Session session, String message) {
         try {
-            var envelope = objectMapper.readValue(message.getPayload(), Map.class);
+            var envelope = objectMapper.readValue(message, Map.class);
             var type = (String) envelope.get("type");
             if ("SUBSCRIBE".equals(type)) {
                 var payload = objectMapper.convertValue(envelope.get("payload"), SocketSubscribePayload.class);
-                var userId = (String) session.getAttributes().get("currentUserId");
+                var userId = (String) session.getUserProperties().get("currentUserId");
                 if (!workspaceRepository.isChannelMember(payload.channelId(), userId)) {
                     throw new IllegalArgumentException("Channel access denied");
                 }
                 sessionRegistry.subscribe(session.getId(), payload.channelId());
-                session.sendMessage(new TextMessage("{\"type\":\"SUBSCRIBED\"}"));
+                session.getBasicRemote().sendText("{\"type\":\"SUBSCRIBED\"}");
                 return;
             }
             if ("CHAT_SEND".equals(type)) {
                 var payload = objectMapper.convertValue(envelope.get("payload"), SocketSendMessagePayload.class);
-                var userId = (String) session.getAttributes().get("currentUserId");
+                var userId = (String) session.getUserProperties().get("currentUserId");
                 var channelId = (String) envelope.get("channelId");
                 messageApplicationService.sendMessage(payload.workspaceId(), channelId, userId, payload.content());
-                session.sendMessage(new TextMessage("{\"type\":\"ACK\"}"));
+                session.getBasicRemote().sendText("{\"type\":\"ACK\"}");
                 return;
             }
-            session.sendMessage(new TextMessage("{\"type\":\"ERROR\",\"payload\":\"Unsupported event\"}"));
+            session.getBasicRemote().sendText("{\"type\":\"ERROR\",\"payload\":\"Unsupported event\"}");
         } catch (Exception ex) {
             try {
-                session.sendMessage(new TextMessage("{\"type\":\"ERROR\",\"payload\":\"" + sanitize(ex.getMessage()) + "\"}"));
+                session.getBasicRemote().sendText("{\"type\":\"ERROR\",\"payload\":\"" + sanitize(ex.getMessage()) + "\"}");
             } catch (IOException ignored) {
                 log.debug("Unable to send websocket error response", ignored);
             }

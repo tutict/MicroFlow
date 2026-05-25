@@ -2,17 +2,15 @@ package com.microflow.agent.config;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "microflow.agent")
 public class DeploymentAgentProperties {
 
     private String configPath = "./data/agents.json";
-    private String configJson;
+    private String configJson = " ";
     private boolean fallbackMockEnabled = true;
-    private String openclawEndpointUrl;
+    private String openclawEndpointUrl = " ";
     private String openclawCredential = "";
-    private String openclawStateDir;
+    private String openclawStateDir = " ";
     private List<String> openclawAgentKeys = new ArrayList<>(List.of("assistant", "reviewer"));
     private List<ProviderDefinition> providers = new ArrayList<>();
 

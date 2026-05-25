@@ -1,21 +1,21 @@
 package com.microflow.realtime.session;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.websocket.Session;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
 
-@Component
+@ApplicationScoped
 public class WebSocketSessionRegistry {
 
     private final Map<String, SessionContext> sessions = new ConcurrentHashMap<>();
 
-    public void register(WebSocketSession session, String userId) {
+    public void register(Session session, String userId) {
         sessions.put(session.getId(), new SessionContext(session, userId));
     }
 
-    public void unregister(WebSocketSession session) {
+    public void unregister(Session session) {
         sessions.remove(session.getId());
     }
 
@@ -39,13 +39,12 @@ public class WebSocketSessionRegistry {
     }
 
     public record SessionContext(
-            WebSocketSession session,
+            Session session,
             String userId,
             Set<String> subscribedChannels
     ) {
-        SessionContext(WebSocketSession session, String userId) {
+        SessionContext(Session session, String userId) {
             this(session, userId, ConcurrentHashMap.newKeySet());
         }
     }
 }
-

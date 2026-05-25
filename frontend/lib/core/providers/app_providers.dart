@@ -7,6 +7,8 @@ import '../network/ws_client.dart';
 import '../storage/local_store.dart';
 import '../../features/agents/data/repositories/agent_repository_impl.dart';
 import '../../features/agents/domain/repositories/agent_repository.dart';
+import '../../features/accounting/data/repositories/accounting_repository_impl.dart';
+import '../../features/accounting/domain/repositories/accounting_repository.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/bootstrap/data/repositories/server_connection_repository_impl.dart';
@@ -62,4 +64,8 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 
 final agentRepositoryProvider = Provider<AgentRepository>((ref) {
   return AgentRepositoryImpl(ref.watch(restClientProvider));
+});
+
+final accountingRepositoryProvider = Provider<AccountingRepository>((ref) {
+  return AccountingRepositoryImpl(ref.watch(restClientProvider));
 });

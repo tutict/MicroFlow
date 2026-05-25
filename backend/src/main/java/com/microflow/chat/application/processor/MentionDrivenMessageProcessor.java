@@ -8,6 +8,7 @@ import com.microflow.chat.infrastructure.persistence.JdbcMessageRepository;
 import com.microflow.knowledge.application.service.KnowledgeBaseService;
 import com.microflow.realtime.broadcaster.RealtimeBroadcaster;
 import com.microflow.realtime.protocol.RealtimeEvent;
+import jakarta.inject.Named;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -36,6 +37,7 @@ public class MentionDrivenMessageProcessor implements MessageProcessor {
             JdbcMessageRepository messageRepository,
             AgentGateway agentGateway,
             RealtimeBroadcaster realtimeBroadcaster,
+            @Named("microflowVirtualThreadExecutor")
             ExecutorService virtualThreadExecutorService,
             MentionParser mentionParser,
             AgentCollaborationOrchestrator collaborationOrchestrator,

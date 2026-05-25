@@ -1,6 +1,5 @@
 package com.microflow.agent.infrastructure.provider.openclaw;
 
-import com.microflow.agent.domain.gateway.AgentGateway;
 import com.microflow.agent.domain.model.AgentExecutionRequest;
 import com.microflow.agent.domain.model.AgentExecutionResult;
 import java.time.Duration;
@@ -8,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MockOpenClawAgentGateway implements AgentGateway {
+public class MockOpenClawAgentGateway {
 
     private final Duration responseDelay;
 
@@ -16,7 +15,6 @@ public class MockOpenClawAgentGateway implements AgentGateway {
         this.responseDelay = responseDelay;
     }
 
-    @Override
     public AgentExecutionResult execute(AgentExecutionRequest request) {
         try {
             Thread.sleep(responseDelay);

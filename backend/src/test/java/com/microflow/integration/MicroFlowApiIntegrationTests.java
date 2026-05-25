@@ -3,10 +3,15 @@ package com.microflow.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.microflow.bootstrap.MicroFlowApplication;
 import com.microflow.bootstrap.pairing.PairingService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.microflow.testing.QuarkusRestTemplate;
+import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -23,37 +28,34 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
-@SpringBootTest(
-        classes = MicroFlowApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
-)
+@QuarkusTest
+@TestProfile(MicroFlowApiIntegrationTests.Profile.class)
 class MicroFlowApiIntegrationTests {
 
     private static final Path databasePath = createDatabasePath();
 
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> "jdbc:sqlite:" + databasePath.toAbsolutePath());
-        registry.add("microflow.agent.mock-delay", () -> "PT0.05S");
-        registry.add("microflow.agent.openclaw-state-dir", () -> databasePath.resolveSibling("missing-qclaw-state").toString());
-        registry.add("microflow.seed.demo-enabled", () -> "true");
-        registry.add("microflow.jwt.secret", () -> "integration-test-jwt-secret-with-entropy");
-        registry.add("microflow.crypto.secret", () -> "ZmVkY2JhOTg3NjU0MzIxMGZlZGNiYTk4NzY1NDMyMTA=");
+    public static class Profile implements QuarkusTestProfile {
+        @Override
+        public Map<String, String> getConfigOverrides() {
+            return Map.of(
+                    "microflow.database.path", databasePath.toAbsolutePath().toString(),
+                    "microflow.agent.mock-delay", "PT0.05S",
+                    "microflow.agent.openclaw-state-dir", databasePath.resolveSibling("missing-qclaw-state").toString(),
+                    "microflow.seed.demo-enabled", "true",
+                    "microflow.jwt.secret", "integration-test-jwt-secret-with-entropy",
+                    "microflow.crypto.secret", "ZmVkY2JhOTg3NjU0MzIxMGZlZGNiYTk4NzY1NDMyMTA="
+            );
+        }
     }
 
     @AfterAll
@@ -65,17 +67,23 @@ class MicroFlowApiIntegrationTests {
         }
     }
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+    private final QuarkusRestTemplate restTemplate = new QuarkusRestTemplate();
 
-    @Autowired
+    @Inject
     private ObjectMapper objectMapper;
 
-    @Autowired
+    @Inject
     private PairingService pairingService;
 
-    @LocalServerPort
+    @TestHTTPResource("/")
+    private URI baseUri;
+
     private int port;
+
+    @BeforeEach
+    void capturePort() {
+        port = baseUri.getPort();
+    }
 
     @Test
     void protectedWorkspaceEndpointRejectsMissingBearerToken() {

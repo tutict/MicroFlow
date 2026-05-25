@@ -3,13 +3,12 @@ package com.microflow.realtime.broadcaster;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microflow.realtime.protocol.RealtimeEvent;
 import com.microflow.realtime.session.WebSocketSessionRegistry;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.websocket.Session;
 import java.io.IOException;
 import java.util.Map;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
 
-@Component
+@ApplicationScoped
 public class DefaultRealtimeBroadcaster implements RealtimeBroadcaster {
 
     private final ObjectMapper objectMapper;
@@ -45,17 +44,16 @@ public class DefaultRealtimeBroadcaster implements RealtimeBroadcaster {
         }
     }
 
-    private void send(WebSocketSession session, String payload) {
+    private void send(Session session, String payload) {
         if (!session.isOpen()) {
             return;
         }
         synchronized (session) {
             try {
-                session.sendMessage(new TextMessage(payload));
+                session.getBasicRemote().sendText(payload);
             } catch (IOException ignored) {
                 // Session lifecycle is best-effort for the minimal runnable backend.
             }
         }
     }
 }
-
