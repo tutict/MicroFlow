@@ -118,7 +118,7 @@ class _ChannelSection extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0,
                 ),
               ),
             ],

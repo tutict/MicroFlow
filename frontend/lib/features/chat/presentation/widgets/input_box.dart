@@ -122,7 +122,7 @@ class _InputBoxState extends State<InputBox> {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(widget.compact ? 18 : 16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
@@ -147,7 +147,7 @@ class _InputBoxState extends State<InputBox> {
               ),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(widget.compact ? 14 : 16),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.colorScheme.primary.withValues(alpha: 0.16),
                 ),
@@ -287,7 +287,7 @@ class _InputBoxState extends State<InputBox> {
                         style: FilledButton.styleFrom(
                           padding: EdgeInsets.zero,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         child: Icon(

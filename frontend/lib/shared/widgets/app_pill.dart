@@ -38,12 +38,12 @@ class AppPill extends StatelessWidget {
     final background =
         backgroundColor ??
         theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.46 : 0.9,
+          alpha: theme.brightness == Brightness.dark ? 0.42 : 0.92,
         );
     final border =
-        borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.82);
+        borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.64);
     final resolvedRadius =
-        borderRadius ?? BorderRadius.circular(_isMetric ? 14 : 999);
+        borderRadius ?? BorderRadius.circular(_isMetric ? 8 : 999);
     final resolvedPadding =
         padding ??
         (_isMetric
@@ -66,6 +66,7 @@ class AppPill extends StatelessWidget {
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: valueColor ?? theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -76,6 +77,7 @@ class AppPill extends StatelessWidget {
                         labelColor ??
                         theme.colorScheme.onSurface.withValues(alpha: 0.78),
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
                   ),
                 ),
               ],
@@ -99,6 +101,7 @@ class AppPill extends StatelessWidget {
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: labelColor ?? theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
                   ),
                 ),
               ],

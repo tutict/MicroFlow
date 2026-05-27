@@ -123,7 +123,7 @@ class _DiagnosticsList extends ConsumerWidget {
                 copy.title,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 8),

@@ -69,7 +69,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
+                top: Radius.circular(16),
               ),
               border: Border.all(color: theme.dividerColor),
             ),
@@ -188,7 +188,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(28),
+                    top: Radius.circular(16),
                   ),
                   border: Border.all(color: theme.dividerColor),
                 ),
@@ -385,7 +385,10 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               height: isCompactPhone ? 34 : 38,
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.16),
+                ),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -393,7 +396,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.primary,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0.4,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -611,24 +614,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           ],
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: theme.brightness == Brightness.dark
-                ? const [
-                    Color(0xFF081015),
-                    Color(0xFF10191F),
-                    Color(0xFF152229),
-                  ]
-                : const [
-                    Color(0xFFF8FAFA),
-                    Color(0xFFEEF2F3),
-                    Color(0xFFE3EAEC),
-                  ],
-          ),
-        ),
+      body: ColoredBox(
+        color: theme.scaffoldBackgroundColor,
         child: SafeArea(
           top: false,
           child: Padding(
@@ -2025,11 +2012,9 @@ class _DesktopWorkspaceLead extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.46 : 0.72,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Row(
         children: [
@@ -2069,7 +2054,7 @@ class _DesktopWorkspaceLead extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '$selectedConversationLabel · $statusLabel',
+                        '$selectedConversationLabel / $statusLabel',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.labelMedium?.copyWith(
@@ -2181,26 +2166,16 @@ class _WorkspaceSetupPanel extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: theme.brightness == Brightness.dark
-              ? const [Color(0xFF162229), Color(0xFF111C22)]
-              : const [Color(0xFFFCFDFD), Color(0xFFF2F6F7)],
-        ),
-        borderRadius: BorderRadius.circular(compact ? 22 : 30),
-        border: Border.all(
-          color: theme.brightness == Brightness.dark
-              ? const Color(0xFF23323A)
-              : const Color(0xFFD9E3E7),
-        ),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.dividerColor),
         boxShadow: [
           BoxShadow(
             color: theme.brightness == Brightness.dark
-                ? const Color(0x30000000)
-                : const Color(0x160E1A22),
-            blurRadius: compact ? 18 : 28,
-            offset: const Offset(0, 16),
+                ? const Color(0x22000000)
+                : const Color(0x0D0F1720),
+            blurRadius: compact ? 10 : 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -2240,7 +2215,7 @@ class _WorkspaceSetupPanel extends StatelessWidget {
                       ?.copyWith(
                         color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: compact ? -0.4 : -0.8,
+                        letterSpacing: 0,
                       ),
             ),
             SizedBox(height: compact ? 10 : 12),
@@ -2277,7 +2252,7 @@ class _WorkspaceSetupPanel extends StatelessWidget {
                 color: theme.colorScheme.surface.withValues(
                   alpha: theme.brightness == Brightness.dark ? 0.34 : 0.72,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.dividerColor.withValues(alpha: 0.82),
                 ),
@@ -2347,7 +2322,7 @@ class _MobileBottomNav extends StatelessWidget {
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
             color: theme.cardColor,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: theme.dividerColor),
             boxShadow: [
               BoxShadow(
@@ -2395,7 +2370,7 @@ class _MobileNavItem extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
@@ -2407,7 +2382,7 @@ class _MobileNavItem extends StatelessWidget {
                     alpha: theme.brightness == Brightness.dark ? 0.22 : 0.14,
                   )
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

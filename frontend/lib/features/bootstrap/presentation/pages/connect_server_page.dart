@@ -105,10 +105,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
                 (isWide
                         ? theme.textTheme.displaySmall
                         : theme.textTheme.headlineMedium)
-                    ?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: isWide ? -1.8 : -1.1,
-                    ),
+                    ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: 0),
           ),
           const SizedBox(height: 12),
           ConstrainedBox(
@@ -197,7 +194,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
                       copy.panelTitle,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.8,
+                        letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -246,7 +243,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
                             copy.panelTitle,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
-                              letterSpacing: -0.8,
+                              letterSpacing: 0,
                             ),
                           ),
                           const SizedBox(height: 8),

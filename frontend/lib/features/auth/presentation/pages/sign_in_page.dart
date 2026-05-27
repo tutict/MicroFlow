@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
@@ -133,7 +131,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               fontSize: isWide ? 64 : (isCondensedMobile ? 34 : 42),
               height: 1,
               fontWeight: FontWeight.w800,
-              letterSpacing: isWide ? -2.2 : (isCondensedMobile ? -0.8 : -1.2),
+              letterSpacing: 0,
               color: theme.colorScheme.onSurface,
             );
 
@@ -221,12 +219,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF1F6F5C), Color(0xFF59B29A)],
-              ),
-              borderRadius: BorderRadius.circular(18),
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: const Icon(
@@ -241,7 +235,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             style: theme.textTheme.headlineMedium?.copyWith(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.6,
+              letterSpacing: 0,
             ),
           ),
           const SizedBox(height: 10),
@@ -260,7 +254,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                 color: theme.colorScheme.surface.withValues(
                   alpha: theme.brightness == Brightness.dark ? 0.78 : 0.92,
                 ),
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.dividerColor.withValues(alpha: 0.82),
                 ),
@@ -340,7 +334,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFBA3B2F).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: const Color(0xFFBA3B2F).withValues(alpha: 0.18),
                 ),
@@ -362,7 +356,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               onPressed: isLoading ? null : _submit,
               style: FilledButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(isLoading ? l10n.signingIn : l10n.enterWorkspace),
@@ -375,7 +369,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
               color: theme.colorScheme.surface.withValues(
                 alpha: theme.brightness == Brightness.dark ? 0.56 : 0.92,
               ),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: theme.colorScheme.outline.withValues(alpha: 0.78),
               ),
@@ -408,213 +402,150 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     );
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: theme.brightness == Brightness.dark
-                ? const [
-                    Color(0xFF081015),
-                    Color(0xFF10191F),
-                    Color(0xFF152229),
-                  ]
-                : const [
-                    Color(0xFFF7F9F9),
-                    Color(0xFFEEF2F3),
-                    Color(0xFFE3EAEC),
-                  ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: -120,
-              top: -100,
-              child: _Orb(
-                size: 320,
-                color: theme.colorScheme.primary.withValues(alpha: 0.16),
-              ),
+      body: ColoredBox(
+        color: theme.scaffoldBackgroundColor,
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              sidePadding,
+              width < 640 ? 18 : 24,
+              sidePadding,
+              width < 640 ? 18 : 24,
             ),
-            Positioned(
-              right: -100,
-              top: 120,
-              child: _Orb(
-                size: 260,
-                color: const Color(0xFF3D7EA6).withValues(alpha: 0.1),
-              ),
-            ),
-            Positioned(
-              right: 60,
-              bottom: -180,
-              child: _Orb(
-                size: 420,
-                color: Colors.white.withValues(
-                  alpha: theme.brightness == Brightness.dark ? 0.06 : 0.22,
-                ),
-              ),
-            ),
-            SafeArea(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  sidePadding,
-                  width < 640 ? 18 : 24,
-                  sidePadding,
-                  width < 640 ? 18 : 24,
-                ),
-                child: Column(
+            child: Column(
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        _GlassPanel(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
+                    _GlassPanel(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      radius: 8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              'MF',
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
-                          radius: 18,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [
-                                      Color(0xFF1F6F5C),
-                                      Color(0xFF54A690),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  'MF',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                              Text(
+                                l10n.appTitle,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.appTitle,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                              Text(
+                                l10n.workspaceHub,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.74,
                                   ),
-                                  Text(
-                                    l10n.workspaceHub,
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.74),
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    if (isCompactHeader)
+                      PopupMenuButton<int>(
+                        tooltip: l10n.language,
+                        onSelected: _handleSettingsSelection,
+                        itemBuilder: (context) => [
+                          PopupMenuItem(value: 1, child: Text(l10n.lightMode)),
+                          PopupMenuItem(value: 2, child: Text(l10n.darkMode)),
+                          PopupMenuItem(
+                            value: 3,
+                            child: Text(l10n.simplifiedChinese),
+                          ),
+                          PopupMenuItem(value: 4, child: Text(l10n.english)),
+                        ],
+                        icon: const Icon(Icons.tune_rounded),
+                      )
+                    else ...[
+                      const ThemeModeSwitcher(),
+                      const SizedBox(width: 8),
+                      const LanguageSwitcher(),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1320),
+                      child: isWide
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _Reveal(
+                                    ready: _ready,
+                                    offset: const Offset(-0.08, 0),
+                                    child: hero,
+                                  ),
+                                ),
+                                const SizedBox(width: 28),
+                                SizedBox(
+                                  width: 430,
+                                  child: _Reveal(
+                                    ready: _ready,
+                                    offset: const Offset(0.08, 0),
+                                    child: form,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : SingleChildScrollView(
+                              keyboardDismissBehavior:
+                                  ScrollViewKeyboardDismissBehavior.onDrag,
+                              padding: EdgeInsets.only(
+                                bottom:
+                                    MediaQuery.viewInsetsOf(context).bottom +
+                                    20,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _Reveal(
+                                    ready: _ready,
+                                    offset: const Offset(0, 0.05),
+                                    child: hero,
+                                  ),
+                                  const SizedBox(height: 22),
+                                  _Reveal(
+                                    ready: _ready,
+                                    offset: const Offset(0, 0.07),
+                                    child: form,
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        if (isCompactHeader)
-                          PopupMenuButton<int>(
-                            tooltip: l10n.language,
-                            onSelected: _handleSettingsSelection,
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 1,
-                                child: Text(l10n.lightMode),
-                              ),
-                              PopupMenuItem(
-                                value: 2,
-                                child: Text(l10n.darkMode),
-                              ),
-                              PopupMenuItem(
-                                value: 3,
-                                child: Text(l10n.simplifiedChinese),
-                              ),
-                              PopupMenuItem(
-                                value: 4,
-                                child: Text(l10n.english),
-                              ),
-                            ],
-                            icon: const Icon(Icons.tune_rounded),
-                          )
-                        else ...[
-                          const ThemeModeSwitcher(),
-                          const SizedBox(width: 8),
-                          const LanguageSwitcher(),
-                        ],
-                      ],
+                            ),
                     ),
-                    const SizedBox(height: 20),
-                    Expanded(
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1320),
-                          child: isWide
-                              ? Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    Expanded(
-                                      child: _Reveal(
-                                        ready: _ready,
-                                        offset: const Offset(-0.08, 0),
-                                        child: hero,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 28),
-                                    SizedBox(
-                                      width: 430,
-                                      child: _Reveal(
-                                        ready: _ready,
-                                        offset: const Offset(0.08, 0),
-                                        child: form,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : SingleChildScrollView(
-                                  keyboardDismissBehavior:
-                                      ScrollViewKeyboardDismissBehavior.onDrag,
-                                  padding: EdgeInsets.only(
-                                    bottom:
-                                        MediaQuery.viewInsetsOf(
-                                          context,
-                                        ).bottom +
-                                        20,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      _Reveal(
-                                        ready: _ready,
-                                        offset: const Offset(0, 0.05),
-                                        child: hero,
-                                      ),
-                                      const SizedBox(height: 22),
-                                      _Reveal(
-                                        ready: _ready,
-                                        offset: const Offset(0, 0.07),
-                                        child: form,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -650,7 +581,7 @@ class _GlassPanel extends StatelessWidget {
   const _GlassPanel({
     required this.child,
     this.padding = const EdgeInsets.all(28),
-    this.radius = 32,
+    this.radius = 10,
   });
   final Widget child;
   final EdgeInsets padding;
@@ -658,33 +589,23 @@ class _GlassPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.78 : 0.92,
-            ),
-            borderRadius: BorderRadius.circular(radius),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.84),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0x22000000)
-                    : const Color(0x100E1A22),
-                blurRadius: 24,
-                offset: const Offset(0, 14),
-              ),
-            ],
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: theme.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: theme.brightness == Brightness.dark
+                ? const Color(0x1F000000)
+                : const Color(0x0D0F1720),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
           ),
-          child: child,
-        ),
+        ],
       ),
+      child: child,
     );
   }
 }
@@ -698,28 +619,16 @@ class _HeroStage extends StatelessWidget {
     final theme = Theme.of(context);
     return _GlassPanel(
       padding: EdgeInsets.all(isWide ? 28 : 18),
-      radius: isWide ? 36 : 28,
+      radius: 10,
       child: Stack(
         children: [
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: theme.brightness == Brightness.dark
-                      ? const [
-                          Color(0x331F6F5C),
-                          Color(0x141E3038),
-                          Color(0x2616242C),
-                        ]
-                      : const [
-                          Color(0x66FFFFFF),
-                          Color(0x2FDCE8E8),
-                          Color(0x55F6FBFB),
-                        ],
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: theme.brightness == Brightness.dark ? 0.22 : 0.42,
                 ),
-                borderRadius: BorderRadius.circular(isWide ? 28 : 22),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),
@@ -737,7 +646,7 @@ class _HeroStage extends StatelessWidget {
             child: Container(
               height: isWide ? 180 : 120,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.colorScheme.primary.withValues(alpha: 0.18),
                 ),
@@ -846,7 +755,7 @@ class _StageCard extends StatelessWidget {
         color: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.58 : 0.9,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.72)),
       ),
       child: Row(
@@ -856,7 +765,7 @@ class _StageCard extends StatelessWidget {
             height: 38,
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Icon(icon, size: 18, color: theme.colorScheme.primary),
@@ -969,29 +878,6 @@ class _Field extends StatelessWidget {
         ),
         fillColor: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.84 : 0.98,
-        ),
-      ),
-    );
-  }
-}
-
-class _Orb extends StatelessWidget {
-  const _Orb({required this.size, required this.color});
-  final double size;
-  final Color color;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color,
-            color.withValues(alpha: color.a * 0.4),
-            Colors.transparent,
-          ],
         ),
       ),
     );

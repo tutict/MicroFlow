@@ -37,7 +37,7 @@ class WorkspacePanel extends StatelessWidget {
       0,
       (sum, conversation) => sum + conversation.unreadCount,
     );
-    final outerRadius = compact ? 20.0 : 30.0;
+    final outerRadius = compact ? 8.0 : 10.0;
     final outerPadding = compact ? 14.0 : 18.0;
     final shellSurface = theme.colorScheme.surface.withValues(
       alpha: theme.brightness == Brightness.dark ? 0.5 : 0.76,
@@ -57,7 +57,7 @@ class WorkspacePanel extends StatelessWidget {
               color: theme.colorScheme.surfaceContainerHigh.withValues(
                 alpha: theme.brightness == Brightness.dark ? 0.4 : 0.82,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: subtleBorder),
             ),
             child: Column(
@@ -72,7 +72,7 @@ class WorkspacePanel extends StatelessWidget {
                         color: theme.colorScheme.primary.withValues(
                           alpha: 0.12,
                         ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: theme.colorScheme.primary.withValues(
                             alpha: 0.14,
@@ -177,7 +177,7 @@ class WorkspacePanel extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: shellSurface,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: subtleBorder),
             ),
             child: _ConversationInbox(
@@ -225,7 +225,7 @@ class WorkspacePanel extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: shellSurface,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: subtleBorder),
               ),
               child: Column(
@@ -274,7 +274,7 @@ class WorkspacePanel extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: shellSurface,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: subtleBorder),
             ),
             child: recentInteractions.isEmpty
@@ -301,7 +301,7 @@ class WorkspacePanel extends StatelessWidget {
             style: theme.textTheme.labelSmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.56),
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.3,
+              letterSpacing: 0,
             ),
           ),
         ],
@@ -353,7 +353,7 @@ class WorkspacePanel extends StatelessWidget {
                         color: theme.colorScheme.primary.withValues(
                           alpha: 0.12,
                         ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: theme.colorScheme.primary.withValues(
                             alpha: 0.14,
@@ -366,7 +366,7 @@ class WorkspacePanel extends StatelessWidget {
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
+                          letterSpacing: 0,
                         ),
                       ),
                     ),
@@ -491,7 +491,7 @@ class WorkspacePanel extends StatelessWidget {
                   padding: EdgeInsets.all(compact ? 12 : 14),
                   decoration: BoxDecoration(
                     color: nestedSurface,
-                    borderRadius: BorderRadius.circular(compact ? 16 : 18),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: subtleBorder),
                   ),
                   child: _ConversationInbox(
@@ -517,13 +517,17 @@ class _WorkspaceMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return AppPill(
       label: label,
       value: value,
-      backgroundColor: Colors.white.withValues(alpha: 0.1),
-      borderColor: Colors.white.withValues(alpha: 0.12),
-      valueColor: Colors.white,
-      labelColor: Colors.white.withValues(alpha: 0.72),
+      backgroundColor: theme.colorScheme.surface.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.34 : 0.74,
+      ),
+      borderColor: theme.dividerColor.withValues(alpha: 0.82),
+      valueColor: theme.colorScheme.onSurface,
+      labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.66),
     );
   }
 }
@@ -697,7 +701,7 @@ class _ConversationSection extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0.3,
+                  letterSpacing: 0,
                 ),
               ),
             ],
@@ -746,13 +750,13 @@ class _ConversationTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? selectedBackground : Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isSelected
                   ? theme.colorScheme.primary.withValues(alpha: 0.24)
@@ -766,7 +770,7 @@ class _ConversationTile extends StatelessWidget {
                 height: 34,
                 decoration: BoxDecoration(
                   color: leadingBackground,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Icon(
@@ -876,7 +880,7 @@ class _MemberListTile extends StatelessWidget {
         color: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
       ),
       child: Row(
@@ -886,7 +890,7 @@ class _MemberListTile extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               color: member.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Text(
@@ -966,7 +970,7 @@ class _RecentInteractionTile extends StatelessWidget {
         color: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
       ),
       child: Row(
@@ -977,7 +981,7 @@ class _RecentInteractionTile extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: interaction.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Text(
@@ -1056,7 +1060,7 @@ class _EmptyCollaborationState extends StatelessWidget {
         color: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.3 : 0.58,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
       ),
       child: Text(

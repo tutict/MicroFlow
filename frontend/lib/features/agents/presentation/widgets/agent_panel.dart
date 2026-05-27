@@ -24,7 +24,7 @@ class AgentPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final enabledAgents = agents.where((agent) => agent.enabled).length;
     final queuedRuns = runs.where((run) => run.status == 'QUEUED').length;
-    final outerRadius = compact ? 20.0 : 30.0;
+    final outerRadius = compact ? 8.0 : 10.0;
     final outerPadding = compact ? 14.0 : 18.0;
     final shellSurface = theme.colorScheme.surface.withValues(
       alpha: theme.brightness == Brightness.dark ? 0.5 : 0.76,
@@ -44,7 +44,7 @@ class AgentPanel extends StatelessWidget {
               color: theme.colorScheme.surfaceContainerHigh.withValues(
                 alpha: theme.brightness == Brightness.dark ? 0.4 : 0.82,
               ),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: subtleBorder),
             ),
             child: Column(
@@ -59,7 +59,7 @@ class AgentPanel extends StatelessWidget {
                         color: theme.colorScheme.primary.withValues(
                           alpha: 0.12,
                         ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: theme.colorScheme.primary.withValues(
                             alpha: 0.14,
@@ -144,7 +144,7 @@ class AgentPanel extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
               decoration: BoxDecoration(
                 color: shellSurface,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: subtleBorder),
               ),
               child: Text(
@@ -210,7 +210,7 @@ class AgentPanel extends StatelessWidget {
                         color: theme.colorScheme.primary.withValues(
                           alpha: 0.12,
                         ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       alignment: Alignment.center,
                       child: Icon(
@@ -302,7 +302,7 @@ class AgentPanel extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: nestedSurface,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: subtleBorder),
                     ),
                     child: Text(
@@ -369,7 +369,7 @@ class _AgentTile extends StatelessWidget {
         color: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
       ),
       child: Row(
@@ -380,7 +380,7 @@ class _AgentTile extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
             child: Icon(
@@ -454,7 +454,7 @@ class _RunTile extends StatelessWidget {
         color: theme.colorScheme.surface.withValues(
           alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
       ),
       child: Row(

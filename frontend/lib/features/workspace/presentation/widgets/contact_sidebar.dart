@@ -43,7 +43,9 @@ class _ContactSidebarState extends State<ContactSidebar> {
   void didUpdateWidget(covariant ContactSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.selectedContactId != null &&
-        widget.contacts.every((entry) => entry.id != widget.selectedContactId)) {
+        widget.contacts.every(
+          (entry) => entry.id != widget.selectedContactId,
+        )) {
       _hoveredContactId = null;
     }
   }
@@ -73,14 +75,8 @@ class _ContactSidebarState extends State<ContactSidebar> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: theme.brightness == Brightness.dark
-              ? const [
-                  Color(0xFF162229),
-                  Color(0xFF111C22),
-                ]
-              : const [
-                  Color(0xFFFCFDFD),
-                  Color(0xFFF2F6F7),
-                ],
+              ? const [Color(0xFF162229), Color(0xFF111C22)]
+              : const [Color(0xFFFCFDFD), Color(0xFFF2F6F7)],
         ),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
@@ -119,10 +115,7 @@ class _ContactSidebarState extends State<ContactSidebar> {
                   height: 52,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF1F6F5C),
-                        Color(0xFF2F8F78),
-                      ],
+                      colors: [Color(0xFF1F6F5C), Color(0xFF2F8F78)],
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -132,7 +125,7 @@ class _ContactSidebarState extends State<ContactSidebar> {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 0.4,
+                      letterSpacing: 0,
                     ),
                   ),
                 ),
@@ -160,9 +153,14 @@ class _ContactSidebarState extends State<ContactSidebar> {
                   backgroundColor: theme.colorScheme.primary.withValues(
                     alpha: theme.brightness == Brightness.dark ? 0.18 : 0.08,
                   ),
-                  borderColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+                  borderColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.14,
+                  ),
                   labelColor: theme.colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -170,7 +168,10 @@ class _ContactSidebarState extends State<ContactSidebar> {
                   decoration: InputDecoration(
                     hintText: l10n.searchContacts,
                     prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     fillColor: theme.colorScheme.surface.withValues(
                       alpha: theme.brightness == Brightness.dark ? 0.34 : 0.68,
                     ),
@@ -259,9 +260,7 @@ class ContactSidebarEntry {
 }
 
 class _ContactSectionLabel extends StatelessWidget {
-  const _ContactSectionLabel({
-    required this.label,
-  });
+  const _ContactSectionLabel({required this.label});
 
   final String label;
 
@@ -272,9 +271,11 @@ class _ContactSectionLabel extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.55),
           fontWeight: FontWeight.w800,
-          letterSpacing: 0.6,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -306,10 +307,10 @@ class _ContactTile extends StatelessWidget {
             alpha: theme.brightness == Brightness.dark ? 0.18 : 0.1,
           )
         : isHovered
-            ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.42)
-            : theme.colorScheme.surface.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.3 : 0.56,
-              );
+        ? theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.42)
+        : theme.colorScheme.surface.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.3 : 0.56,
+          );
 
     return MouseRegion(
       onEnter: (_) => onHoverChanged(true),
@@ -351,10 +352,11 @@ class _ContactTile extends StatelessWidget {
                         alignment: Alignment.center,
                         child: Text(
                           initials,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: entry.accent,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: entry.accent,
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                       ),
                       Positioned(
@@ -364,9 +366,14 @@ class _ContactTile extends StatelessWidget {
                           width: 12,
                           height: 12,
                           decoration: BoxDecoration(
-                            color: entry.isOnline ? const Color(0xFF1F8A5C) : const Color(0xFF9AA7AF),
+                            color: entry.isOnline
+                                ? const Color(0xFF1F8A5C)
+                                : const Color(0xFF9AA7AF),
                             shape: BoxShape.circle,
-                            border: Border.all(color: Theme.of(context).cardColor, width: 2),
+                            border: Border.all(
+                              color: Theme.of(context).cardColor,
+                              width: 2,
+                            ),
                           ),
                         ),
                       ),
@@ -379,7 +386,9 @@ class _ContactTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: isSelected ? entry.accent : Theme.of(context).colorScheme.onSurface,
+                      color: isSelected
+                          ? entry.accent
+                          : Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -390,7 +399,9 @@ class _ContactTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -408,7 +419,10 @@ String _initialsFor(String value) {
   if (cleaned.isEmpty) {
     return 'MF';
   }
-  final parts = cleaned.split(RegExp(r'[\s_-]+')).where((part) => part.isNotEmpty).toList();
+  final parts = cleaned
+      .split(RegExp(r'[\s_-]+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
   if (parts.length >= 2) {
     return '${parts.first[0]}${parts[1][0]}'.toUpperCase();
   }

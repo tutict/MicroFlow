@@ -81,7 +81,7 @@ class AgentRunsPage extends StatelessWidget {
                     l10n.recentExecutions,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.4,
+                      letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(height: 8),

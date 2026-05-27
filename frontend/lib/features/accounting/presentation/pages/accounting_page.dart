@@ -88,7 +88,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(copy.title),
         actions: [
@@ -101,24 +101,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: theme.brightness == Brightness.dark
-                ? const [
-                    Color(0xFF081015),
-                    Color(0xFF10191F),
-                    Color(0xFF152229),
-                  ]
-                : const [
-                    Color(0xFFF7F9F9),
-                    Color(0xFFEEF2F3),
-                    Color(0xFFE3EAEC),
-                  ],
-          ),
-        ),
+      body: ColoredBox(
+        color: theme.scaffoldBackgroundColor,
         child: widget.workspaceId.isEmpty
             ? _EmptyState(message: copy.workspaceRequired)
             : dashboardAsync.when(
@@ -240,22 +224,30 @@ class _DashboardContent extends StatelessWidget {
               onCreateVoucher: onCreateVoucher,
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TabBar(
-                tabs: [
-                  Tab(
-                    icon: const Icon(Icons.receipt_long_rounded),
-                    text: copy.vouchers,
-                  ),
-                  Tab(
-                    icon: const Icon(Icons.account_tree_rounded),
-                    text: copy.accounts,
-                  ),
-                  Tab(
-                    icon: const Icon(Icons.balance_rounded),
-                    text: copy.trialBalance,
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Theme.of(context).dividerColor),
+                ),
+                child: TabBar(
+                  tabs: [
+                    Tab(
+                      icon: const Icon(Icons.receipt_long_rounded),
+                      text: copy.vouchers,
+                    ),
+                    Tab(
+                      icon: const Icon(Icons.account_tree_rounded),
+                      text: copy.accounts,
+                    ),
+                    Tab(
+                      icon: const Icon(Icons.balance_rounded),
+                      text: copy.trialBalance,
+                    ),
+                  ],
+                ),
               ),
             ),
             Expanded(
@@ -304,15 +296,13 @@ class _AccountingHeader extends StatelessWidget {
     final compact = width < 720;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
       child: Container(
-        padding: EdgeInsets.all(compact ? 16 : 20),
+        padding: EdgeInsets.all(compact ? 14 : 18),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.44 : 0.78,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,8 +324,8 @@ class _AccountingHeader extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 10,
+              runSpacing: 10,
               children: [
                 _MetricTile(
                   label: copy.accounts,
@@ -426,45 +416,60 @@ class _MetricTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SizedBox(
-      width: 164,
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: Icon(icon, color: color, size: 20),
+      width: 176,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.22 : 0.46,
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: theme.dividerColor),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, color: color, size: 18),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.62,
+                      ),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -483,7 +488,7 @@ class _VoucherList extends StatelessWidget {
       return _EmptyState(message: copy.noVouchers);
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemBuilder: (context, index) {
         final voucher = vouchers[index];
         return _VoucherCard(
@@ -511,11 +516,9 @@ class _VoucherCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.36 : 0.78,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,19 +674,15 @@ class _AccountList extends StatelessWidget {
       return _EmptyState(message: copy.noAccounts);
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemBuilder: (context, index) {
         final account = accounts[index];
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.34 : 0.76,
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.82),
-            ),
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: Row(
             children: [
@@ -692,7 +691,7 @@ class _AccountList extends StatelessWidget {
                 height: 42,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -762,14 +761,11 @@ class _TrialBalanceTable extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.34 : 0.76,
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.82),
-            ),
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: theme.dividerColor),
           ),
+          clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
@@ -1207,7 +1203,7 @@ class _VoucherLineEditorRow extends StatelessWidget {
             color: Theme.of(
               context,
             ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.36),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: compact
