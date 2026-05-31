@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/widgets/app_surface.dart';
 
 class InputBox extends StatefulWidget {
   const InputBox({
@@ -113,17 +114,13 @@ class _InputBoxState extends State<InputBox> {
         ? l10n.sendingMessage
         : widget.placeholderText ?? l10n.typeMessageHint;
 
-    return Container(
+    return AppSurface(
+      variant: AppSurfaceVariant.base,
       padding: EdgeInsets.fromLTRB(
         widget.compact ? 10 : 14,
         widget.compact ? 10 : 14,
         widget.compact ? 10 : 14,
         widget.compact ? 8 : 14,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

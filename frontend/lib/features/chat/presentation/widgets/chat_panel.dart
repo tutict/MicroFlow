@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
+import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/widgets/app_surface.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../domain/entities/collaboration_event.dart';
 import '../../domain/entities/collaboration_run.dart';
@@ -169,21 +171,9 @@ class ChatPanel extends StatelessWidget {
         participantStrip,
       ],
     );
-    final panel = Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(outerRadius),
-        border: Border.all(color: theme.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? const Color(0x22000000)
-                : const Color(0x0D0F1720),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    final panel = AppSurface(
+      variant: AppSurfaceVariant.raised,
+      borderRadius: outerRadius,
       child: Column(
         children: [
           Padding(
@@ -230,22 +220,9 @@ class ChatPanel extends StatelessWidget {
                       ),
                     ),
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: compact
-                            ? theme.colorScheme.surfaceContainerLowest
-                            : theme.colorScheme.surface.withValues(
-                                alpha: theme.brightness == Brightness.dark
-                                    ? 0.48
-                                    : 0.76,
-                              ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: compact
-                              ? theme.dividerColor
-                              : theme.dividerColor.withValues(alpha: 0.82),
-                        ),
-                      ),
+                    child: AppSurface(
+                      variant: AppSurfaceVariant.muted,
+                      clipBehavior: Clip.antiAlias,
                       child: ChatMessageList(
                         messages: messages,
                         currentUserId: currentUserId,
@@ -290,15 +267,9 @@ class ChatPanel extends StatelessWidget {
         if (compact) {
           return Column(
             children: [
-              Container(
+              AppSurface(
+                variant: AppSurfaceVariant.muted,
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHigh.withValues(
-                    alpha: 0.4,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: theme.dividerColor),
-                ),
                 child: compactHeader,
               ),
               const SizedBox(height: 6),
@@ -386,7 +357,7 @@ class _CollaborationStatusPanelState extends State<_CollaborationStatusPanel> {
     final activeSnapshot = widget.snapshot;
     final statusColor = activeSnapshot == null
         ? theme.colorScheme.primary
-        : _collaborationStatusColor(activeSnapshot.status);
+        : _collaborationStatusColor(context, activeSnapshot.status);
     final progress = activeSnapshot == null
         ? null
         : _collaborationProgress(activeSnapshot);
@@ -828,7 +799,7 @@ class _CollaborationRunCard extends StatelessWidget {
     final latestEntry = group.events.isEmpty
         ? _fallbackRunEvent(group)
         : group.events.last;
-    final statusColor = _collaborationStatusColor(group.status);
+    final statusColor = _collaborationStatusColor(context, group.status);
     final stages = _distinctStages(group.events);
     final agentKeys = group.agentKeys.isNotEmpty
         ? group.agentKeys
@@ -982,7 +953,7 @@ class _CollaborationTimelineTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final statusColor = _collaborationStatusColor(entry.status);
+    final statusColor = _collaborationStatusColor(context, entry.status);
     final timestamp = DateTime.tryParse(entry.createdAt)?.toLocal();
     final roundLabel = entry.maxRounds > 0
         ? 'R${entry.round}/${entry.maxRounds}'
@@ -1179,12 +1150,13 @@ String _formatCollaborationStatusLabel(AppLocalizations l10n, String value) {
   };
 }
 
-Color _collaborationStatusColor(String value) {
+Color _collaborationStatusColor(BuildContext context, String value) {
+  final semantic = AppSemanticColors.of(context);
   return switch (value) {
-    'COMPLETED' => const Color(0xFF1F8A5C),
-    'ABORTED' => const Color(0xFFBA3B2F),
-    'RUNNING' => const Color(0xFF3D7EA6),
-    _ => const Color(0xFF6C7A89),
+    'COMPLETED' => semantic.success,
+    'ABORTED' => semantic.danger,
+    'RUNNING' => semantic.info,
+    _ => semantic.neutral,
   };
 }
 

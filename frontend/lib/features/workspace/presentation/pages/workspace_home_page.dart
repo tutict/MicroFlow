@@ -8,6 +8,7 @@ import '../../../../core/utils/date_time_formatter.dart';
 import '../../../../core/providers/locale_controller.dart';
 import '../../../../core/providers/theme_mode_controller.dart';
 import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/widgets/app_surface.dart';
 import '../../../../shared/widgets/language_switcher.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/theme_mode_switcher.dart';
@@ -2009,13 +2010,9 @@ class _DesktopWorkspaceLead extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return AppSurface(
+      variant: AppSurfaceVariant.raised,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor),
-      ),
       child: Row(
         children: [
           Expanded(
@@ -2101,25 +2098,29 @@ class _DesktopMetricPill extends StatelessWidget {
 
     return SizedBox(
       width: 108,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
+      child: AppSurface(
+        variant: AppSurfaceVariant.muted,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -2164,21 +2165,9 @@ class _WorkspaceSetupPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: theme.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? const Color(0x22000000)
-                : const Color(0x0D0F1720),
-            blurRadius: compact ? 10 : 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    return AppSurface(
+      variant: AppSurfaceVariant.raised,
+      borderRadius: 10,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           compact ? 18 : 32,

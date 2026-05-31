@@ -51,6 +51,9 @@ class AppPill extends StatelessWidget {
             : const EdgeInsets.symmetric(horizontal: 12, vertical: 8));
 
     final child = Container(
+      constraints: onTap == null
+          ? null
+          : const BoxConstraints(minHeight: 44, minWidth: 44),
       padding: resolvedPadding,
       decoration: BoxDecoration(
         color: background,

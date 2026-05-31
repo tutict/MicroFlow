@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/providers/app_providers.dart';
+import '../../../../shared/theme/app_theme_extensions.dart';
+import '../../../../shared/widgets/app_metric_tile.dart';
 import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/widgets/app_surface.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../domain/entities/accounting_account.dart';
 import '../../domain/entities/accounting_voucher.dart';
@@ -291,19 +294,15 @@ class _AccountingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = _AccountingCopy.of(context);
-    final theme = Theme.of(context);
+    final semantic = AppSemanticColors.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 720;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-      child: Container(
+      child: AppSurface(
+        variant: AppSurfaceVariant.raised,
         padding: EdgeInsets.all(compact ? 14 : 18),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.dividerColor),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -327,29 +326,33 @@ class _AccountingHeader extends StatelessWidget {
               spacing: 10,
               runSpacing: 10,
               children: [
-                _MetricTile(
+                AppMetricTile(
                   label: copy.accounts,
                   value: '${dashboard.accounts.length}',
                   icon: Icons.account_tree_rounded,
-                  color: const Color(0xFF3D7EA6),
+                  color: semantic.info,
+                  width: compact ? 160 : 176,
                 ),
-                _MetricTile(
+                AppMetricTile(
                   label: copy.postedVouchers,
                   value: '${dashboard.postedVoucherCount}',
                   icon: Icons.task_alt_rounded,
-                  color: const Color(0xFF1F8A5C),
+                  color: semantic.success,
+                  width: compact ? 160 : 176,
                 ),
-                _MetricTile(
+                AppMetricTile(
                   label: copy.debit,
                   value: _money(dashboard.periodDebitTotal),
                   icon: Icons.south_west_rounded,
-                  color: const Color(0xFF7A5CBE),
+                  color: semantic.warning,
+                  width: compact ? 160 : 176,
                 ),
-                _MetricTile(
+                AppMetricTile(
                   label: copy.credit,
                   value: _money(dashboard.periodCreditTotal),
                   icon: Icons.north_east_rounded,
-                  color: const Color(0xFFC86A3B),
+                  color: semantic.danger,
+                  width: compact ? 160 : 176,
                 ),
               ],
             ),
@@ -398,83 +401,6 @@ class _AccountingHeader extends StatelessWidget {
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: 176,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.22 : 0.46,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: theme.dividerColor),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Icon(icon, color: color, size: 18),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.62,
-                      ),
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _VoucherList extends StatelessWidget {
   const _VoucherList({required this.vouchers, required this.onPostVoucher});
 
@@ -513,13 +439,9 @@ class _VoucherCard extends StatelessWidget {
     final copy = _AccountingCopy.of(context);
     final theme = Theme.of(context);
 
-    return Container(
+    return AppSurface(
+      variant: AppSurfaceVariant.raised,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -553,7 +475,7 @@ class _VoucherCard extends StatelessWidget {
               const SizedBox(width: 10),
               StatusBadge(
                 label: _statusLabel(copy, voucher.status),
-                color: _statusColor(voucher.status),
+                color: _statusColor(context, voucher.status),
               ),
             ],
           ),
@@ -677,13 +599,9 @@ class _AccountList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemBuilder: (context, index) {
         final account = accounts[index];
-        return Container(
+        return AppSurface(
+          variant: AppSurfaceVariant.base,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: theme.dividerColor),
-          ),
           child: Row(
             children: [
               Container(
@@ -731,8 +649,8 @@ class _AccountList extends StatelessWidget {
               StatusBadge(
                 label: account.active ? copy.enabled : copy.disabled,
                 color: account.active
-                    ? const Color(0xFF1F8A5C)
-                    : const Color(0xFF7A8791),
+                    ? AppSemanticColors.of(context).success
+                    : AppSemanticColors.of(context).neutral,
               ),
             ],
           ),
@@ -752,19 +670,14 @@ class _TrialBalanceTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = _AccountingCopy.of(context);
-    final theme = Theme.of(context);
     if (rows.isEmpty) {
       return _EmptyState(message: copy.noTrialBalance);
     }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: theme.dividerColor),
-          ),
+        AppSurface(
+          variant: AppSurfaceVariant.base,
           clipBehavior: Clip.antiAlias,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -914,7 +827,7 @@ Future<bool> _showCreateAccountDialog({
                       Text(
                         errorText!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFFBA3B2F),
+                          color: AppSemanticColors.of(context).danger,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1090,7 +1003,7 @@ Future<bool> _showCreateVoucherDialog({
                       Text(
                         errorText!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFFBA3B2F),
+                          color: AppSemanticColors.of(context).danger,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -1316,11 +1229,12 @@ String _statusLabel(_AccountingCopy copy, String status) {
   };
 }
 
-Color _statusColor(String status) {
+Color _statusColor(BuildContext context, String status) {
+  final semantic = AppSemanticColors.of(context);
   return switch (status) {
-    'POSTED' => const Color(0xFF1F8A5C),
-    'DRAFT' => const Color(0xFF3D7EA6),
-    _ => const Color(0xFF7A8791),
+    'POSTED' => semantic.success,
+    'DRAFT' => semantic.info,
+    _ => semantic.neutral,
   };
 }
 

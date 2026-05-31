@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
+import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/widgets/app_surface.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../domain/entities/agent_descriptor.dart';
 import '../../domain/entities/agent_run.dart';
@@ -26,27 +28,13 @@ class AgentPanel extends StatelessWidget {
     final queuedRuns = runs.where((run) => run.status == 'QUEUED').length;
     final outerRadius = compact ? 8.0 : 10.0;
     final outerPadding = compact ? 14.0 : 18.0;
-    final shellSurface = theme.colorScheme.surface.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.5 : 0.76,
-    );
-    final nestedSurface = theme.colorScheme.surface.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.34 : 0.62,
-    );
-    final subtleBorder = theme.dividerColor.withValues(alpha: 0.82);
-
     if (compact) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
+          AppSurface(
+            variant: AppSurfaceVariant.raised,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHigh.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.4 : 0.82,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: subtleBorder),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -139,14 +127,10 @@ class AgentPanel extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           if (runs.isEmpty)
-            Container(
+            AppSurface(
+              variant: AppSurfaceVariant.base,
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              decoration: BoxDecoration(
-                color: shellSurface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: subtleBorder),
-              ),
               child: Text(
                 l10n.noAgentExecutions,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -165,21 +149,9 @@ class AgentPanel extends StatelessWidget {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: shellSurface,
-        borderRadius: BorderRadius.circular(outerRadius),
-        border: Border.all(color: subtleBorder),
-        boxShadow: [
-          BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? const Color(0x22000000)
-                : const Color(0x120E1A22),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return AppSurface(
+      variant: AppSurfaceVariant.raised,
+      borderRadius: outerRadius,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -294,16 +266,12 @@ class AgentPanel extends StatelessWidget {
                 ),
                 SizedBox(height: compact ? 10 : 12),
                 if (runs.isEmpty)
-                  Container(
+                  AppSurface(
+                    variant: AppSurfaceVariant.muted,
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 18,
-                    ),
-                    decoration: BoxDecoration(
-                      color: nestedSurface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: subtleBorder),
                     ),
                     child: Text(
                       l10n.noAgentExecutions,
@@ -408,8 +376,8 @@ class _AgentTile extends StatelessWidget {
                     StatusBadge(
                       label: agent.enabled ? l10n.enabled : l10n.disabled,
                       color: agent.enabled
-                          ? const Color(0xFF1F6F5C)
-                          : const Color(0xFF7A8791),
+                          ? AppSemanticColors.of(context).success
+                          : AppSemanticColors.of(context).neutral,
                     ),
                   ],
                 ),
@@ -446,7 +414,7 @@ class _RunTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final statusColor = _statusColor(run.status);
+    final statusColor = _statusColor(context, run.status);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -517,12 +485,13 @@ String _formatRunStatus(AppLocalizations l10n, String value) {
   };
 }
 
-Color _statusColor(String value) {
+Color _statusColor(BuildContext context, String value) {
+  final semantic = AppSemanticColors.of(context);
   return switch (value) {
-    'DONE' || 'COMPLETED' => const Color(0xFF1F8A5C),
-    'FAILED' => const Color(0xFFBA3B2F),
-    'RUNNING' => const Color(0xFF3D7EA6),
-    _ => const Color(0xFFB38A32),
+    'DONE' || 'COMPLETED' => semantic.success,
+    'FAILED' => semantic.danger,
+    'RUNNING' => semantic.info,
+    _ => semantic.warning,
   };
 }
 

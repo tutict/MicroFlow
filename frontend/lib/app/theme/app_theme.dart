@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../shared/theme/app_theme_extensions.dart';
+
 final class AppTheme {
   static ThemeData light() {
     return _buildTheme(
       brightness: Brightness.light,
       background: const Color(0xFFF6F7F5),
       surface: const Color(0xFFFFFFFF),
-      primary: const Color(0xFF1F6F5C),
+      primary: const Color(0xFF176B50),
       accent: const Color(0xFF38658A),
       text: const Color(0xFF151B1E),
       outline: const Color(0xFFDDE4E0),
@@ -14,22 +16,36 @@ final class AppTheme {
       inputFill: const Color(0xFFFAFBF8),
       shadow: const Color(0x0F0F1720),
       appBarBackground: const Color(0xFFF6F7F5),
+      semanticColors: const AppSemanticColors(
+        success: Color(0xFF168A4D),
+        info: Color(0xFF2F6F9F),
+        warning: Color(0xFFB66A16),
+        danger: Color(0xFFBA3B2F),
+        neutral: Color(0xFF6C7A89),
+      ),
     );
   }
 
   static ThemeData dark() {
     return _buildTheme(
       brightness: Brightness.dark,
-      background: const Color(0xFF0F1314),
-      surface: const Color(0xFF171D1F),
-      primary: const Color(0xFF66BBA5),
+      background: const Color(0xFF060908),
+      surface: const Color(0xFF111715),
+      primary: const Color(0xFF48D597),
       accent: const Color(0xFF8AA6B8),
-      text: const Color(0xFFE8EEEC),
-      outline: const Color(0xFF2D3939),
-      divider: const Color(0xFF253130),
-      inputFill: const Color(0xFF1C2425),
+      text: const Color(0xFFF0F6F2),
+      outline: const Color(0xFF2A3831),
+      divider: const Color(0xFF22302A),
+      inputFill: const Color(0xFF151D1A),
       shadow: const Color(0x30000000),
-      appBarBackground: const Color(0xFF0F1314),
+      appBarBackground: const Color(0xFF060908),
+      semanticColors: const AppSemanticColors(
+        success: Color(0xFF48D597),
+        info: Color(0xFF7BB8D8),
+        warning: Color(0xFFF0A744),
+        danger: Color(0xFFFF7D72),
+        neutral: Color(0xFF91A09A),
+      ),
     );
   }
 
@@ -45,6 +61,7 @@ final class AppTheme {
     required Color inputFill,
     required Color shadow,
     required Color appBarBackground,
+    required AppSemanticColors semanticColors,
   }) {
     final scheme =
         ColorScheme.fromSeed(
@@ -314,6 +331,7 @@ final class AppTheme {
       ),
       dividerTheme: DividerThemeData(color: divider, thickness: 1, space: 1),
       dividerColor: divider,
+      extensions: [semanticColors],
     );
   }
 }

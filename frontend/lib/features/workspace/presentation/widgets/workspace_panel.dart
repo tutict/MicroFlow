@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../core/utils/date_time_formatter.dart';
+import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/widgets/app_surface.dart';
 import '../../../../shared/widgets/status_badge.dart';
 
 class WorkspacePanel extends StatelessWidget {
@@ -33,33 +35,20 @@ class WorkspacePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final semantic = AppSemanticColors.of(context);
     final unreadTotal = conversations.fold<int>(
       0,
       (sum, conversation) => sum + conversation.unreadCount,
     );
     final outerRadius = compact ? 8.0 : 10.0;
     final outerPadding = compact ? 14.0 : 18.0;
-    final shellSurface = theme.colorScheme.surface.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.5 : 0.76,
-    );
-    final nestedSurface = theme.colorScheme.surface.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.34 : 0.62,
-    );
-    final subtleBorder = theme.dividerColor.withValues(alpha: 0.82);
-
     if (compact) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Container(
+          AppSurface(
+            variant: AppSurfaceVariant.raised,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHigh.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.4 : 0.82,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: subtleBorder),
-            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -173,13 +162,9 @@ class WorkspacePanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Container(
+          AppSurface(
+            variant: AppSurfaceVariant.base,
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: shellSurface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: subtleBorder),
-            ),
             child: _ConversationInbox(
               conversations: conversations,
               selectedConversationId: selectedConversationId,
@@ -221,13 +206,9 @@ class WorkspacePanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            Container(
+            AppSurface(
+              variant: AppSurfaceVariant.base,
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: shellSurface,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: subtleBorder),
-              ),
               child: Column(
                 children: [
                   for (var index = 0; index < members.length; index++) ...[
@@ -270,13 +251,9 @@ class WorkspacePanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Container(
+          AppSurface(
+            variant: AppSurfaceVariant.base,
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: shellSurface,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: subtleBorder),
-            ),
             child: recentInteractions.isEmpty
                 ? _EmptyCollaborationState(message: l10n.noRecentInteractions)
                 : Column(
@@ -308,21 +285,9 @@ class WorkspacePanel extends StatelessWidget {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: shellSurface,
-        borderRadius: BorderRadius.circular(outerRadius),
-        border: Border.all(color: subtleBorder),
-        boxShadow: [
-          BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? const Color(0x22000000)
-                : const Color(0x120E1A22),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return AppSurface(
+      variant: AppSurfaceVariant.raised,
+      borderRadius: outerRadius,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -427,15 +392,12 @@ class WorkspacePanel extends StatelessWidget {
                   children: [
                     StatusBadge(
                       label: l10n.localFirst,
-                      color: const Color(0xFF1F6F5C),
+                      color: semantic.success,
                     ),
-                    StatusBadge(
-                      label: l10n.sqlite,
-                      color: const Color(0xFF52796F),
-                    ),
+                    StatusBadge(label: l10n.sqlite, color: semantic.info),
                     StatusBadge(
                       label: l10n.virtualThreads,
-                      color: const Color(0xFF6C7A89),
+                      color: semantic.neutral,
                     ),
                   ],
                 ),
@@ -487,13 +449,9 @@ class WorkspacePanel extends StatelessWidget {
                   ],
                 ),
                 SizedBox(height: compact ? 12 : 14),
-                Container(
+                AppSurface(
+                  variant: AppSurfaceVariant.muted,
                   padding: EdgeInsets.all(compact ? 12 : 14),
-                  decoration: BoxDecoration(
-                    color: nestedSurface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: subtleBorder),
-                  ),
                   child: _ConversationInbox(
                     conversations: conversations,
                     selectedConversationId: selectedConversationId,
@@ -1013,7 +971,7 @@ class _RecentInteractionTile extends StatelessWidget {
                     if (interaction.isAgent)
                       StatusBadge(
                         label: l10n.aiBadge,
-                        color: const Color(0xFF1F6F5C),
+                        color: AppSemanticColors.of(context).success,
                       ),
                   ],
                 ),
