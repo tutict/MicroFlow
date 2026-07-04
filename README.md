@@ -1,13 +1,15 @@
-# MicroFlow
+﻿# 微澜协作
 
-一个面向本地部署与内网协作场景的轻量级 AI 协作工作台，整合账号登录、工作区聊天、实时通信、Agent 调用、运行诊断和前后端配对连接能力。项目采用本地优先的设计思路，适合快速部署、快速演示和持续扩展。
+**微澜协作（MicroFlow）** 是一个面向本地部署与内网协作场景的轻量级 AI 协作工作台。项目整合账号登录、工作区聊天、实时通信、Agent 调用、运行诊断、前后端配对连接和本地持久化能力，采用本地优先的设计思路，适合快速演示、私有化部署和持续扩展。
 
 ## 项目概览
 
-- 项目类型：本地优先的 AI 协作系统
-- 业务方向：团队沟通、Agent 协作与内网部署型工作台
-- 主要能力：工作区消息协作、Agent 调用、WebSocket 实时通信、前后端配对连接、本地安全存储
-- 适合阅读对象：HR 初筛、后端开发、全栈开发、企业工具与协作平台方向面试官
+- **中文名称**：微澜协作
+- **英文名称**：MicroFlow
+- **项目定位**：本地优先的 AI 协作系统
+- **业务方向**：团队沟通、Agent 协作、内网部署型工作台
+- **核心能力**：工作区消息协作、Agent 调用、WebSocket 实时通信、前后端配对连接、本地安全存储
+- **适合场景**：个人演示、团队内网协作、企业工具原型、全栈项目展示
 
 ## 核心功能
 
@@ -16,26 +18,18 @@
 - WebSocket 实时消息同步
 - Agent 列表、运行记录、角色策略与诊断信息展示
 - 前后端分离场景下的一次性配对连接
-- 基于 SQLite 的轻量持久化
+- 基于 SQLite 的轻量级本地持久化
 - 本地安全存储与连接信息保存
+- 一键启动本地 debug 预览环境
 
-## 承担内容
+## 设计取向
 
-- 完成协作系统的业务边界设计与后端模块划分
-- 完成 Quarkus 后端、Flutter 客户端与本地部署链路实现
-- 完成配对码连接机制、登录流程和实时消息能力设计
-- 完成 Agent 运行记录、诊断页和角色策略相关功能
-- 完成登录限流、Host 校验、输入边界与本地安全存储等安全收敛工作
+微澜协作强调“轻量、本地、可控”：
 
-## 关键技术实现
-
-- 使用 `Quarkus + WebSocket + JDBC` 构建本地优先协作后端
-- 使用 `SQLite` 降低部署门槛，支持单机和内网快速启动
-- 使用一次性 `pairing code` 完成前后端动态配对，不依赖写死地址
-- 使用 `Flutter + Riverpod` 实现跨平台客户端和状态管理
-- 使用 `web_socket_channel` 支撑实时消息与 Agent 状态同步
-- 使用 `flutter_secure_storage` 管理敏感连接信息与认证数据
-- 通过健康检查、诊断页和运行记录增强可观测性与问题定位能力
+- **轻量**：使用 SQLite 和本地进程即可完成核心功能演示，降低部署门槛。
+- **本地**：优先支持单机与内网环境，减少对公网服务的依赖。
+- **可控**：通过配对码、Host 校验、CORS 收敛和登录限流约束访问边界。
+- **可扩展**：后端按认证、工作区、消息、Agent、诊断等边界拆分，便于继续扩展业务模块。
 
 ## 技术栈
 
@@ -46,25 +40,28 @@
 | 客户端 | Flutter、Dart 3、Riverpod |
 | 通信 | HTTP API、WebSocket |
 | 安全 | JWT、本地安全存储、请求限流、Host 收敛 |
-| 部署 | 本地部署、Docker Compose、GraalVM Native Image |
+| 部署 | 本地启动、Docker Compose、GraalVM Native Image |
 
 ## 仓库结构
 
 ```text
 MicroFlow
-├─ backend/              # Quarkus 后端
-├─ frontend/             # Flutter 跨平台客户端
-├─ ops/                  # 运维与辅助脚本
-├─ docker-compose.yml    # 本地部署编排
-├─ DEPLOYMENT.md         # 部署文档
-└─ README.md             # 项目说明
+├─ backend/                         # Quarkus 后端服务
+├─ frontend/                        # Flutter 跨平台客户端
+├─ ops/                             # 运维与辅助脚本
+├─ scripts/                         # 本地开发脚本
+│  ├─ start-debug-preview.ps1       # Windows 一键 debug 预览脚本
+│  └─ start-debug-preview.bat       # 双击启动包装脚本
+├─ docker-compose.yml               # 本地部署编排
+├─ DEPLOYMENT.md                    # 部署文档
+└─ README.md                        # 项目说明
 ```
 
-## 主要模块说明
+## 主要模块
 
-### 1. 后端服务
+### 后端服务
 
-负责认证、配对连接、工作区协作、消息处理和 Agent 运行支撑。
+后端负责认证、配对连接、工作区协作、消息处理和 Agent 运行支撑。
 
 - 路径：`backend/`
 - 技术关键词：`Quarkus`、`WebSocket`、`SQLite`
@@ -76,9 +73,9 @@ MicroFlow
   - Agent Run Service
   - Agent Diagnostics
 
-### 2. Flutter 客户端
+### Flutter 客户端
 
-负责跨平台界面、连接建立、实时消息和本地配置保存。
+客户端负责跨平台界面、连接建立、实时消息和本地配置保存。
 
 - 路径：`frontend/`
 - 技术关键词：`Flutter`、`Riverpod`、`web_socket_channel`
@@ -89,16 +86,16 @@ MicroFlow
   - 消息面板与 Agent 面板
   - Agent runs / diagnostics 页面
 
-### 3. 配对连接机制
+### 配对连接机制
 
-用于解决前后端分离部署下的首次连接问题。
+配对连接用于解决前后端分离部署下的首次连接问题。
 
 - 后端启动时生成一次性配对码
 - 前端输入服务器地址和配对码完成握手
 - 后端返回 `serverOrigin`、`apiBaseUrl`、`wsBaseUrl`
 - 前端保存连接配置后进入登录流程
 
-## 运行说明
+## 快速启动
 
 ### 环境准备
 
@@ -107,11 +104,55 @@ MicroFlow
 - Flutter 3+
 - Docker（可选，用于本地编排）
 
-### 启动后端
+### 一键 debug 预览
+
+Windows 环境可直接运行：
+
+```powershell
+.\scripts\start-debug-preview.ps1
+```
+
+或双击/执行：
+
+```bat
+.\scripts\start-debug-preview.bat
+```
+
+默认启动地址：
+
+```text
+后端服务：http://127.0.0.1:8080
+健康检查：http://127.0.0.1:8080/api/v1/system/health
+前端预览：http://127.0.0.1:3000
+```
+
+常用参数：
+
+```powershell
+.\scripts\start-debug-preview.ps1 -BackendPort 8081 -FrontendPort 3001
+.\scripts\start-debug-preview.ps1 -SeedDemo
+.\scripts\start-debug-preview.ps1 -NoBrowser
+.\scripts\start-debug-preview.ps1 -SkipPubGet
+```
+
+脚本会自动为前端注入：
+
+```text
+MICROFLOW_API_BASE_URL=http://127.0.0.1:8080/api/v1
+MICROFLOW_WS_BASE_URL=ws://127.0.0.1:8080/ws
+```
+
+脚本日志默认写入：
+
+```text
+.codex-tmp/debug-preview/
+```
+
+### 手动启动后端
 
 ```powershell
 cd backend
-./mvnw quarkus:dev
+..\mvnw.cmd quarkus:dev
 ```
 
 默认地址：
@@ -126,7 +167,7 @@ http://localhost:8080
 GET /api/v1/system/health
 ```
 
-### 启动前端
+### 手动启动前端
 
 ```powershell
 cd frontend
@@ -134,7 +175,7 @@ flutter pub get
 flutter run -d chrome
 ```
 
-开发阶段也可以显式指定地址：
+开发阶段也可以显式指定后端地址：
 
 ```powershell
 flutter run -d chrome `
@@ -164,17 +205,27 @@ flutter run -d chrome `
   3. Quarkus 配置 `microflow.agent.openclaw-*`
   4. `OPENCLAW_ENDPOINT_URL` + `OPENCLAW_AGENT_KEYS`
   5. fallback `mock-openclaw`
-- 是否生成演示账号由 `MICROFLOW_SEED_DEMO_ENABLED` 控制
-- 推荐优先使用配对流程，而不是在前端写死服务地址
+- 是否生成演示账号由 `MICROFLOW_SEED_DEMO_ENABLED` 控制。
+- 本地 debug 预览脚本默认启用 `MICROFLOW_ALLOW_INSECURE_DEFAULT_SECRETS=true`，仅用于开发环境。
+- 生产或正式部署应显式配置 `microflow.jwt.secret` 和 `microflow.crypto.secret`。
+- 推荐优先使用配对流程，而不是在前端写死服务地址。
 
-## 已完成的安全收敛
+## 安全收敛
 
 - 收紧配对访问逻辑与 Host 信任边界
 - 限制 CORS 来源为本地或显式配置来源
 - 为登录请求增加限流保护
 - 对消息输入长度与列表上限进行校验
 - 敏感信息迁移到安全存储
-- 清理前端页面中的残留脏代码与默认回退逻辑
+- 清理前端页面中的残留调试代码与默认回退逻辑
+
+## 项目亮点
+
+- **本地优先**：单机即可完成完整的协作、登录、配对和 Agent 演示链路。
+- **前后端清晰分离**：后端提供稳定 HTTP/WebSocket 接口，前端通过环境参数或配对流程建立连接。
+- **可观测性友好**：健康检查、诊断页、Agent 运行记录和脚本日志便于定位问题。
+- **部署路径完整**：支持本地开发、Docker Compose 和后续 Native Image 扩展。
+- **中文产品化命名**：以“微澜协作”作为中文名称，保留 MicroFlow 作为英文工程名。
 
 ## 相关文档
 
