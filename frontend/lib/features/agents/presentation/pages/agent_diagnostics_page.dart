@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../shared/widgets/app_pill.dart';
 import '../../../../shared/widgets/status_badge.dart';
+import '../../../../shared/widgets/app_skeletons.dart';
 import '../../domain/entities/agent_diagnostic.dart';
 
 final _agentDiagnosticsProvider = FutureProvider.family
@@ -65,8 +66,7 @@ class AgentDiagnosticsPage extends ConsumerWidget {
                       workspaceId: workspaceId,
                       diagnostics: diagnostics,
                     ),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
+                    loading: () => const AgentDiagnosticsSkeleton(),
                     error: (error, _) =>
                         _EmptyState(message: '${copy.loadFailed}: $error'),
                   ),

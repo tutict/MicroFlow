@@ -9,6 +9,7 @@ import '../../../../core/providers/locale_controller.dart';
 import '../../../../core/providers/theme_mode_controller.dart';
 import '../../../../shared/widgets/app_pill.dart';
 import '../../../../shared/widgets/app_surface.dart';
+import '../../../../shared/widgets/app_skeletons.dart';
 import '../../../../shared/widgets/language_switcher.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/theme_mode_switcher.dart';
@@ -998,7 +999,10 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                         ],
                       );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => WorkspaceHomeSkeleton(
+                compact: isPhone,
+                showAgents: isDesktop,
+              ),
               error: (error, _) => Center(
                 child: Text(l10n.workspaceLoadError(error.toString())),
               ),

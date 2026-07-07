@@ -8,6 +8,7 @@ import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/widgets/app_metric_tile.dart';
 import '../../../../shared/widgets/app_pill.dart';
 import '../../../../shared/widgets/app_surface.dart';
+import '../../../../shared/widgets/app_skeletons.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../domain/entities/accounting_account.dart';
 import '../../domain/entities/accounting_voucher.dart';
@@ -176,7 +177,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     }
                   },
                 ),
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const AccountingDashboardSkeleton(),
                 error: (error, _) =>
                     _EmptyState(message: '${copy.loadFailed}: $error'),
               ),

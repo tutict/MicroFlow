@@ -1,6 +1,10 @@
 /.idea/
 /.DS_Store
 
+# Local assistant/tooling state
+/.claude/
+/.codex-tmp/
+/frontend/.codex-tmp/
 /backend/target/
 /backend/.m2/
 /backend/.mvn/wrapper-home/

@@ -1,21 +1,50 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 
 import '../../shared/theme/app_theme_extensions.dart';
 
 final class AppTheme {
-  static ThemeData light() {
+  static const _lightBackground = Color(0xFFF6F7F5);
+  static const _lightSurface = Color(0xFFFFFFFF);
+  static const _lightPrimary = Color(0xFF176B50);
+  static const _lightAccent = Color(0xFF38658A);
+  static const _lightText = Color(0xFF151B1E);
+  static const _lightOutline = Color(0xFFDDE4E0);
+  static const _lightDivider = Color(0xFFE3E7E4);
+  static const _lightInputFill = Color(0xFFFAFBF8);
+  static const _lightShadow = Color(0x0F0F1720);
+
+  static const _darkBackground = Color(0xFF060908);
+  static const _darkSurface = Color(0xFF111715);
+  static const _darkPrimary = Color(0xFF48D597);
+  static const _darkAccent = Color(0xFF8AA6B8);
+  static const _darkText = Color(0xFFF0F6F2);
+  static const _darkOutline = Color(0xFF2A3831);
+  static const _darkDivider = Color(0xFF22302A);
+  static const _darkInputFill = Color(0xFF151D1A);
+  static const _darkShadow = Color(0x30000000);
+
+  static ThemeData light({ColorScheme? dynamicScheme}) {
     return _buildTheme(
+      baseTheme: FlexThemeData.light(
+        useMaterial3: true,
+        colorScheme: dynamicScheme ?? _lightScheme,
+        surfaceMode: FlexSurfaceMode.highScaffoldLowSurface,
+        blendLevel: 6,
+        subThemesData: _subThemes,
+        visualDensity: FlexColorScheme.comfortablePlatformDensity,
+      ),
       brightness: Brightness.light,
-      background: const Color(0xFFF6F7F5),
-      surface: const Color(0xFFFFFFFF),
-      primary: const Color(0xFF176B50),
-      accent: const Color(0xFF38658A),
-      text: const Color(0xFF151B1E),
-      outline: const Color(0xFFDDE4E0),
-      divider: const Color(0xFFE3E7E4),
-      inputFill: const Color(0xFFFAFBF8),
-      shadow: const Color(0x0F0F1720),
-      appBarBackground: const Color(0xFFF6F7F5),
+      background: _lightBackground,
+      surface: _lightSurface,
+      primary: dynamicScheme?.primary ?? _lightPrimary,
+      accent: dynamicScheme?.secondary ?? _lightAccent,
+      text: dynamicScheme?.onSurface ?? _lightText,
+      outline: dynamicScheme?.outlineVariant ?? _lightOutline,
+      divider: _lightDivider,
+      inputFill: _lightInputFill,
+      shadow: _lightShadow,
+      appBarBackground: _lightBackground,
       semanticColors: const AppSemanticColors(
         success: Color(0xFF168A4D),
         info: Color(0xFF2F6F9F),
@@ -26,19 +55,27 @@ final class AppTheme {
     );
   }
 
-  static ThemeData dark() {
+  static ThemeData dark({ColorScheme? dynamicScheme}) {
     return _buildTheme(
+      baseTheme: FlexThemeData.dark(
+        useMaterial3: true,
+        colorScheme: dynamicScheme ?? _darkScheme,
+        surfaceMode: FlexSurfaceMode.highScaffoldLowSurface,
+        blendLevel: 8,
+        subThemesData: _subThemes,
+        visualDensity: FlexColorScheme.comfortablePlatformDensity,
+      ),
       brightness: Brightness.dark,
-      background: const Color(0xFF060908),
-      surface: const Color(0xFF111715),
-      primary: const Color(0xFF48D597),
-      accent: const Color(0xFF8AA6B8),
-      text: const Color(0xFFF0F6F2),
-      outline: const Color(0xFF2A3831),
-      divider: const Color(0xFF22302A),
-      inputFill: const Color(0xFF151D1A),
-      shadow: const Color(0x30000000),
-      appBarBackground: const Color(0xFF060908),
+      background: _darkBackground,
+      surface: _darkSurface,
+      primary: dynamicScheme?.primary ?? _darkPrimary,
+      accent: dynamicScheme?.secondary ?? _darkAccent,
+      text: dynamicScheme?.onSurface ?? _darkText,
+      outline: dynamicScheme?.outlineVariant ?? _darkOutline,
+      divider: _darkDivider,
+      inputFill: _darkInputFill,
+      shadow: _darkShadow,
+      appBarBackground: _darkBackground,
       semanticColors: const AppSemanticColors(
         success: Color(0xFF48D597),
         info: Color(0xFF7BB8D8),
@@ -49,7 +86,45 @@ final class AppTheme {
     );
   }
 
+  static const FlexSubThemesData _subThemes = FlexSubThemesData(
+    defaultRadius: 8,
+    buttonMinSize: Size(44, 44),
+    inputDecoratorIsFilled: true,
+    inputDecoratorBorderType: FlexInputBorderType.outline,
+    popupMenuRadius: 10,
+    dialogRadius: 12,
+    snackBarRadius: 10,
+    tabBarItemSchemeColor: SchemeColor.primary,
+  );
+
+  static final ColorScheme _lightScheme =
+      ColorScheme.fromSeed(
+        seedColor: _lightPrimary,
+        brightness: Brightness.light,
+      ).copyWith(
+        primary: _lightPrimary,
+        secondary: _lightAccent,
+        surface: _lightSurface,
+        onSurface: _lightText,
+        outline: _lightOutline,
+        outlineVariant: _lightDivider,
+      );
+
+  static final ColorScheme _darkScheme =
+      ColorScheme.fromSeed(
+        seedColor: _darkPrimary,
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: _darkPrimary,
+        secondary: _darkAccent,
+        surface: _darkSurface,
+        onSurface: _darkText,
+        outline: _darkOutline,
+        outlineVariant: _darkDivider,
+      );
+
   static ThemeData _buildTheme({
+    required ThemeData baseTheme,
     required Brightness brightness,
     required Color background,
     required Color surface,
@@ -63,67 +138,11 @@ final class AppTheme {
     required Color appBarBackground,
     required AppSemanticColors semanticColors,
   }) {
-    final scheme =
-        ColorScheme.fromSeed(
-          seedColor: primary,
-          brightness: brightness,
-        ).copyWith(
-          primary: primary,
-          secondary: accent,
-          surface: surface,
-          onSurface: text,
-          outline: outline,
-        );
-
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: scheme,
+    return baseTheme.copyWith(
       scaffoldBackgroundColor: background,
       canvasColor: surface,
       cardColor: surface,
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 56,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-          height: 0.98,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 42,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-          height: 1,
-        ),
-        displaySmall: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-          height: 1.02,
-        ),
-        headlineLarge: TextStyle(
-          fontSize: 30,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        headlineSmall: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        titleLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(fontSize: 15, height: 1.5),
-        bodyMedium: TextStyle(fontSize: 14, height: 1.45),
-        bodySmall: TextStyle(fontSize: 12, height: 1.35),
-        labelMedium: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0,
-        ),
-        labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-      ),
+      textTheme: _textTheme(baseTheme.textTheme),
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBackground,
         foregroundColor: text,
@@ -212,6 +231,7 @@ final class AppTheme {
         style: IconButton.styleFrom(
           foregroundColor: text,
           padding: const EdgeInsets.all(9),
+          minimumSize: const Size(44, 44),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
@@ -332,6 +352,52 @@ final class AppTheme {
       dividerTheme: DividerThemeData(color: divider, thickness: 1, space: 1),
       dividerColor: divider,
       extensions: [semanticColors],
+    );
+  }
+
+  static TextTheme _textTheme(TextTheme base) {
+    return base.copyWith(
+      displayLarge: const TextStyle(
+        fontSize: 56,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+        height: 0.98,
+      ),
+      displayMedium: const TextStyle(
+        fontSize: 42,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+        height: 1,
+      ),
+      displaySmall: const TextStyle(
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+        height: 1.02,
+      ),
+      headlineLarge: const TextStyle(
+        fontSize: 30,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+      ),
+      headlineMedium: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+      ),
+      headlineSmall: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+      titleLarge: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      titleMedium: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      titleSmall: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      bodyLarge: const TextStyle(fontSize: 15, height: 1.5),
+      bodyMedium: const TextStyle(fontSize: 14, height: 1.45),
+      bodySmall: const TextStyle(fontSize: 12, height: 1.35),
+      labelMedium: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+      ),
+      labelSmall: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
     );
   }
 }

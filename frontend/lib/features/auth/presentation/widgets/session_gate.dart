@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
+import '../../../../shared/widgets/app_skeletons.dart';
 import '../../../bootstrap/presentation/pages/connect_server_page.dart';
 import '../../../bootstrap/presentation/providers/server_connection_controller.dart';
 import '../../../workspace/presentation/pages/workspace_home_page.dart';
@@ -18,7 +19,7 @@ class SessionGate extends ConsumerWidget {
     final authSession = ref.watch(authSessionControllerProvider);
 
     if (serverConnection.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const AppLoadingScaffold();
     }
     if (serverConnection.hasError) {
       return Scaffold(
@@ -36,8 +37,7 @@ class SessionGate extends ConsumerWidget {
     return authSession.when(
       data: (session) =>
           session == null ? const SignInPage() : const WorkspaceHomePage(),
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const AppLoadingScaffold(),
       error: (error, _) => Scaffold(
         body: Center(child: Text(l10n.restoreSessionError(error.toString()))),
       ),
