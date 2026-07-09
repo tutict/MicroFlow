@@ -42,6 +42,9 @@ public class DefaultMessageApplicationService implements MessageApplicationServi
         if (!workspaceRepository.isWorkspaceMember(workspaceId, senderUserId)) {
             throw new IllegalArgumentException("Workspace access denied");
         }
+        if (!workspaceRepository.isChannelInWorkspace(workspaceId, channelId)) {
+            throw new IllegalArgumentException("Channel does not belong to workspace");
+        }
         if (!workspaceRepository.isChannelMember(channelId, senderUserId)) {
             throw new IllegalArgumentException("Channel access denied");
         }

@@ -1,4 +1,5 @@
 import '../../../../core/storage/local_store.dart';
+import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/network/rest_client.dart';
 import '../dto/auth_tokens_dto.dart';
 import '../dto/login_request_dto.dart';
@@ -31,7 +32,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     final dto = LoginRequestDto(email: email, password: password);
     final response = await _restClient.postJson(
-      '/auth/login',
+      ApiEndpoints.login,
       authenticated: false,
       body: dto.toJson(),
     );
@@ -46,6 +47,39 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AuthSession?> currentSession() async {
     await _localStore.migrateFromPreferences(_secureKeys);
+    final stored = await _storedSession();
+    if (stored == null) {
+      return null;
+    }
+    if (await _canUseCurrentAccessToken()) {
+      return stored;
+    }
+    final refreshed = await _refresh(stored);
+    if (refreshed == null) {
+      await _clearSession();
+      return null;
+    }
+    return refreshed;
+  }
+
+  @override
+  Future<void> signOut() async {
+    final refreshToken = await _localStore.readString(_refreshTokenKey);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        await _restClient.postJson(
+          ApiEndpoints.logout,
+          authenticated: false,
+          body: {'refreshToken': refreshToken},
+        );
+      } catch (_) {
+        // Local sign-out should still clear credentials if the server is unavailable.
+      }
+    }
+    await _clearSession();
+  }
+
+  Future<AuthSession?> _storedSession() async {
     final accessToken = await _localStore.readString(_accessTokenKey);
     final refreshToken = await _localStore.readString(_refreshTokenKey);
     final userId = await _localStore.readString(_userIdKey);
@@ -67,8 +101,34 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
-  @override
-  Future<void> signOut() async {
+  Future<bool> _canUseCurrentAccessToken() async {
+    try {
+      await _restClient.getJson(ApiEndpoints.me);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<AuthSession?> _refresh(AuthSession stored) async {
+    try {
+      final response = await _restClient.postJson(
+        ApiEndpoints.refresh,
+        authenticated: false,
+        body: {'refreshToken': stored.refreshToken},
+      );
+      final refreshed = AuthTokensDto.fromJson({
+        ...response,
+        'email': stored.email,
+      }).toDomain();
+      await _persist(refreshed);
+      return refreshed;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _clearSession() async {
     await _localStore.remove(_accessTokenKey);
     await _localStore.remove(_refreshTokenKey);
     await _localStore.remove(_userIdKey);

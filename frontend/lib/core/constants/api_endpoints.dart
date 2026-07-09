@@ -3,7 +3,9 @@ final class ApiEndpoints {
 
   static const login = '/auth/login';
   static const refresh = '/auth/refresh';
+  static const logout = '/auth/logout';
   static const me = '/auth/me';
+  static const webSocketTicket = '/auth/ws-ticket';
   static const workspaces = '/workspaces';
   static const agents = '/agents';
   static const agentRuns = '/agent-runs';

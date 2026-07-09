@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -14,6 +15,8 @@ final class RestClient {
   final LocalStore _localStore;
 
   static const _accessTokenKey = 'auth.access_token';
+  static const _requestTimeout = Duration(seconds: 15);
+  static const _multipartTimeout = Duration(seconds: 60);
 
   Future<Uri> buildUrl(
     String path, [
@@ -33,9 +36,11 @@ final class RestClient {
     Map<String, String>? queryParameters,
     bool authenticated = true,
   }) async {
-    final response = await http.get(
-      await buildUrl(path, queryParameters),
-      headers: await _headers(authenticated: authenticated),
+    final response = await _send(
+      () async => http.get(
+        await buildUrl(path, queryParameters),
+        headers: await _headers(authenticated: authenticated),
+      ),
     );
     return _decodeMap(response);
   }
@@ -45,9 +50,11 @@ final class RestClient {
     Map<String, String>? queryParameters,
     bool authenticated = true,
   }) async {
-    final response = await http.get(
-      await buildUrl(path, queryParameters),
-      headers: await _headers(authenticated: authenticated),
+    final response = await _send(
+      () async => http.get(
+        await buildUrl(path, queryParameters),
+        headers: await _headers(authenticated: authenticated),
+      ),
     );
     return _decodeList(response);
   }
@@ -57,10 +64,12 @@ final class RestClient {
     required Map<String, Object?> body,
     bool authenticated = true,
   }) async {
-    final response = await http.post(
-      await buildUrl(path),
-      headers: await _headers(authenticated: authenticated),
-      body: jsonEncode(body),
+    final response = await _send(
+      () async => http.post(
+        await buildUrl(path),
+        headers: await _headers(authenticated: authenticated),
+        body: jsonEncode(body),
+      ),
     );
     return _decodeMap(response);
   }
@@ -70,10 +79,12 @@ final class RestClient {
     required Map<String, Object?> body,
     bool authenticated = true,
   }) async {
-    final response = await http.post(
-      await buildUrl(path),
-      headers: await _headers(authenticated: authenticated),
-      body: jsonEncode(body),
+    final response = await _send(
+      () async => http.post(
+        await buildUrl(path),
+        headers: await _headers(authenticated: authenticated),
+        body: jsonEncode(body),
+      ),
     );
     return _decodeList(response);
   }
@@ -84,10 +95,12 @@ final class RestClient {
     Map<String, String>? queryParameters,
     bool authenticated = true,
   }) async {
-    final response = await http.put(
-      await buildUrl(path, queryParameters),
-      headers: await _headers(authenticated: authenticated),
-      body: jsonEncode(body),
+    final response = await _send(
+      () async => http.put(
+        await buildUrl(path, queryParameters),
+        headers: await _headers(authenticated: authenticated),
+        body: jsonEncode(body),
+      ),
     );
     return _decodeMap(response);
   }
@@ -110,8 +123,10 @@ final class RestClient {
     request.files.add(
       http.MultipartFile.fromBytes(fileField, fileBytes, filename: fileName),
     );
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
+    final response = await _send(() async {
+      final streamed = await request.send().timeout(_multipartTimeout);
+      return http.Response.fromStream(streamed).timeout(_requestTimeout);
+    }, timeout: _multipartTimeout);
     return _decodeMap(response);
   }
 
@@ -133,17 +148,27 @@ final class RestClient {
     return headers;
   }
 
+  Future<http.Response> _send(
+    Future<http.Response> Function() request, {
+    Duration timeout = _requestTimeout,
+  }) async {
+    try {
+      return await request().timeout(timeout);
+    } on TimeoutException {
+      throw const AppException('Request timed out');
+    } on http.ClientException catch (error) {
+      throw AppException('Network request failed: ${error.message}');
+    } on FormatException {
+      rethrow;
+    } catch (error) {
+      throw AppException('Network request failed: $error');
+    }
+  }
+
   Map<String, Object?> _decodeMap(http.Response response) {
-    final payload = response.body.isEmpty
-        ? const <String, Object?>{}
-        : jsonDecode(response.body);
+    final payload = _decodePayload(response);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = payload is Map<String, Object?>
-          ? (payload['message'] as String?)
-          : null;
-      throw AppException(
-        message ?? 'Request failed with status ${response.statusCode}',
-      );
+      throw AppException(_errorMessage(response, payload));
     }
     if (payload is! Map<String, Object?>) {
       throw const AppException('Expected JSON object');
@@ -152,17 +177,9 @@ final class RestClient {
   }
 
   List<Map<String, Object?>> _decodeList(http.Response response) {
-    final payload = response.body.isEmpty
-        ? const []
-        : jsonDecode(response.body);
+    final payload = _decodePayload(response);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      String? message;
-      if (payload is Map<String, Object?>) {
-        message = payload['message'] as String?;
-      }
-      throw AppException(
-        message ?? 'Request failed with status ${response.statusCode}',
-      );
+      throw AppException(_errorMessage(response, payload));
     }
     if (payload is! List) {
       throw const AppException('Expected JSON list');
@@ -171,5 +188,31 @@ final class RestClient {
         .cast<Map>()
         .map((entry) => entry.cast<String, Object?>())
         .toList();
+  }
+
+  Object? _decodePayload(http.Response response) {
+    if (response.body.isEmpty) {
+      return response.statusCode >= 200 && response.statusCode < 300
+          ? const <String, Object?>{}
+          : null;
+    }
+    try {
+      return jsonDecode(response.body);
+    } on FormatException {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return null;
+      }
+      throw const AppException('Invalid JSON response');
+    }
+  }
+
+  String _errorMessage(http.Response response, Object? payload) {
+    if (payload is Map<String, Object?>) {
+      final message = payload['message'];
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+    }
+    return 'Request failed with status ${response.statusCode}';
   }
 }

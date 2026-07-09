@@ -3,6 +3,8 @@ quarkus:
     name: microflow
   http:
     port: 8080
+    limits:
+      max-body-size: ${MICROFLOW_HTTP_MAX_BODY_SIZE:6M}
     cors:
       enabled: true
       origins: ${MICROFLOW_HTTP_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,https://localhost:*,https://127.0.0.1:*}

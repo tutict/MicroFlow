@@ -3,6 +3,7 @@ package com.microflow.auth.api.rest;
 import com.microflow.auth.api.dto.AuthTokensResponse;
 import com.microflow.auth.api.dto.LoginRequest;
 import com.microflow.auth.api.dto.RegisterRequest;
+import com.microflow.auth.api.dto.RefreshTokenRequest;
 import com.microflow.auth.api.dto.UserProfileResponse;
 import com.microflow.auth.api.dto.WebSocketTicketResponse;
 import com.microflow.auth.api.mapper.AuthApiMapper;
@@ -56,6 +57,18 @@ public class AuthController {
         return ResponseEntity.ok(authApiMapper.toResponse(tokens));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthTokensResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        var tokens = authService.refresh(request.refreshToken());
+        return ResponseEntity.ok(authApiMapper.toResponse(tokens));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request.refreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> me(HttpServletRequest request) {
         var userId = (String) request.getAttribute("currentUserId");
@@ -86,3 +99,4 @@ public class AuthController {
         }
     }
 }
+

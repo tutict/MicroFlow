@@ -190,12 +190,12 @@ public class JdbcWorkspaceRepository {
                     OR (
                       c.type = 'DIRECT_MESSAGE'
                       AND (
-                        c.name LIKE ('dm::' || ? || '::%')
-                        OR c.name LIKE ('dm::%::' || ?)
+                        c.name LIKE ('dm::' || ? || '::%') ESCAPE '\'
+                        OR c.name LIKE ('dm::%::' || ?) ESCAPE '\'
                       )
                     )
                   )
-                """, Integer.class, channelId, userId, userId, userId);
+                """, Integer.class, channelId, userId, escapeLikePattern(userId), escapeLikePattern(userId));
         return count != null && count > 0;
     }
 
@@ -441,6 +441,12 @@ public class JdbcWorkspaceRepository {
                 now,
                 workspaceId,
                 directMessageChannelName(leftUserId, rightUserId));
+    }
+
+    private String escapeLikePattern(String value) {
+        return value.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 
     private String directMessageChannelName(String leftUserId, String rightUserId) {

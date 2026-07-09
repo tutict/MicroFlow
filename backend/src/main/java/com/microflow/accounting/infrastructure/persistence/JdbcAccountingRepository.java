@@ -6,9 +6,13 @@ import com.microflow.accounting.domain.model.AccountingVoucherLine;
 import com.microflow.accounting.domain.model.TrialBalanceRow;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -84,22 +88,24 @@ public class JdbcAccountingRepository {
     }
 
     public List<AccountingVoucher> listVouchers(String workspaceId) {
-        return jdbcTemplate.query("""
+        var records = jdbcTemplate.query("""
                 SELECT id, workspace_id, voucher_no, voucher_date, period, status, description,
                        created_by_user_id, created_at, updated_at, posted_at
                 FROM accounting_vouchers
                 WHERE workspace_id = ?
                 ORDER BY voucher_date DESC, created_at DESC
-                """, (rs, rowNum) -> mapVoucherWithLines(rs), workspaceId);
+                """, JdbcAccountingRepository::mapVoucherRecord, workspaceId);
+        return hydrateVouchers(records);
     }
 
     public Optional<AccountingVoucher> findVoucher(String workspaceId, String voucherId) {
-        return jdbcTemplate.query("""
+        var records = jdbcTemplate.query("""
                 SELECT id, workspace_id, voucher_no, voucher_date, period, status, description,
                        created_by_user_id, created_at, updated_at, posted_at
                 FROM accounting_vouchers
                 WHERE workspace_id = ? AND id = ?
-                """, (rs, rowNum) -> mapVoucherWithLines(rs), workspaceId, voucherId).stream().findFirst();
+                """, JdbcAccountingRepository::mapVoucherRecord, workspaceId, voucherId);
+        return hydrateVouchers(records).stream().findFirst();
     }
 
     public int countVouchersForPeriod(String workspaceId, String period) {
@@ -139,22 +145,7 @@ public class JdbcAccountingRepository {
                 now,
                 now
         );
-        for (var line : lines) {
-            jdbcTemplate.update("""
-                    INSERT INTO accounting_voucher_lines(
-                        id, voucher_id, line_no, account_id, summary, debit_amount, credit_amount
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    line.id(),
-                    id,
-                    line.lineNo(),
-                    line.accountId(),
-                    line.summary(),
-                    line.debitAmount(),
-                    line.creditAmount()
-            );
-        }
+        batchInsertLines(id, lines);
         return findVoucher(workspaceId, id)
                 .orElseThrow(() -> new IllegalStateException("Created voucher could not be loaded"));
     }
@@ -192,9 +183,53 @@ public class JdbcAccountingRepository {
                 """, TRIAL_BALANCE_ROW_MAPPER, period, period, workspaceId);
     }
 
-    private AccountingVoucher mapVoucherWithLines(ResultSet rs) throws SQLException {
-        var voucherId = rs.getString("id");
-        var lines = listLines(voucherId);
+    private void batchInsertLines(String voucherId, List<AccountingVoucherLine> lines) {
+        jdbcTemplate.batchUpdate("""
+                INSERT INTO accounting_voucher_lines(
+                    id, voucher_id, line_no, account_id, summary, debit_amount, credit_amount
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, lines, lines.size(), (PreparedStatement ps, AccountingVoucherLine line) -> {
+            ps.setString(1, line.id());
+            ps.setString(2, voucherId);
+            ps.setInt(3, line.lineNo());
+            ps.setString(4, line.accountId());
+            ps.setString(5, line.summary());
+            ps.setBigDecimal(6, line.debitAmount());
+            ps.setBigDecimal(7, line.creditAmount());
+        });
+    }
+
+    private List<AccountingVoucher> hydrateVouchers(List<VoucherRecord> records) {
+        if (records.isEmpty()) {
+            return List.of();
+        }
+        var linesByVoucherId = listLinesByVoucherId(records.stream()
+                .map(VoucherRecord::id)
+                .toList());
+        return records.stream()
+                .map(record -> toVoucher(record, linesByVoucherId.getOrDefault(record.id(), List.of())))
+                .toList();
+    }
+
+    private Map<String, List<AccountingVoucherLine>> listLinesByVoucherId(List<String> voucherIds) {
+        var placeholders = String.join(",", voucherIds.stream().map(id -> "?").toList());
+        var lines = jdbcTemplate.query("""
+                SELECT l.id, l.voucher_id, l.line_no, l.account_id, a.code AS account_code,
+                       a.name AS account_name, l.summary, l.debit_amount, l.credit_amount
+                FROM accounting_voucher_lines l
+                JOIN accounting_accounts a ON a.id = l.account_id
+                WHERE l.voucher_id IN (%s)
+                ORDER BY l.voucher_id ASC, l.line_no ASC
+                """.formatted(placeholders), LINE_MAPPER, voucherIds.toArray());
+        var grouped = new LinkedHashMap<String, List<AccountingVoucherLine>>();
+        for (var line : lines) {
+            grouped.computeIfAbsent(line.voucherId(), id -> new ArrayList<>()).add(line);
+        }
+        return grouped;
+    }
+
+    private static AccountingVoucher toVoucher(VoucherRecord record, List<AccountingVoucherLine> lines) {
         var totalDebit = lines.stream()
                 .map(AccountingVoucherLine::debitAmount)
                 .reduce(ZERO, BigDecimal::add);
@@ -202,32 +237,37 @@ public class JdbcAccountingRepository {
                 .map(AccountingVoucherLine::creditAmount)
                 .reduce(ZERO, BigDecimal::add);
         return new AccountingVoucher(
-                voucherId,
+                record.id(),
+                record.workspaceId(),
+                record.voucherNo(),
+                record.voucherDate(),
+                record.period(),
+                record.status(),
+                record.description(),
+                totalDebit,
+                totalCredit,
+                record.createdByUserId(),
+                record.createdAt(),
+                record.updatedAt(),
+                record.postedAt(),
+                lines
+        );
+    }
+
+    private static VoucherRecord mapVoucherRecord(ResultSet rs, int rowNum) throws SQLException {
+        return new VoucherRecord(
+                rs.getString("id"),
                 rs.getString("workspace_id"),
                 rs.getString("voucher_no"),
                 rs.getString("voucher_date"),
                 rs.getString("period"),
                 rs.getString("status"),
                 rs.getString("description"),
-                totalDebit,
-                totalCredit,
                 rs.getString("created_by_user_id"),
                 rs.getString("created_at"),
                 rs.getString("updated_at"),
-                rs.getString("posted_at"),
-                lines
+                rs.getString("posted_at")
         );
-    }
-
-    private List<AccountingVoucherLine> listLines(String voucherId) {
-        return jdbcTemplate.query("""
-                SELECT l.id, l.voucher_id, l.line_no, l.account_id, a.code AS account_code,
-                       a.name AS account_name, l.summary, l.debit_amount, l.credit_amount
-                FROM accounting_voucher_lines l
-                JOIN accounting_accounts a ON a.id = l.account_id
-                WHERE l.voucher_id = ?
-                ORDER BY l.line_no ASC
-                """, LINE_MAPPER, voucherId);
     }
 
     private static AccountingAccount mapAccount(ResultSet rs, int rowNum) throws SQLException {
@@ -282,5 +322,20 @@ public class JdbcAccountingRepository {
     private static BigDecimal decimal(ResultSet rs, String columnName) throws SQLException {
         var value = rs.getBigDecimal(columnName);
         return value == null ? ZERO : value.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private record VoucherRecord(
+            String id,
+            String workspaceId,
+            String voucherNo,
+            String voucherDate,
+            String period,
+            String status,
+            String description,
+            String createdByUserId,
+            String createdAt,
+            String updatedAt,
+            String postedAt
+    ) {
     }
 }

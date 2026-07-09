@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,6 +28,7 @@ public class AccountingService {
     );
     private static final Set<String> BALANCE_DIRECTIONS = Set.of("DEBIT", "CREDIT");
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(2);
+    private static final int VOUCHER_CREATE_MAX_ATTEMPTS = 3;
 
     private final JdbcAccountingRepository accountingRepository;
     private final JdbcWorkspaceRepository workspaceRepository;
@@ -109,31 +111,40 @@ public class AccountingService {
             throw new IllegalArgumentException("Voucher debit and credit totals must balance");
         }
         var now = Instant.now(clock).toString();
-        var voucherId = "vch_" + UUID.randomUUID();
-        var voucherNo = nextVoucherNo(workspaceId, period);
-        return accountingRepository.createVoucher(
-                voucherId,
-                workspaceId,
-                voucherNo,
-                parsedDate.toString(),
-                period,
-                normalizedDescription,
-                userId,
-                now,
-                lines.stream()
-                        .map(line -> new AccountingVoucherLine(
-                                line.id(),
-                                voucherId,
-                                line.lineNo(),
-                                line.accountId(),
-                                line.accountCode(),
-                                line.accountName(),
-                                line.summary(),
-                                line.debitAmount(),
-                                line.creditAmount()
-                        ))
-                        .toList()
-        );
+        for (var attempt = 1; attempt <= VOUCHER_CREATE_MAX_ATTEMPTS; attempt++) {
+            var voucherId = "vch_" + UUID.randomUUID();
+            var voucherNo = nextVoucherNo(workspaceId, period);
+            try {
+                return accountingRepository.createVoucher(
+                        voucherId,
+                        workspaceId,
+                        voucherNo,
+                        parsedDate.toString(),
+                        period,
+                        normalizedDescription,
+                        userId,
+                        now,
+                        lines.stream()
+                                .map(line -> new AccountingVoucherLine(
+                                        line.id(),
+                                        voucherId,
+                                        line.lineNo(),
+                                        line.accountId(),
+                                        line.accountCode(),
+                                        line.accountName(),
+                                        line.summary(),
+                                        line.debitAmount(),
+                                        line.creditAmount()
+                                ))
+                                .toList()
+                );
+            } catch (DuplicateKeyException ex) {
+                if (attempt == VOUCHER_CREATE_MAX_ATTEMPTS) {
+                    throw ex;
+                }
+            }
+        }
+        throw new IllegalStateException("Unable to create voucher after retrying voucher number allocation");
     }
 
     @Transactional

@@ -340,6 +340,75 @@ class MicroFlowApiIntegrationTests {
     }
 
     @Test
+    void refreshRotatesTokensAndLogoutRevokesRefreshToken() throws Exception {
+        var email = "refresh-" + System.nanoTime() + "@microflow.local";
+        var session = registerUser(email);
+
+        var refreshResponse = restTemplate.postForEntity(
+                "/api/v1/auth/refresh",
+                Map.of("refreshToken", session.refreshToken()),
+                String.class
+        );
+
+        assertThat(refreshResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var refreshed = readJsonObject(refreshResponse);
+        assertThat((String) refreshed.get("accessToken")).isNotBlank();
+        assertThat((String) refreshed.get("refreshToken")).isNotBlank();
+        assertThat(refreshed.get("refreshToken")).isNotEqualTo(session.refreshToken());
+
+        var reusedResponse = restTemplate.postForEntity(
+                "/api/v1/auth/refresh",
+                Map.of("refreshToken", session.refreshToken()),
+                String.class
+        );
+        assertThat(reusedResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        var logoutResponse = restTemplate.postForEntity(
+                "/api/v1/auth/logout",
+                Map.of("refreshToken", refreshed.get("refreshToken")),
+                String.class
+        );
+        assertThat(logoutResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        var afterLogoutResponse = restTemplate.postForEntity(
+                "/api/v1/auth/refresh",
+                Map.of("refreshToken", refreshed.get("refreshToken")),
+                String.class
+        );
+        assertThat(afterLogoutResponse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void restMessageFlowRejectsMismatchedWorkspaceAndChannel() throws Exception {
+        var owner = registerUser("owner-" + System.nanoTime() + "@microflow.local");
+        var memberEmail = "member-" + System.nanoTime() + "@microflow.local";
+        var member = registerUser(memberEmail);
+        var ownerWorkspace = firstWorkspace(owner.accessToken());
+        var memberWorkspace = firstWorkspace(member.accessToken());
+        var ownerChannel = firstChannel(owner.accessToken(), ownerWorkspace.id());
+
+        var addMemberResponse = restTemplate.exchange(
+                "/api/v1/workspaces/" + ownerWorkspace.id() + "/members",
+                HttpMethod.POST,
+                authenticatedJsonEntity(owner.accessToken(), Map.of("email", memberEmail)),
+                String.class
+        );
+        assertThat(addMemberResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        var response = restTemplate.exchange(
+                "/api/v1/channels/" + ownerChannel.id() + "/messages",
+                HttpMethod.POST,
+                authenticatedJsonEntity(
+                        member.accessToken(),
+                        Map.of("workspaceId", memberWorkspace.id(), "content", "cross workspace " + System.nanoTime())
+                ),
+                String.class
+        );
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("Channel does not belong to workspace");
+    }
+    @Test
     void restMessageFlowPersistsAndReturnsMessages() throws Exception {
         var session = loginDemoUser();
         var workspace = firstWorkspace(session.accessToken());
@@ -769,6 +838,7 @@ class MicroFlowApiIntegrationTests {
         var payload = readJsonObject(response);
         return new AuthSession(
                 (String) payload.get("accessToken"),
+                (String) payload.get("refreshToken"),
                 (String) payload.get("userId")
         );
     }
@@ -788,6 +858,7 @@ class MicroFlowApiIntegrationTests {
         var payload = readJsonObject(response);
         return new AuthSession(
                 (String) payload.get("accessToken"),
+                (String) payload.get("refreshToken"),
                 (String) payload.get("userId")
         );
     }
@@ -1005,7 +1076,7 @@ class MicroFlowApiIntegrationTests {
         }
     }
 
-    private record AuthSession(String accessToken, String userId) {
+    private record AuthSession(String accessToken, String refreshToken, String userId) {
     }
 
     private record WorkspacePayload(String id, String name) {

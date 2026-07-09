@@ -52,8 +52,12 @@ public class JwtAuthenticationFilter implements ContainerRequestFilter {
                 || normalizedPath.startsWith("bootstrap/")
                 || normalizedPath.equals("api/v1/auth/login")
                 || normalizedPath.equals("api/v1/auth/register")
+                || normalizedPath.equals("api/v1/auth/refresh")
+                || normalizedPath.equals("api/v1/auth/logout")
                 || normalizedPath.equals("auth/login")
                 || normalizedPath.equals("auth/register")
+                || normalizedPath.equals("auth/refresh")
+                || normalizedPath.equals("auth/logout")
                 || normalizedPath.startsWith("q/")
                 || normalizedPath.startsWith("ws");
     }
@@ -75,3 +79,4 @@ public class JwtAuthenticationFilter implements ContainerRequestFilter {
                 .build());
     }
 }
+

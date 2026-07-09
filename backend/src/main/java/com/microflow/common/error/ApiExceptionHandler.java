@@ -5,6 +5,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 final class ApiExceptionPayload {
 
@@ -21,6 +23,8 @@ final class ApiExceptionPayload {
 
 @Provider
 public class ApiExceptionHandler implements ExceptionMapper<Exception> {
+
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @Override
     public Response toResponse(Exception exception) {
@@ -39,13 +43,10 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
                     .entity(ApiExceptionPayload.body("validation_error", firstValidationError(validationException)))
                     .build();
         }
+        log.error("Unhandled API exception", exception);
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                .entity(ApiExceptionPayload.body("internal_error", safeMessage(exception)))
+                .entity(ApiExceptionPayload.body("internal_error", "Internal server error"))
                 .build();
-    }
-
-    private String safeMessage(Exception ex) {
-        return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
     }
 
     private String firstValidationError(ConstraintViolationException exception) {

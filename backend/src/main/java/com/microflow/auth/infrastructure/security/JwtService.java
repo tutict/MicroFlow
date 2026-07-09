@@ -3,6 +3,7 @@ package com.microflow.auth.infrastructure.security;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
@@ -59,34 +60,67 @@ public class JwtService {
 
     public JwtPrincipal verify(String token) {
         try {
-            var parts = token.split("\\.");
-            if (parts.length != 3) {
+            var parts = token.split("\\.", -1);
+            if (parts.length != 3 || parts[0].isBlank() || parts[1].isBlank() || parts[2].isBlank()) {
                 throw new IllegalArgumentException("Malformed JWT");
             }
-            var expectedSignature = sign(parts[0] + "." + parts[1]);
-            if (!expectedSignature.equals(parts[2])) {
-                throw new IllegalArgumentException("Invalid JWT signature");
-            }
+            validateHeader(parts[0]);
+            validateSignature(parts);
             var payload = objectMapper.readValue(URL_DECODER.decode(parts[1]), MAP_TYPE);
-            var exp = ((Number) payload.get("exp")).longValue();
+            var subject = requiredString(payload, "sub");
+            var email = requiredString(payload, "email");
+            var displayName = requiredString(payload, "name");
+            requiredLong(payload, "iat");
+            var exp = requiredLong(payload, "exp");
             if (Instant.now(clock).getEpochSecond() >= exp) {
                 throw new IllegalArgumentException("JWT expired");
             }
-            return new JwtPrincipal(
-                    (String) payload.get("sub"),
-                    (String) payload.get("email"),
-                    (String) payload.get("name")
-            );
+            return new JwtPrincipal(subject, email, displayName);
         } catch (Exception ex) {
             throw new IllegalArgumentException("Invalid JWT", ex);
         }
     }
 
+    private void validateHeader(String encodedHeader) throws Exception {
+        var header = objectMapper.readValue(URL_DECODER.decode(encodedHeader), MAP_TYPE);
+        if (!"HS256".equals(header.get("alg")) || !"JWT".equals(header.get("typ"))) {
+            throw new IllegalArgumentException("Unsupported JWT header");
+        }
+    }
+
+    private void validateSignature(String[] parts) {
+        var expectedSignature = signBytes(parts[0] + "." + parts[1]);
+        var actualSignature = URL_DECODER.decode(parts[2]);
+        if (!MessageDigest.isEqual(expectedSignature, actualSignature)) {
+            throw new IllegalArgumentException("Invalid JWT signature");
+        }
+    }
+
+    private String requiredString(Map<String, Object> payload, String key) {
+        var value = payload.get(key);
+        if (value instanceof String text && !text.isBlank()) {
+            return text;
+        }
+        throw new IllegalArgumentException("Missing JWT claim: " + key);
+    }
+
+    private long requiredLong(Map<String, Object> payload, String key) {
+        var value = payload.get(key);
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        throw new IllegalArgumentException("Missing JWT claim: " + key);
+    }
+
     private String sign(String content) {
+        return URL_ENCODER.encodeToString(signBytes(content));
+    }
+
+    private byte[] signBytes(String content) {
         try {
             var mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(signingKey, "HmacSHA256"));
-            return URL_ENCODER.encodeToString(mac.doFinal(content.getBytes(StandardCharsets.UTF_8)));
+            return mac.doFinal(content.getBytes(StandardCharsets.UTF_8));
         } catch (Exception ex) {
             throw new IllegalStateException("Unable to sign JWT", ex);
         }

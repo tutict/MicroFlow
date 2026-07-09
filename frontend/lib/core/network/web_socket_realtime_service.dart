@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../errors/app_exception.dart';
+import '../constants/api_endpoints.dart';
 import 'rest_client.dart';
 import 'realtime_socket_service.dart';
 import 'ws_client.dart';
@@ -28,7 +29,9 @@ class WebSocketRealtimeService implements RealtimeSocketService {
   Future<void> connect({required String token}) async {
     await disconnect();
     final ticket = await _issueTicket(token);
-    _channel = WebSocketChannel.connect(await _wsClient.endpoint(ticket: ticket));
+    _channel = WebSocketChannel.connect(
+      await _wsClient.endpoint(ticket: ticket),
+    );
     _subscription = _channel!.stream.listen(
       (event) {
         if (event is String) {
@@ -45,11 +48,8 @@ class WebSocketRealtimeService implements RealtimeSocketService {
 
   Future<String> _issueTicket(String token) async {
     final response = await http.post(
-      await _restClient.buildUrl('/auth/ws-ticket'),
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      await _restClient.buildUrl(ApiEndpoints.webSocketTicket),
+      headers: {'Accept': 'application/json', 'Authorization': 'Bearer $token'},
     );
     final payload = response.body.isEmpty ? null : jsonDecode(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -57,7 +57,8 @@ class WebSocketRealtimeService implements RealtimeSocketService {
           ? payload['message'] as String?
           : null;
       throw AppException(
-        message ?? 'WebSocket ticket request failed with status ${response.statusCode}',
+        message ??
+            'WebSocket ticket request failed with status ${response.statusCode}',
       );
     }
     if (payload is! Map<String, Object?>) {

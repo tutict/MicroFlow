@@ -9,6 +9,8 @@ public interface AuthService {
 
     AuthTokens login(String email, String password);
 
+    AuthTokens refresh(String refreshToken);
+
     void logout(String refreshToken);
 
     UserProfile currentUser(String userId);
