@@ -1,33 +1,93 @@
-/.idea/
-/.DS_Store
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.idea/
+.vscode/
 
-# Local assistant/tooling state
-/.claude/
-/.codex-tmp/
-/frontend/.codex-tmp/
-/backend/target/
-/backend/.m2/
-/backend/.mvn/wrapper-home/
-/backend/.mvn/wrapper/maven-wrapper.jar
-/backend/data/
-/backend/microflow.db
+# Local assistant / tooling state
+.claude/
+.codex-tmp/
+frontend/.codex-tmp/
+.dart-appdata/
 
-/frontend/.dart_tool/
-/frontend/.flutter-plugins
-/frontend/.flutter-plugins-dependencies
-/frontend/.packages
-/frontend/build/
-/frontend/.metadata
-/frontend/macos/Flutter/ephemeral/
-/frontend/linux/flutter/ephemeral/
-/frontend/windows/flutter/ephemeral/
-/frontend/android/.gradle/
-/frontend/android/app/debug/
-/frontend/android/app/profile/
-/frontend/android/app/release/
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.local
+*.key
+*.pem
+*.p12
+*.jks
 
-/.env
-/ops/docker/backend/data/*
-!/ops/docker/backend/data/.gitkeep
-/ops/docker/backend/db/*
-!/ops/docker/backend/db/.gitkeep
+# Logs and runtime dumps
+*.log
+logs/
+*.pid
+*.hprof
+hs_err_pid*
+replay_pid*
+
+# Java / Maven / Quarkus
+backend/target/
+backend/.m2/
+backend/.mvn/wrapper-home/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.quarkus/
+backend/quarkus.log
+
+# Local backend runtime data
+backend/data/
+backend/microflow.db
+backend/microflow.db-*
+*.sqlite
+*.sqlite3
+
+# Flutter / Dart
+.dart_tool/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/.packages
+frontend/.metadata
+frontend/build/
+frontend/coverage/
+frontend/pubspec.lock.bak
+
+# Flutter desktop generated state
+frontend/macos/Flutter/ephemeral/
+frontend/linux/flutter/ephemeral/
+frontend/windows/flutter/ephemeral/
+
+# Flutter Android generated state
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/**/GeneratedPluginRegistrant.*
+frontend/android/app/debug/
+frontend/android/app/profile/
+frontend/android/app/release/
+frontend/android/app/outputs/
+
+# Flutter iOS generated state
+frontend/ios/Flutter/.last_build_id
+frontend/ios/Flutter/Generated.xcconfig
+frontend/ios/Flutter/flutter_export_environment.sh
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/build/
+
+# Node / frontend tool caches if introduced later
+node_modules/
+frontend/node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+
+# Docker/local deployment volumes
+ops/docker/backend/data/*
+!ops/docker/backend/data/.gitkeep
+ops/docker/backend/db/*
+!ops/docker/backend/db/.gitkeep
