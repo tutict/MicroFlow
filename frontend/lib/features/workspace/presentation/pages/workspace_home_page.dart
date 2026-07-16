@@ -181,8 +181,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
         return Consumer(
           builder: (context, ref, _) {
             final latestShell =
-                ref.watch(workspaceShellControllerProvider).valueOrNull ??
-                shell;
+                ref.watch(workspaceShellControllerProvider).value ?? shell;
             final theme = Theme.of(sheetContext);
             return FractionallySizedBox(
               heightFactor: 0.92,
@@ -203,9 +202,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                         .refreshKnowledgeDocuments();
                   },
                   onUpload: (targetChannelId) async {
-                    final result = await FilePicker.platform.pickFiles(
-                      withData: true,
-                    );
+                    final result = await FilePicker.pickFiles(withData: true);
                     if (result == null ||
                         result.files.isEmpty ||
                         result.files.first.bytes == null) {
@@ -358,20 +355,20 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
       isPhoneChatTab ? 6 : (isCompactPhone ? 12 : 16),
     );
     final appBarStatus = StatusBadge(
-      label: _connectionLabel(l10n, shellAsync.valueOrNull?.connectionStatus),
-      color: _connectionColor(shellAsync.valueOrNull?.connectionStatus),
+      label: _connectionLabel(l10n, shellAsync.value?.connectionStatus),
+      color: _connectionColor(shellAsync.value?.connectionStatus),
     );
     final mobileStatusColor = _connectionColor(
-      shellAsync.valueOrNull?.connectionStatus,
+      shellAsync.value?.connectionStatus,
     );
     final mobileStatusLabel = _connectionLabel(
       l10n,
-      shellAsync.valueOrNull?.connectionStatus,
+      shellAsync.value?.connectionStatus,
     );
     final canManageMembers =
-        shellAsync.valueOrNull?.workspaceMembers.any(
+        shellAsync.value?.workspaceMembers.any(
           (member) =>
-              member.userId == shellAsync.valueOrNull?.currentUserId &&
+              member.userId == shellAsync.value?.currentUserId &&
               member.role == 'OWNER',
         ) ??
         false;
@@ -435,7 +432,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           ],
         ),
         actions: [
-          if ((shellAsync.valueOrNull?.workspaces.length ?? 0) > 1)
+          if ((shellAsync.value?.workspaces.length ?? 0) > 1)
             PopupMenuButton<String>(
               tooltip: l10n.switchWorkspaceTooltip,
               onSelected: (workspaceId) {
@@ -444,7 +441,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     .selectWorkspace(workspaceId);
               },
               itemBuilder: (context) {
-                final shell = shellAsync.valueOrNull!;
+                final shell = shellAsync.value!;
                 return shell.workspaces
                     .map(
                       (workspace) => PopupMenuItem<String>(
@@ -476,20 +473,20 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           if (!isPhone)
             IconButton(
               tooltip: l10n.knowledgeTooltip,
-              onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
+              onPressed: shellAsync.value?.workspaceId.isEmpty ?? true
                   ? null
-                  : () => _openKnowledgeSheet(shellAsync.valueOrNull!),
+                  : () => _openKnowledgeSheet(shellAsync.value!),
               icon: const Icon(Icons.library_books_rounded),
             ),
           if (!isPhone)
             IconButton(
               tooltip: _accountingLabel(context),
-              onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
+              onPressed: shellAsync.value?.workspaceId.isEmpty ?? true
                   ? null
                   : () {
                       Navigator.of(context).pushNamed(
                         AppRoutes.accounting,
-                        arguments: shellAsync.valueOrNull!.workspaceId,
+                        arguments: shellAsync.value!.workspaceId,
                       );
                     },
               icon: const Icon(Icons.account_balance_rounded),
@@ -498,7 +495,7 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
             IconButton(
               tooltip: l10n.addMemberTooltip,
               onPressed:
-                  (shellAsync.valueOrNull?.workspaceId.isEmpty ?? true) ||
+                  (shellAsync.value?.workspaceId.isEmpty ?? true) ||
                       !canManageMembers
                   ? null
                   : _promptAddMember,
@@ -507,10 +504,10 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
           if (isTablet)
             IconButton(
               tooltip: l10n.agents,
-              onPressed: shellAsync.valueOrNull == null
+              onPressed: shellAsync.value == null
                   ? null
                   : () {
-                      final shell = shellAsync.valueOrNull!;
+                      final shell = shellAsync.value!;
                       _openAgentSheet(
                         agents: shell.agents,
                         runs: shell.agentRuns,
@@ -520,12 +517,12 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
             ),
           IconButton(
             tooltip: l10n.agentDiagnosticsTooltip,
-            onPressed: shellAsync.valueOrNull?.workspaceId.isEmpty ?? true
+            onPressed: shellAsync.value?.workspaceId.isEmpty ?? true
                 ? null
                 : () {
                     Navigator.of(context).pushNamed(
                       AppRoutes.agents,
-                      arguments: shellAsync.valueOrNull!.workspaceId,
+                      arguments: shellAsync.value!.workspaceId,
                     );
                   },
             icon: const Icon(Icons.health_and_safety_rounded),
@@ -547,12 +544,12 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               onSelected: (action) {
                 _handlePhoneMenuSelection(
                   action,
-                  shellAsync.valueOrNull,
+                  shellAsync.value,
                   canManageMembers,
                 );
               },
               itemBuilder: (context) {
-                final shell = shellAsync.valueOrNull;
+                final shell = shellAsync.value;
                 final hasWorkspace = shell?.workspaceId.isNotEmpty ?? false;
                 return [
                   PopupMenuItem(

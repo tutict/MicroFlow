@@ -208,9 +208,7 @@ void main() {
           .read(workspaceShellControllerProvider.notifier)
           .selectWorkspace('ws_1');
 
-      final state = container
-          .read(workspaceShellControllerProvider)
-          .valueOrNull;
+      final state = container.read(workspaceShellControllerProvider).value;
       expect(state, isNotNull);
       expect(state!.workspaceId, 'ws_1');
       expect(state.knowledgeDocuments, hasLength(1));
@@ -479,9 +477,7 @@ void main() {
       });
       await Future<void>.delayed(const Duration(milliseconds: 10));
 
-      final state = container
-          .read(workspaceShellControllerProvider)
-          .valueOrNull;
+      final state = container.read(workspaceShellControllerProvider).value;
       expect(state, isNotNull);
       expect(state!.selectedCollaborationStatus, isNotNull);
       expect(state.selectedCollaborationStatus!.status, 'COMPLETED');
@@ -562,7 +558,7 @@ void main() {
         .read(workspaceShellControllerProvider.notifier)
         .selectWorkspace('ws_2');
 
-    final state = container.read(workspaceShellControllerProvider).valueOrNull;
+    final state = container.read(workspaceShellControllerProvider).value;
     expect(state, isNotNull);
     expect(state!.workspaceId, 'ws_2');
     expect(state.workspaceName, 'Ops');

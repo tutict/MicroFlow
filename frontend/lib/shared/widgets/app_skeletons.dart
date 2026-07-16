@@ -45,7 +45,7 @@ class AppPageSkeleton extends StatelessWidget {
         children: [
           if (showHeader) ...[
             _SkeletonBlock(
-              height: isWide ? 112 : 96,
+              height: isWide ? 112 : 104,
               borderRadius: 12,
               child: const _SkeletonHeader(),
             ),

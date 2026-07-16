@@ -11,7 +11,7 @@ class LanguageSwitcher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final currentLocale =
-        ref.watch(localeControllerProvider).valueOrNull ?? const Locale('zh');
+        ref.watch(localeControllerProvider).value ?? const Locale('zh');
     final theme = Theme.of(context);
 
     return PopupMenuButton<Locale>(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:microflow_frontend/app/theme/app_theme.dart';
 import 'package:microflow_frontend/features/agents/domain/entities/agent_descriptor.dart';
 import 'package:microflow_frontend/features/agents/domain/entities/agent_run.dart';
 import 'package:microflow_frontend/features/agents/presentation/widgets/agent_panel.dart';
@@ -644,6 +645,7 @@ Future<void> _pumpWorkspaceHomePage(
         ),
       ],
       child: MaterialApp(
+        theme: AppTheme.light(),
         locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,

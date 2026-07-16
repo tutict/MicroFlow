@@ -88,8 +88,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
     final isWide = width >= 1040;
     final compactPanelHeader = width < 620;
     final connectionAsync = ref.watch(serverConnectionControllerProvider);
-    final catalog =
-        connectionAsync.valueOrNull ?? const ServerConnectionCatalog();
+    final catalog = connectionAsync.value ?? const ServerConnectionCatalog();
     final isBusy = connectionAsync.isLoading;
 
     final introPanel = _FrostPanel(

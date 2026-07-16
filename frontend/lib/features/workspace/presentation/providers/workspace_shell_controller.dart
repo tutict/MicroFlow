@@ -191,7 +191,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> selectWorkspace(String workspaceId) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null ||
         workspaceId.isEmpty ||
         workspaceId == current.workspaceId) {
@@ -247,7 +247,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> createWorkspace(String name) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) {
       return;
     }
@@ -274,7 +274,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> refreshKnowledgeDocuments() async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || current.workspaceId.isEmpty) {
       return;
     }
@@ -294,7 +294,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> addMemberByEmail(String email) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || current.workspaceId.isEmpty) {
       return;
     }
@@ -323,7 +323,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     String? channelId,
     bool inheritSelectedConversation = true,
   }) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || current.workspaceId.isEmpty) {
       return;
     }
@@ -344,7 +344,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
                 ? channelId ?? current.selectedChannelIdOrNull
                 : channelId,
           );
-      final latest = state.valueOrNull ?? current;
+      final latest = state.value ?? current;
       _setWorkspaceState(
         latest.copyWith(
           isUploadingKnowledgeDocument: false,
@@ -353,7 +353,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
         ),
       );
     } catch (error) {
-      final latest = state.valueOrNull ?? current;
+      final latest = state.value ?? current;
       _setWorkspaceState(
         latest.copyWith(
           isUploadingKnowledgeDocument: false,
@@ -464,7 +464,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     required WorkspaceSelectedConversationKind kind,
     required bool isAvailable,
   }) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null ||
         (current.selectedConversationId == conversationId &&
             current.selectedConversation.kind == kind)) {
@@ -538,7 +538,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
 
   Future<void> sendMessage(String rawContent) async {
     final content = rawContent.trim();
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || content.isEmpty || current.isSendingMessage) {
       return;
     }
@@ -568,7 +568,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
               channelId: selectedChannelId,
               content: outboundContent,
             );
-        final latest = state.valueOrNull;
+        final latest = state.value;
         if (latest != null) {
           _setWorkspaceState(
             latest.copyWith(isSendingMessage: false, clearMessageError: true),
@@ -586,7 +586,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
             content: outboundContent,
           );
 
-      final latest = state.valueOrNull;
+      final latest = state.value;
       if (latest != null) {
         _setWorkspaceState(
           latest.copyWith(
@@ -605,7 +605,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
         );
       }
     } catch (error) {
-      final latest = state.valueOrNull;
+      final latest = state.value;
       if (latest != null) {
         _setWorkspaceState(
           latest.copyWith(
@@ -618,7 +618,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> connectRealtime(String token) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null) {
       return;
     }
@@ -641,7 +641,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
         }
       }
     } catch (_) {
-      final latest = state.valueOrNull;
+      final latest = state.value;
       if (latest != null) {
         _setWorkspaceState(
           latest.copyWith(connectionStatus: ChatConnectionStatus.error),
@@ -651,7 +651,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> disconnectRealtime() async {
-    final current = state.valueOrNull;
+    final current = state.value;
     await _socketSubscription?.cancel();
     _socketSubscription = null;
     await ref.read(realtimeSocketServiceProvider).disconnect();
@@ -663,7 +663,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   Future<void> _subscribeChannel(String channelId) async {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null ||
         current.connectionStatus != ChatConnectionStatus.connected) {
       return;
@@ -672,7 +672,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   void setCollaborationModeForSelectedConversation(bool enabled) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null ||
         current.selectedConversation.kind !=
             WorkspaceSelectedConversationKind.channel) {
@@ -908,7 +908,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   }
 
   void _handleSocketEvent(dynamic rawEvent) {
-    final current = state.valueOrNull;
+    final current = state.value;
     if (current == null || rawEvent is! Map<String, Object?>) {
       return;
     }

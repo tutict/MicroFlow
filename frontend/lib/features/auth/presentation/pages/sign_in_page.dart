@@ -110,7 +110,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     final authAsync = ref.watch(authSessionControllerProvider);
     final serverConnection = ref
         .watch(serverConnectionControllerProvider)
-        .valueOrNull
+        .value
         ?.currentConnection;
     final isLoading = authAsync.isLoading;
     final theme = Theme.of(context);

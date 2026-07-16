@@ -18,7 +18,7 @@ class AuthSessionController extends AsyncNotifier<AuthSession?> {
     required String email,
     required String password,
   }) async {
-    final previousSession = state.valueOrNull;
+    final previousSession = state.value;
     state = const AsyncLoading();
     try {
       final session = await ref

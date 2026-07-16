@@ -31,7 +31,7 @@ void main() {
     final state = container.read(authSessionControllerProvider);
     expect(state.isLoading, isFalse);
     expect(state.hasError, isFalse);
-    expect(state.valueOrNull, isNull);
+    expect(state.value, isNull);
   });
 }
 

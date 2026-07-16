@@ -11,7 +11,7 @@ class ThemeModeSwitcher extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final themeMode =
-        ref.watch(themeModeControllerProvider).valueOrNull ?? ThemeMode.light;
+        ref.watch(themeModeControllerProvider).value ?? ThemeMode.light;
     final isDark = themeMode == ThemeMode.dark;
     final theme = Theme.of(context);
 

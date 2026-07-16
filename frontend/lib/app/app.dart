@@ -26,9 +26,9 @@ class MicroFlowApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale =
-        ref.watch(localeControllerProvider).valueOrNull ?? const Locale('zh');
+        ref.watch(localeControllerProvider).value ?? const Locale('zh');
     final themeMode =
-        ref.watch(themeModeControllerProvider).valueOrNull ?? ThemeMode.light;
+        ref.watch(themeModeControllerProvider).value ?? ThemeMode.light;
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
