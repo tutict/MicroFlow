@@ -7,12 +7,9 @@ import '../../../../app/router.dart';
 import '../../../../core/utils/date_time_formatter.dart';
 import '../../../../core/providers/locale_controller.dart';
 import '../../../../core/providers/theme_mode_controller.dart';
-import '../../../../shared/widgets/app_pill.dart';
-import '../../../../shared/widgets/app_surface.dart';
+import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/widgets/app_layout.dart';
 import '../../../../shared/widgets/app_skeletons.dart';
-import '../../../../shared/widgets/language_switcher.dart';
-import '../../../../shared/widgets/status_badge.dart';
-import '../../../../shared/widgets/theme_mode_switcher.dart';
 import '../../../agents/domain/entities/agent_descriptor.dart';
 import '../../../agents/domain/entities/agent_run.dart';
 import '../../../agents/presentation/widgets/agent_panel.dart';
@@ -347,23 +344,11 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
     final isTablet = width >= 820 && !isDesktop;
     final isPhone = !isDesktop && !isTablet;
     final isCompactPhone = isPhone && width < 640;
-    final isPhoneChatTab = isPhone && _mobileTabIndex == 0;
-    final bodyPadding = EdgeInsets.fromLTRB(
-      isPhoneChatTab ? 8 : (isCompactPhone ? 14 : 18),
-      isPhoneChatTab ? 6 : (isCompactPhone ? 10 : 14),
-      isPhoneChatTab ? 8 : (isCompactPhone ? 14 : 18),
-      isPhoneChatTab ? 6 : (isCompactPhone ? 12 : 16),
-    );
-    final appBarStatus = StatusBadge(
+    final bodyPadding = EdgeInsets.all(isPhone ? AppSpacing.xs : AppSpacing.sm);
+    final appBarStatus = AppStatusDot(
       label: _connectionLabel(l10n, shellAsync.value?.connectionStatus),
       color: _connectionColor(shellAsync.value?.connectionStatus),
-    );
-    final mobileStatusColor = _connectionColor(
-      shellAsync.value?.connectionStatus,
-    );
-    final mobileStatusLabel = _connectionLabel(
-      l10n,
-      shellAsync.value?.connectionStatus,
+      compact: true,
     );
     final canManageMembers =
         shellAsync.value?.workspaceMembers.any(
@@ -375,31 +360,28 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: isCompactPhone ? 64 : 72,
-        titleSpacing: isCompactPhone ? 12 : 16,
+        toolbarHeight: 60,
+        titleSpacing: AppSpacing.md,
         title: Row(
           children: [
             Container(
-              width: isCompactPhone ? 34 : 38,
-              height: isCompactPhone ? 34 : 38,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.16),
-                ),
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(AppRadii.small),
               ),
               alignment: Alignment.center,
               child: Text(
                 'MF',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: theme.colorScheme.primary,
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimary,
+                  fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
                 ),
               ),
             ),
-            SizedBox(width: isCompactPhone ? 10 : 12),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -410,22 +392,18 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(
-                    isDesktop || isTablet
-                        ? l10n.workspaceHub
-                        : mobileStatusLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: isDesktop || isTablet
-                          ? theme.colorScheme.onSurface.withValues(alpha: 0.62)
-                          : mobileStatusColor,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (!isCompactPhone)
+                    Text(
+                      shellAsync.value?.workspaceName ?? l10n.workspaceHub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -478,29 +456,6 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   : () => _openKnowledgeSheet(shellAsync.value!),
               icon: const Icon(Icons.library_books_rounded),
             ),
-          if (!isPhone)
-            IconButton(
-              tooltip: _accountingLabel(context),
-              onPressed: shellAsync.value?.workspaceId.isEmpty ?? true
-                  ? null
-                  : () {
-                      Navigator.of(context).pushNamed(
-                        AppRoutes.accounting,
-                        arguments: shellAsync.value!.workspaceId,
-                      );
-                    },
-              icon: const Icon(Icons.account_balance_rounded),
-            ),
-          if (!isPhone)
-            IconButton(
-              tooltip: l10n.addMemberTooltip,
-              onPressed:
-                  (shellAsync.value?.workspaceId.isEmpty ?? true) ||
-                      !canManageMembers
-                  ? null
-                  : _promptAddMember,
-              icon: const Icon(Icons.person_add_alt_1_rounded),
-            ),
           if (isTablet)
             IconButton(
               tooltip: l10n.agents,
@@ -515,102 +470,76 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     },
               icon: const Icon(Icons.smart_toy_rounded),
             ),
-          IconButton(
-            tooltip: l10n.agentDiagnosticsTooltip,
-            onPressed: shellAsync.value?.workspaceId.isEmpty ?? true
-                ? null
-                : () {
-                    Navigator.of(context).pushNamed(
-                      AppRoutes.agents,
-                      arguments: shellAsync.value!.workspaceId,
-                    );
-                  },
-            icon: const Icon(Icons.health_and_safety_rounded),
-          ),
-          if (isDesktop || isTablet) ...[
-            const ThemeModeSwitcher(),
-            const SizedBox(width: 8),
-            const LanguageSwitcher(),
-            const SizedBox(width: 8),
-          ],
-          if (isDesktop || isTablet)
+          if (!isCompactPhone)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
               child: Center(child: appBarStatus),
             ),
-          if (isPhone) ...[
-            PopupMenuButton<_PhoneMenuAction>(
-              tooltip: l10n.language,
-              onSelected: (action) {
-                _handlePhoneMenuSelection(
-                  action,
-                  shellAsync.value,
-                  canManageMembers,
-                );
-              },
-              itemBuilder: (context) {
-                final shell = shellAsync.value;
-                final hasWorkspace = shell?.workspaceId.isNotEmpty ?? false;
-                return [
+          PopupMenuButton<_PhoneMenuAction>(
+            tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
+            onSelected: (action) {
+              _handlePhoneMenuSelection(
+                action,
+                shellAsync.value,
+                canManageMembers,
+              );
+            },
+            itemBuilder: (context) {
+              final shell = shellAsync.value;
+              final hasWorkspace = shell?.workspaceId.isNotEmpty ?? false;
+              return [
+                if (isPhone)
                   PopupMenuItem(
                     value: _PhoneMenuAction.newWorkspace,
                     child: Text(l10n.newWorkspaceTitle),
                   ),
-                  if (hasWorkspace)
-                    PopupMenuItem(
-                      value: _PhoneMenuAction.knowledge,
-                      child: Text(l10n.knowledgeTooltip),
-                    ),
-                  if (hasWorkspace)
-                    PopupMenuItem(
-                      value: _PhoneMenuAction.accounting,
-                      child: Text(_accountingLabel(context)),
-                    ),
-                  if (hasWorkspace && canManageMembers)
-                    PopupMenuItem(
-                      value: _PhoneMenuAction.addMember,
-                      child: Text(l10n.addMemberTooltip),
-                    ),
-                  if (hasWorkspace)
-                    PopupMenuItem(
-                      value: _PhoneMenuAction.diagnostics,
-                      child: Text(l10n.agentDiagnosticsTooltip),
-                    ),
-                  const PopupMenuDivider(),
+                if (isPhone && hasWorkspace)
                   PopupMenuItem(
-                    value: _PhoneMenuAction.lightMode,
-                    child: Text(l10n.lightMode),
+                    value: _PhoneMenuAction.knowledge,
+                    child: Text(l10n.knowledgeTooltip),
                   ),
+                if (hasWorkspace)
                   PopupMenuItem(
-                    value: _PhoneMenuAction.darkMode,
-                    child: Text(l10n.darkMode),
+                    value: _PhoneMenuAction.accounting,
+                    child: Text(_accountingLabel(context)),
                   ),
+                if (hasWorkspace && canManageMembers)
                   PopupMenuItem(
-                    value: _PhoneMenuAction.chinese,
-                    child: Text(l10n.simplifiedChinese),
+                    value: _PhoneMenuAction.addMember,
+                    child: Text(l10n.addMemberTooltip),
                   ),
+                if (hasWorkspace)
                   PopupMenuItem(
-                    value: _PhoneMenuAction.english,
-                    child: Text(l10n.english),
+                    value: _PhoneMenuAction.diagnostics,
+                    child: Text(l10n.agentDiagnosticsTooltip),
                   ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: _PhoneMenuAction.signOut,
-                    child: Text(l10n.signOutTooltip),
-                  ),
-                ];
-              },
-              icon: const Icon(Icons.more_horiz_rounded),
-            ),
-            const SizedBox(width: 12),
-          ] else ...[
-            IconButton(
-              tooltip: l10n.signOutTooltip,
-              onPressed: _signOut,
-              icon: const Icon(Icons.logout_rounded),
-            ),
-            const SizedBox(width: 8),
-          ],
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: _PhoneMenuAction.lightMode,
+                  child: Text(l10n.lightMode),
+                ),
+                PopupMenuItem(
+                  value: _PhoneMenuAction.darkMode,
+                  child: Text(l10n.darkMode),
+                ),
+                PopupMenuItem(
+                  value: _PhoneMenuAction.chinese,
+                  child: Text(l10n.simplifiedChinese),
+                ),
+                PopupMenuItem(
+                  value: _PhoneMenuAction.english,
+                  child: Text(l10n.english),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem(
+                  value: _PhoneMenuAction.signOut,
+                  child: Text(l10n.signOutTooltip),
+                ),
+              ];
+            },
+            icon: const Icon(Icons.more_horiz_rounded),
+          ),
+          const SizedBox(width: AppSpacing.xs),
         ],
       ),
       body: ColoredBox(
@@ -635,10 +564,6 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   currentUserId: shell.currentUserId,
                   currentUserLabel: shell.currentUserLabel,
                   messages: shell.messages,
-                );
-                final unreadTotal = conversations.fold<int>(
-                  0,
-                  (sum, conversation) => sum + conversation.unreadCount,
                 );
                 final enabledAgents = shell.agents
                     .where((agent) => agent.enabled)
@@ -745,7 +670,6 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     primaryStatLabel: l10n.conversations,
                     secondaryStatValue: '$enabledAgents',
                     secondaryStatLabel: l10n.availableAgents,
-                    note: l10n.privateConversationPreview,
                     primaryActionLabel: isPhone ? l10n.agents : null,
                     onPrimaryAction: isPhone
                         ? () {
@@ -770,7 +694,6 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   primaryStatLabel: l10n.conversations,
                   secondaryStatValue: '$enabledAgents',
                   secondaryStatLabel: l10n.availableAgents,
-                  note: l10n.agentConversationHint,
                   primaryActionLabel: isPhone ? l10n.collaboration : null,
                   onPrimaryAction: isPhone
                       ? () {
@@ -795,29 +718,6 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _DesktopWorkspaceLead(
-                            workspaceName: shell.workspaceName,
-                            selectedConversationTitle:
-                                shell.selectedConversation.title,
-                            selectedConversationLabel: _conversationLabel(
-                              l10n,
-                              shell.selectedConversation,
-                            ),
-                            statusLabel: _conversationStatusLabel(
-                              l10n,
-                              shell.selectedConversation,
-                            ),
-                            statusColor: _conversationStatusColor(
-                              shell.selectedConversation,
-                            ),
-                            conversationCount: conversations.length,
-                            unreadCount: unreadTotal,
-                            agentCount: enabledAgents,
-                            conversationsLabel: l10n.conversations,
-                            unreadLabel: l10n.unreadLabel,
-                            agentsLabel: l10n.availableAgents,
-                          ),
-                          const SizedBox(height: 12),
                           Expanded(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -873,29 +773,6 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _DesktopWorkspaceLead(
-                            workspaceName: shell.workspaceName,
-                            selectedConversationTitle:
-                                shell.selectedConversation.title,
-                            selectedConversationLabel: _conversationLabel(
-                              l10n,
-                              shell.selectedConversation,
-                            ),
-                            statusLabel: _conversationStatusLabel(
-                              l10n,
-                              shell.selectedConversation,
-                            ),
-                            statusColor: _conversationStatusColor(
-                              shell.selectedConversation,
-                            ),
-                            conversationCount: conversations.length,
-                            unreadCount: unreadTotal,
-                            agentCount: enabledAgents,
-                            conversationsLabel: l10n.conversations,
-                            unreadLabel: l10n.unreadLabel,
-                            agentsLabel: l10n.availableAgents,
-                          ),
-                          const SizedBox(height: 12),
                           Expanded(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1634,13 +1511,18 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
         ),
         Divider(height: 1, color: theme.dividerColor),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            0,
+          ),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadii.medium),
               border: Border.all(color: theme.dividerColor),
             ),
             child: Column(
@@ -1649,51 +1531,31 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                 Text(
                   l10n.uploadTargetLabel,
                   style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: Text(l10n.workspaceLibrary),
-                      selected:
-                          _uploadTarget == _KnowledgeUploadTarget.workspace,
-                      onSelected: (_) {
-                        setState(
-                          () =>
-                              _uploadTarget = _KnowledgeUploadTarget.workspace,
-                        );
-                      },
-                    ),
-                    if (hasChannelScopedTarget)
-                      ChoiceChip(
-                        label: Text(currentConversationLabel),
-                        selected:
-                            _uploadTarget ==
-                            _KnowledgeUploadTarget.currentConversation,
-                        onSelected: (_) {
-                          setState(
-                            () => _uploadTarget =
-                                _KnowledgeUploadTarget.currentConversation,
-                          );
-                        },
+                const SizedBox(height: AppSpacing.sm),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SegmentedButton<_KnowledgeUploadTarget>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(
+                        value: _KnowledgeUploadTarget.workspace,
+                        icon: const Icon(Icons.hub_outlined),
+                        label: Text(l10n.workspaceLibrary),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _uploadTarget == _KnowledgeUploadTarget.currentConversation &&
-                          hasChannelScopedTarget
-                      ? l10n.uploadTargetConversationDescription(
-                          currentConversationLabel,
-                        )
-                      : l10n.uploadTargetWorkspaceDescription,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                    height: 1.45,
+                      if (hasChannelScopedTarget)
+                        ButtonSegment(
+                          value: _KnowledgeUploadTarget.currentConversation,
+                          icon: const Icon(Icons.forum_outlined),
+                          label: Text(currentConversationLabel),
+                        ),
+                    ],
+                    selected: {_uploadTarget},
+                    onSelectionChanged: (selection) {
+                      setState(() => _uploadTarget = selection.first);
+                    },
                   ),
                 ),
               ],
@@ -1762,7 +1624,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8E7E5),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadii.medium),
               ),
               child: Text(widget.shell.knowledgeError!),
             ),
@@ -1777,7 +1639,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
                 color: theme.colorScheme.primary.withValues(
                   alpha: theme.brightness == Brightness.dark ? 0.16 : 0.08,
                 ),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadii.medium),
                 border: Border.all(
                   color: theme.colorScheme.primary.withValues(alpha: 0.18),
                 ),
@@ -1825,7 +1687,7 @@ class _KnowledgeSheetState extends State<_KnowledgeSheet> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: filteredDocuments.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final document = filteredDocuments[index];
                     return _KnowledgeDocumentTile(
@@ -1870,7 +1732,7 @@ class _KnowledgeDocumentTile extends StatelessWidget {
                 alpha: theme.brightness == Brightness.dark ? 0.14 : 0.08,
               )
             : theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.medium),
         border: Border.all(
           color: highlighted
               ? theme.colorScheme.primary.withValues(alpha: 0.28)
@@ -1925,7 +1787,7 @@ class _KnowledgeDocumentTile extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             document.summary.isEmpty ? document.contentType : document.summary,
-            maxLines: 3,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
@@ -1934,29 +1796,30 @@ class _KnowledgeDocumentTile extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              AppPill(
-                label: scopeLabel,
-                icon: document.channelId == null || document.channelId!.isEmpty
+              Icon(
+                document.channelId == null || document.channelId!.isEmpty
                     ? Icons.public_rounded
                     : Icons.forum_rounded,
+                size: 14,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              AppPill(label: _formatBytes(document.sizeBytes)),
+              Text(scopeLabel, style: theme.textTheme.labelSmall),
+              Text(_formatBytes(document.sizeBytes)),
               Text(
                 document.status,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
-                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               if (createdAt != null)
                 Text(
                   '${createdAt.year}/${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')}',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
-                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
             ],
@@ -1980,113 +1843,6 @@ class _ScrollablePanel extends StatelessWidget {
   }
 }
 
-class _DesktopWorkspaceLead extends StatelessWidget {
-  const _DesktopWorkspaceLead({
-    required this.workspaceName,
-    required this.selectedConversationTitle,
-    required this.selectedConversationLabel,
-    required this.statusLabel,
-    required this.statusColor,
-    required this.conversationCount,
-    required this.unreadCount,
-    required this.agentCount,
-    required this.conversationsLabel,
-    required this.unreadLabel,
-    required this.agentsLabel,
-  });
-
-  final String workspaceName;
-  final String selectedConversationTitle;
-  final String selectedConversationLabel;
-  final String statusLabel;
-  final Color statusColor;
-  final int conversationCount;
-  final int unreadCount;
-  final int agentCount;
-  final String conversationsLabel;
-  final String unreadLabel;
-  final String agentsLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AppSurface(
-      variant: AppSurfaceVariant.raised,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  workspaceName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  selectedConversationTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '$selectedConversationLabel / $statusLabel',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.72,
-                          ),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _DesktopMetricPill(
-                value: '$conversationCount',
-                label: conversationsLabel,
-              ),
-              _DesktopMetricPill(value: '$unreadCount', label: unreadLabel),
-              _DesktopMetricPill(value: '$agentCount', label: agentsLabel),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DesktopMetricPill extends StatelessWidget {
   const _DesktopMetricPill({required this.value, required this.label});
 
@@ -2098,30 +1854,27 @@ class _DesktopMetricPill extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SizedBox(
-      width: 108,
-      child: AppSurface(
-        variant: AppSurfaceVariant.muted,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
+      width: 112,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 2),
-            Text(
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
-                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -2137,7 +1890,6 @@ class _WorkspaceSetupPanel extends StatelessWidget {
     required this.primaryStatLabel,
     required this.secondaryStatValue,
     required this.secondaryStatLabel,
-    required this.note,
     this.primaryActionLabel,
     this.onPrimaryAction,
     this.primaryActionIcon = Icons.arrow_forward_rounded,
@@ -2154,7 +1906,6 @@ class _WorkspaceSetupPanel extends StatelessWidget {
   final String primaryStatLabel;
   final String secondaryStatValue;
   final String secondaryStatLabel;
-  final String note;
   final String? primaryActionLabel;
   final VoidCallback? onPrimaryAction;
   final IconData primaryActionIcon;
@@ -2166,63 +1917,42 @@ class _WorkspaceSetupPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AppSurface(
-      variant: AppSurfaceVariant.raised,
-      borderRadius: 10,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          compact ? 18 : 32,
-          compact ? 20 : 34,
-          compact ? 18 : 32,
-          compact ? 18 : 28,
-        ),
+    return AppPane(
+      padding: EdgeInsets.all(compact ? AppSpacing.lg : AppSpacing.xl),
+      child: Center(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(
-                  alpha: theme.brightness == Brightness.dark ? 0.18 : 0.1,
-                ),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                eyebrow,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w800,
-                ),
+            Text(
+              eyebrow,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            SizedBox(height: compact ? 16 : 20),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               title,
-              style:
-                  (compact
-                          ? theme.textTheme.headlineSmall
-                          : theme.textTheme.headlineLarge)
-                      ?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            SizedBox(height: compact ? 10 : 12),
+            const SizedBox(height: AppSpacing.sm),
             ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: compact ? 520 : 640),
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Text(
                 description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                  height: 1.5,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
                 ),
               ),
             ),
-            SizedBox(height: compact ? 18 : 22),
+            const SizedBox(height: AppSpacing.lg),
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
               children: [
                 _DesktopMetricPill(
                   value: primaryStatValue,
@@ -2234,32 +1964,11 @@ class _WorkspaceSetupPanel extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: compact ? 16 : 20),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(compact ? 16 : 18),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(
-                  alpha: theme.brightness == Brightness.dark ? 0.34 : 0.72,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.82),
-                ),
-              ),
-              child: Text(
-                note,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  height: 1.5,
-                ),
-              ),
-            ),
-            const Spacer(),
-            if (primaryActionLabel != null || secondaryActionLabel != null)
+            if (primaryActionLabel != null || secondaryActionLabel != null) ...[
+              const SizedBox(height: AppSpacing.lg),
               Wrap(
-                spacing: 10,
-                runSpacing: 10,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
                 children: [
                   if (primaryActionLabel != null)
                     FilledButton.icon(
@@ -2275,6 +1984,7 @@ class _WorkspaceSetupPanel extends StatelessWidget {
                     ),
                 ],
               ),
+            ],
           ],
         ),
       ),
@@ -2306,36 +2016,28 @@ class _MobileBottomNav extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(10, 6, 10, 10),
-        child: Container(
-          padding: const EdgeInsets.all(5),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.dividerColor),
-            boxShadow: [
-              BoxShadow(
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0x24000000)
-                    : const Color(0x120E1A22),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              for (var index = 0; index < items.length; index++)
-                Expanded(
-                  child: _MobileNavItem(
-                    data: items[index],
-                    selected: index == currentIndex,
-                    onTap: () => onSelected(index),
-                  ),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          AppSpacing.xs,
+          AppSpacing.sm,
+          AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(top: BorderSide(color: theme.dividerColor)),
+        ),
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++)
+              Expanded(
+                child: _MobileNavItem(
+                  data: items[index],
+                  selected: index == currentIndex,
+                  onTap: () => onSelected(index),
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -2363,16 +2065,16 @@ class _MobileNavItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
+          duration: MediaQuery.disableAnimationsOf(context)
+              ? Duration.zero
+              : AppMotion.fast,
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           decoration: BoxDecoration(
             color: selected
-                ? theme.colorScheme.primary.withValues(
-                    alpha: theme.brightness == Brightness.dark ? 0.22 : 0.14,
-                  )
+                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadii.small),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -2392,8 +2094,8 @@ class _MobileNavItem extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: selected
                       ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.72),
-                  fontWeight: FontWeight.w800,
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ],

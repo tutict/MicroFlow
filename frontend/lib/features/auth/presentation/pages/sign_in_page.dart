@@ -5,9 +5,9 @@ import 'package:microflow_frontend/l10n/app_localizations.dart';
 import '../../../../app/router.dart';
 import '../../../../core/providers/locale_controller.dart';
 import '../../../../core/providers/theme_mode_controller.dart';
+import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/widgets/app_layout.dart';
 import '../../../bootstrap/presentation/providers/server_connection_controller.dart';
-import '../../../../shared/widgets/language_switcher.dart';
-import '../../../../shared/widgets/theme_mode_switcher.dart';
 import '../providers/auth_session_controller.dart';
 
 class SignInPage extends ConsumerStatefulWidget {
@@ -22,21 +22,12 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   late final TextEditingController _passwordController;
   String? _errorText;
   bool _obscurePassword = true;
-  bool _ready = false;
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _ready = true;
-      });
-    });
   }
 
   @override
@@ -47,9 +38,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   }
 
   Future<void> _submit() async {
-    setState(() {
-      _errorText = null;
-    });
+    setState(() => _errorText = null);
     try {
       await ref
           .read(authSessionControllerProvider.notifier)
@@ -62,9 +51,9 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       }
       Navigator.of(context).pushReplacementNamed(AppRoutes.workspace);
     } catch (error) {
-      setState(() {
-        _errorText = error.toString();
-      });
+      if (mounted) {
+        setState(() => _errorText = error.toString());
+      }
     }
   }
 
@@ -84,466 +73,129 @@ class _SignInPageState extends ConsumerState<SignInPage> {
         ref
             .read(themeModeControllerProvider.notifier)
             .setThemeMode(ThemeMode.light);
-        break;
       case 2:
         ref
             .read(themeModeControllerProvider.notifier)
             .setThemeMode(ThemeMode.dark);
-        break;
       case 3:
         ref
             .read(localeControllerProvider.notifier)
             .setLocale(const Locale('zh'));
-        break;
       case 4:
         ref
             .read(localeControllerProvider.notifier)
             .setLocale(const Locale('en'));
-        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final pageCopy = _SignInPageCopy.of(context);
-    final authAsync = ref.watch(authSessionControllerProvider);
-    final serverConnection = ref
+    final copy = _SignInCopy.of(context);
+    final authState = ref.watch(authSessionControllerProvider);
+    final connection = ref
         .watch(serverConnectionControllerProvider)
         .value
         ?.currentConnection;
-    final isLoading = authAsync.isLoading;
-    final theme = Theme.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final height = MediaQuery.sizeOf(context).height;
-    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final isWide = width >= 980;
-    final isCompactHeader = width < 560;
-    final isCondensedMobile = !isWide && (height < 800 || keyboardVisible);
-    final sidePadding = width < 640 ? 18.0 : 28.0;
-    final titleStyle =
-        (isWide
-                ? theme.textTheme.displayLarge
-                : (isCondensedMobile
-                      ? theme.textTheme.displaySmall
-                      : theme.textTheme.displayMedium))
-            ?.copyWith(
-              fontSize: isWide ? 64 : (isCondensedMobile ? 34 : 42),
-              height: 1,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-              color: theme.colorScheme.onSurface,
-            );
+    final compact = width < 760;
+    final theme = Theme.of(context);
 
-    final hero = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.18 : 0.1,
-            ),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            l10n.workspaceHub,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        SizedBox(height: isWide ? 24 : 18),
-        Text(l10n.appTitle, style: titleStyle),
-        SizedBox(height: isWide ? 16 : 14),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: isWide ? 620 : 540),
-          child: Text(
-            l10n.workspaceDescription,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-              height: 1.5,
-            ),
-          ),
-        ),
-        SizedBox(height: isCondensedMobile ? 12 : 16),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final label in [
-              l10n.localFirst,
-              l10n.sqlite,
-              l10n.virtualThreads,
-            ])
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(
-                    alpha: theme.brightness == Brightness.dark ? 0.42 : 0.66,
-                  ),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: theme.dividerColor.withValues(alpha: 0.82),
-                  ),
-                ),
-                child: Text(
-                  label,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        if (!isCondensedMobile) ...[
-          SizedBox(height: isWide ? 28 : 20),
-          SizedBox(
-            height: isWide ? 500 : 320,
-            child: _HeroStage(isWide: isWide, l10n: l10n),
-          ),
-        ],
-      ],
-    );
-
-    final form = _GlassPanel(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.lock_open_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(height: 22),
-          Text(
-            l10n.signInTitle,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            l10n.signInDescription,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
-              height: 1.5,
-            ),
-          ),
-          if (serverConnection != null) ...[
-            const SizedBox(height: 18),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(
-                  alpha: theme.brightness == Brightness.dark ? 0.78 : 0.92,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.82),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          pageCopy.connectedServer,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: isLoading ? null : _changeServer,
-                        child: Text(pageCopy.changeServer),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    serverConnection.instanceName,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    serverConnection.serverOrigin,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.76,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 22),
-          _Field(
-            controller: _emailController,
-            label: l10n.email,
-            icon: Icons.alternate_email_rounded,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: 16),
-          _Field(
-            controller: _passwordController,
-            label: l10n.password,
-            icon: Icons.lock_outline_rounded,
-            obscureText: _obscurePassword,
-            textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _submit(),
-            suffix: IconButton(
-              onPressed: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
-              },
-              icon: Icon(
-                _obscurePassword
-                    ? Icons.visibility_rounded
-                    : Icons.visibility_off_rounded,
-                size: 18,
-              ),
-            ),
-          ),
-          if (_errorText != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFBA3B2F).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFFBA3B2F).withValues(alpha: 0.18),
-                ),
-              ),
-              child: Text(
-                _errorText!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFFBA3B2F),
-                  fontWeight: FontWeight.w600,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 22),
-          SizedBox(
-            height: 56,
-            child: FilledButton(
-              onPressed: isLoading ? null : _submit,
-              style: FilledButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(isLoading ? l10n.signingIn : l10n.enterWorkspace),
-            ),
-          ),
-          const SizedBox(height: 18),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.56 : 0.92,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: 0.78),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 9,
-                  height: 9,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF1F8A5C),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.workspaceDescription,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final form = _SignInForm(
+      emailController: _emailController,
+      passwordController: _passwordController,
+      obscurePassword: _obscurePassword,
+      isLoading: authState.isLoading,
+      errorText: _errorText,
+      connectionName: connection?.instanceName,
+      connectionOrigin: connection?.serverOrigin,
+      copy: copy,
+      l10n: l10n,
+      onTogglePassword: () {
+        setState(() => _obscurePassword = !_obscurePassword);
+      },
+      onChangeServer: _changeServer,
+      onSubmit: _submit,
     );
 
     return Scaffold(
-      body: ColoredBox(
-        color: theme.scaffoldBackgroundColor,
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              sidePadding,
-              width < 640 ? 18 : 24,
-              sidePadding,
-              width < 640 ? 18 : 24,
+      appBar: AppBar(
+        toolbarHeight: 60,
+        titleSpacing: AppSpacing.md,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _BrandMark(label: l10n.appTitle),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              l10n.appTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    _GlassPanel(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      radius: 8,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary,
-                              borderRadius: BorderRadius.circular(8),
+          ],
+        ),
+        actions: [
+          PopupMenuButton<int>(
+            tooltip: copy.preferences,
+            onSelected: _handleSettingsSelection,
+            itemBuilder: (context) => [
+              PopupMenuItem(value: 1, child: Text(l10n.lightMode)),
+              PopupMenuItem(value: 2, child: Text(l10n.darkMode)),
+              const PopupMenuDivider(),
+              PopupMenuItem(value: 3, child: Text(l10n.simplifiedChinese)),
+              PopupMenuItem(value: 4, child: Text(l10n.english)),
+            ],
+            icon: const Icon(Icons.tune_rounded),
+          ),
+          const SizedBox(width: AppSpacing.xs),
+        ],
+      ),
+      body: SafeArea(
+        top: false,
+        child: Center(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.all(compact ? AppSpacing.md : AppSpacing.lg),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 920),
+              child: compact
+                  ? form
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: AppSpacing.md,
+                              right: AppSpacing.xl,
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              'MF',
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.appTitle,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              Text(
-                                l10n.workspaceHub,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.74,
-                                  ),
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    if (isCompactHeader)
-                      PopupMenuButton<int>(
-                        tooltip: l10n.language,
-                        onSelected: _handleSettingsSelection,
-                        itemBuilder: (context) => [
-                          PopupMenuItem(value: 1, child: Text(l10n.lightMode)),
-                          PopupMenuItem(value: 2, child: Text(l10n.darkMode)),
-                          PopupMenuItem(
-                            value: 3,
-                            child: Text(l10n.simplifiedChinese),
-                          ),
-                          PopupMenuItem(value: 4, child: Text(l10n.english)),
-                        ],
-                        icon: const Icon(Icons.tune_rounded),
-                      )
-                    else ...[
-                      const ThemeModeSwitcher(),
-                      const SizedBox(width: 8),
-                      const LanguageSwitcher(),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1320),
-                      child: isWide
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: _Reveal(
-                                    ready: _ready,
-                                    offset: const Offset(-0.08, 0),
-                                    child: hero,
-                                  ),
+                                Text(
+                                  l10n.appTitle,
+                                  style: theme.textTheme.displayLarge,
                                 ),
-                                const SizedBox(width: 28),
-                                SizedBox(
-                                  width: 430,
-                                  child: _Reveal(
-                                    ready: _ready,
-                                    offset: const Offset(0.08, 0),
-                                    child: form,
+                                const SizedBox(height: AppSpacing.sm),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 440,
+                                  ),
+                                  child: Text(
+                                    l10n.signInDescription,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
                                   ),
                                 ),
                               ],
-                            )
-                          : SingleChildScrollView(
-                              keyboardDismissBehavior:
-                                  ScrollViewKeyboardDismissBehavior.onDrag,
-                              padding: EdgeInsets.only(
-                                bottom:
-                                    MediaQuery.viewInsetsOf(context).bottom +
-                                    20,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  _Reveal(
-                                    ready: _ready,
-                                    offset: const Offset(0, 0.05),
-                                    child: hero,
-                                  ),
-                                  const SizedBox(height: 22),
-                                  _Reveal(
-                                    ready: _ready,
-                                    offset: const Offset(0, 0.07),
-                                    child: form,
-                                  ),
-                                ],
-                              ),
                             ),
+                          ),
+                        ),
+                        SizedBox(width: 420, child: form),
+                      ],
                     ),
-                  ),
-                ),
-              ],
             ),
           ),
         ),
@@ -552,365 +204,194 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   }
 }
 
-class _Reveal extends StatelessWidget {
-  const _Reveal({
-    required this.ready,
-    required this.offset,
-    required this.child,
+class _SignInForm extends StatelessWidget {
+  const _SignInForm({
+    required this.emailController,
+    required this.passwordController,
+    required this.obscurePassword,
+    required this.isLoading,
+    required this.errorText,
+    required this.connectionName,
+    required this.connectionOrigin,
+    required this.copy,
+    required this.l10n,
+    required this.onTogglePassword,
+    required this.onChangeServer,
+    required this.onSubmit,
   });
-  final bool ready;
-  final Offset offset;
-  final Widget child;
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSlide(
-      duration: const Duration(milliseconds: 780),
-      curve: Curves.easeOutCubic,
-      offset: ready ? Offset.zero : offset,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 720),
-        curve: Curves.easeOut,
-        opacity: ready ? 1 : 0,
-        child: child,
-      ),
-    );
-  }
-}
 
-class _GlassPanel extends StatelessWidget {
-  const _GlassPanel({
-    required this.child,
-    this.padding = const EdgeInsets.all(28),
-    this.radius = 10,
-  });
-  final Widget child;
-  final EdgeInsets padding;
-  final double radius;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: theme.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: theme.brightness == Brightness.dark
-                ? const Color(0x1F000000)
-                : const Color(0x0D0F1720),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-}
-
-class _HeroStage extends StatelessWidget {
-  const _HeroStage({required this.isWide, required this.l10n});
-  final bool isWide;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
+  final bool obscurePassword;
+  final bool isLoading;
+  final String? errorText;
+  final String? connectionName;
+  final String? connectionOrigin;
+  final _SignInCopy copy;
   final AppLocalizations l10n;
+  final VoidCallback onTogglePassword;
+  final VoidCallback onChangeServer;
+  final VoidCallback onSubmit;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _GlassPanel(
-      padding: EdgeInsets.all(isWide ? 28 : 18),
-      radius: 10,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: theme.brightness == Brightness.dark ? 0.22 : 0.42,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 0,
-            child: _MetricPill(
-              icon: Icons.radio_button_checked_rounded,
-              label: l10n.connected,
-              color: const Color(0xFF1F8A5C),
-            ),
-          ),
-          Align(
-            alignment: Alignment.center,
-            child: Container(
-              height: isWide ? 180 : 120,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.18),
+    return AppPane(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: AutofillGroup(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(l10n.signInTitle, style: theme.textTheme.headlineMedium),
+            if (connectionName != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              AppListRow(
+                title: connectionName!,
+                subtitle: connectionOrigin,
+                leading: const Icon(Icons.computer_rounded),
+                selected: true,
+                trailing: TextButton(
+                  onPressed: isLoading ? null : onChangeServer,
+                  child: Text(copy.manageDevice),
                 ),
               ),
-              child: Stack(
-                children: [
-                  for (final top in [18.0, 56.0, 94.0, 132.0])
-                    Positioned(
-                      left: 16,
-                      right: 16,
-                      top: isWide ? top : top * 0.68,
-                      child: Container(
-                        height: 1,
-                        color: theme.dividerColor.withValues(alpha: 0.6),
-                      ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              controller: emailController,
+              enabled: !isLoading,
+              autofillHints: const [
+                AutofillHints.username,
+                AutofillHints.email,
+              ],
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: l10n.email,
+                prefixIcon: const Icon(Icons.alternate_email_rounded),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: passwordController,
+              enabled: !isLoading,
+              autofillHints: const [AutofillHints.password],
+              obscureText: obscurePassword,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => onSubmit(),
+              decoration: InputDecoration(
+                labelText: l10n.password,
+                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                suffixIcon: IconButton(
+                  tooltip: copy.togglePassword,
+                  onPressed: onTogglePassword,
+                  icon: Icon(
+                    obscurePassword
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
+                  ),
+                ),
+              ),
+            ),
+            if (errorText != null) ...[
+              const SizedBox(height: AppSpacing.sm),
+              Semantics(
+                liveRegion: true,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 18,
+                      color: theme.colorScheme.error,
                     ),
-                  for (final left in [42.0, 140.0, 260.0, 392.0, 510.0])
-                    Positioned(
-                      top: 16,
-                      bottom: 16,
-                      left: isWide ? left : left * 0.54,
-                      child: Container(
-                        width: 1,
-                        color: theme.dividerColor.withValues(alpha: 0.42),
-                      ),
-                    ),
-                  for (final dot in [
-                    const _Dot(0.18, 0.24, Color(0xFF3D7EA6)),
-                    const _Dot(0.38, 0.16, Color(0xFF1F6F5C)),
-                    const _Dot(0.62, 0.32, Color(0xFF1F8A5C)),
-                    const _Dot(0.74, 0.18, Color(0xFF52796F)),
-                    const _Dot(0.28, 0.62, Color(0xFF1F6F5C)),
-                    const _Dot(0.54, 0.54, Color(0xFF3D7EA6)),
-                    const _Dot(0.72, 0.76, Color(0xFF1F8A5C)),
-                  ])
-                    Positioned(
-                      left: dot.x * (isWide ? 560 : 300),
-                      top: dot.y * (isWide ? 180 : 120),
-                      child: Container(
-                        width: isWide ? 18 : 14,
-                        height: isWide ? 18 : 14,
-                        decoration: BoxDecoration(
-                          color: dot.color,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: dot.color.withValues(alpha: 0.45),
-                              blurRadius: 16,
-                            ),
-                          ],
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        errorText!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
+                onPressed: isLoading ? null : onSubmit,
+                child: isLoading
+                    ? const SizedBox.square(
+                        dimension: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.enterWorkspace),
               ),
             ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _StageCard(
-                  title: l10n.collaboration,
-                  subtitle: l10n.workspaceHub,
-                  icon: Icons.forum_rounded,
-                ),
-                _StageCard(
-                  title: l10n.contacts,
-                  subtitle: l10n.memberConversationHint,
-                  icon: Icons.groups_2_rounded,
-                ),
-                _StageCard(
-                  title: l10n.recentActivityLabel,
-                  subtitle: l10n.agentConversationHint,
-                  icon: Icons.bolt_rounded,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StageCard extends StatelessWidget {
-  const _StageCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      width: 210,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.58 : 0.9,
+          ],
         ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.72)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Icon(icon, size: 18, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-class _MetricPill extends StatelessWidget {
-  const _MetricPill({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-  final IconData icon;
+class _BrandMark extends StatelessWidget {
+  const _BrandMark({required this.label});
+
   final String label;
-  final Color color;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.64 : 0.92,
+    return Semantics(
+      label: label,
+      child: Container(
+        width: 34,
+        height: 34,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          borderRadius: BorderRadius.circular(AppRadii.medium),
         ),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.84)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
+        child: Text(
+          'MF',
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    required this.textInputAction,
-    this.keyboardType,
-    this.obscureText = false,
-    this.onSubmitted,
-    this.suffix,
-  });
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final TextInputAction textInputAction;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-  final ValueChanged<String>? onSubmitted;
-  final Widget? suffix;
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      obscureText: obscureText,
-      onSubmitted: onSubmitted,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(
-          icon,
-          size: 18,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-        ),
-        suffixIcon: suffix,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 18,
-        ),
-        fillColor: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.84 : 0.98,
         ),
       ),
     );
   }
 }
 
-class _Dot {
-  const _Dot(this.x, this.y, this.color);
-  final double x;
-  final double y;
-  final Color color;
-}
-
-class _SignInPageCopy {
-  const _SignInPageCopy({
-    required this.connectedServer,
-    required this.changeServer,
+class _SignInCopy {
+  const _SignInCopy({
+    required this.manageDevice,
+    required this.preferences,
+    required this.togglePassword,
   });
 
-  final String connectedServer;
-  final String changeServer;
+  final String manageDevice;
+  final String preferences;
+  final String togglePassword;
 
-  static _SignInPageCopy of(BuildContext context) {
-    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
-    if (isChinese) {
-      return const _SignInPageCopy(
-        connectedServer: '当前设备',
-        changeServer: '管理设备',
+  static _SignInCopy of(BuildContext context) {
+    if (Localizations.localeOf(context).languageCode == 'zh') {
+      return const _SignInCopy(
+        manageDevice: '管理设备',
+        preferences: '显示设置',
+        togglePassword: '显示或隐藏密码',
       );
     }
-    return const _SignInPageCopy(
-      connectedServer: 'Current device',
-      changeServer: 'Manage devices',
+    return const _SignInCopy(
+      manageDevice: 'Manage device',
+      preferences: 'Display settings',
+      togglePassword: 'Show or hide password',
     );
   }
 }

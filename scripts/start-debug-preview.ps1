@@ -19,6 +19,7 @@ $LogDir = Join-Path $ProjectRoot ".codex-tmp\debug-preview"
 $ApiBaseUrl = "http://$HostName`:$BackendPort/api/v1"
 $WsBaseUrl = "ws://$HostName`:$BackendPort/ws"
 $FrontendUrl = "http://$HostName`:$FrontendPort"
+$PairingUrl = "http://$HostName`:$BackendPort/api/v1/bootstrap/console"
 
 function Write-Step {
     param([string]$Message)
@@ -113,6 +114,7 @@ Write-Step "Starting MicroFlow debug preview"
 Write-Host "Backend:  http://$HostName`:$BackendPort"
 Write-Host "Health:   http://$HostName`:$BackendPort/api/v1/system/health"
 Write-Host "Frontend: $FrontendUrl"
+Write-Host "Pairing:  $PairingUrl"
 Write-Host "API:      $ApiBaseUrl"
 Write-Host "WS:       $WsBaseUrl"
 Write-Host "Logs:     $LogDir"
@@ -128,9 +130,10 @@ $backendCommand = @"
 `$env:MICROFLOW_ALLOW_INSECURE_DEFAULT_SECRETS = '$allowInsecureDefaultSecrets'
 `$env:MICROFLOW_SEED_DEMO_ENABLED = '$seedDemoEnabled'
 `$env:MICROFLOW_DB_PATH = '$databasePath'
-& '$maven' -f '$BackendDir\pom.xml' quarkus:dev -Dquarkus.http.port=$BackendPort
+`$env:MICROFLOW_SERVER_ORIGIN = 'http://$HostName`:$BackendPort'
+& '$maven' quarkus:dev '-Dquarkus.http.port=$BackendPort'
 "@
-$backendProcess = Start-DebugProcess -Title "MicroFlow Backend (Quarkus dev)" -WorkingDirectory $ProjectRoot -Command $backendCommand -LogPath $backendLog
+$backendProcess = Start-DebugProcess -Title "MicroFlow Backend (Quarkus dev)" -WorkingDirectory $BackendDir -Command $backendCommand -LogPath $backendLog
 Write-Ok "Backend launch requested (PID $($backendProcess.Id))"
 
 Write-Step "Waiting a few seconds before starting Flutter"

@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'MicroFlow';
+  String get appTitle => '微澜协作';
 
   @override
   String get language => '语言';
@@ -33,10 +33,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchContacts => '搜索联系人';
 
   @override
-  String get signInTitle => '登录 MicroFlow';
+  String get signInTitle => '登录';
 
   @override
-  String get signInDescription => '连接本地工作区，完成认证后开始实时协作。';
+  String get signInDescription => '继续进入本地工作区。';
 
   @override
   String get email => '邮箱';
@@ -64,7 +64,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signOutTooltip => '退出登录';
 
   @override
-  String get workspaceDescription => '面向本地 AI 执行、加密存储和轻量部署的专注协作工作区。';
+  String get workspaceDescription => '会话、成员与智能体，集中协作。';
 
   @override
   String get workspace => '工作区';
@@ -136,10 +136,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get memberConversationHint => '1 对 1 团队会话';
 
   @override
-  String get agentConversationHint => '与 AI 协作者的私有会话';
+  String get agentConversationHint => '智能体私聊';
 
   @override
-  String get privateConversationPreview => '私有会话入口已在界面中准备好，后端会话 API 是下一步。';
+  String get privateConversationPreview => '此会话暂不可用。';
 
   @override
   String get localFirst => '本地优先';
@@ -194,13 +194,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiEnabled => '已启用 AI';
 
   @override
-  String get chatPanelDescription => '面向团队协作的共享对话流，需要时可通过 @mention 调用智能体。';
+  String get chatPanelDescription => '团队会话';
 
   @override
   String get noMessagesTitle => '还没有消息';
 
   @override
-  String get noMessagesDescription => '先发一条团队动态，需要时再 @ 智能体协助处理。';
+  String get noMessagesDescription => '发送第一条消息。';
 
   @override
   String get quickActionsLabel => '快捷操作';
@@ -406,7 +406,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get referencedSourceNotice => '已高亮显示聊天引用对应的知识来源。';
 
   @override
-  String get knowledgeEmptyDescription => '上传文本、Markdown、JSON 或笔记，为智能体回复提供工作区知识支撑。';
+  String get knowledgeEmptyDescription => '上传文档后即可使用。';
 
   @override
   String get knowledgeEmptySearchDescription => '当前搜索条件下没有匹配的知识文档。';

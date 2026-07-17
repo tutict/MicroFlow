@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'MicroFlow';
+  String get appTitle => 'Weilan';
 
   @override
   String get language => 'Language';
@@ -33,10 +33,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchContacts => 'Search contacts';
 
   @override
-  String get signInTitle => 'Sign in to MicroFlow';
+  String get signInTitle => 'Sign in';
 
   @override
-  String get signInDescription => 'Connect the local workspace, authenticate, then start real-time collaboration.';
+  String get signInDescription => 'Continue to your local workspace.';
 
   @override
   String get email => 'Email';
@@ -64,7 +64,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOutTooltip => 'Sign out';
 
   @override
-  String get workspaceDescription => 'Focused collaboration workspace for local AI execution, encrypted storage, and lightweight delivery.';
+  String get workspaceDescription => 'Conversations, teammates, and agents in one place.';
 
   @override
   String get workspace => 'Workspace';
@@ -136,10 +136,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get memberConversationHint => '1:1 team conversation';
 
   @override
-  String get agentConversationHint => 'Private thread with AI coworker';
+  String get agentConversationHint => 'Private agent conversation';
 
   @override
-  String get privateConversationPreview => 'Private conversation entry is ready in the UI. Backend conversation APIs are the next step.';
+  String get privateConversationPreview => 'This conversation is unavailable.';
 
   @override
   String get localFirst => 'Local-first';
@@ -194,13 +194,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiEnabled => 'AI enabled';
 
   @override
-  String get chatPanelDescription => 'A shared team conversation with AI support available through @mention when needed.';
+  String get chatPanelDescription => 'Team conversation';
 
   @override
   String get noMessagesTitle => 'No messages yet';
 
   @override
-  String get noMessagesDescription => 'Start the conversation with a team update, then mention an agent only when you need help.';
+  String get noMessagesDescription => 'Send the first message.';
 
   @override
   String get quickActionsLabel => 'Quick actions';
@@ -406,7 +406,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referencedSourceNotice => 'Referenced source highlighted from chat citation.';
 
   @override
-  String get knowledgeEmptyDescription => 'Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.';
+  String get knowledgeEmptyDescription => 'Upload a document to begin.';
 
   @override
   String get knowledgeEmptySearchDescription => 'No knowledge documents match the current search.';

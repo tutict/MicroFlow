@@ -98,7 +98,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'MicroFlow'**
+  /// **'Weilan'**
   String get appTitle;
 
   /// No description provided for @language.
@@ -146,13 +146,13 @@ abstract class AppLocalizations {
   /// No description provided for @signInTitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to MicroFlow'**
+  /// **'Sign in'**
   String get signInTitle;
 
   /// No description provided for @signInDescription.
   ///
   /// In en, this message translates to:
-  /// **'Connect the local workspace, authenticate, then start real-time collaboration.'**
+  /// **'Continue to your local workspace.'**
   String get signInDescription;
 
   /// No description provided for @email.
@@ -200,7 +200,7 @@ abstract class AppLocalizations {
   /// No description provided for @workspaceDescription.
   ///
   /// In en, this message translates to:
-  /// **'Focused collaboration workspace for local AI execution, encrypted storage, and lightweight delivery.'**
+  /// **'Conversations, teammates, and agents in one place.'**
   String get workspaceDescription;
 
   /// No description provided for @workspace.
@@ -332,13 +332,13 @@ abstract class AppLocalizations {
   /// No description provided for @agentConversationHint.
   ///
   /// In en, this message translates to:
-  /// **'Private thread with AI coworker'**
+  /// **'Private agent conversation'**
   String get agentConversationHint;
 
   /// No description provided for @privateConversationPreview.
   ///
   /// In en, this message translates to:
-  /// **'Private conversation entry is ready in the UI. Backend conversation APIs are the next step.'**
+  /// **'This conversation is unavailable.'**
   String get privateConversationPreview;
 
   /// No description provided for @localFirst.
@@ -440,7 +440,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatPanelDescription.
   ///
   /// In en, this message translates to:
-  /// **'A shared team conversation with AI support available through @mention when needed.'**
+  /// **'Team conversation'**
   String get chatPanelDescription;
 
   /// No description provided for @noMessagesTitle.
@@ -452,7 +452,7 @@ abstract class AppLocalizations {
   /// No description provided for @noMessagesDescription.
   ///
   /// In en, this message translates to:
-  /// **'Start the conversation with a team update, then mention an agent only when you need help.'**
+  /// **'Send the first message.'**
   String get noMessagesDescription;
 
   /// No description provided for @quickActionsLabel.
@@ -824,7 +824,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeEmptyDescription.
   ///
   /// In en, this message translates to:
-  /// **'Upload text, markdown, JSON or notes to ground agent replies with workspace knowledge.'**
+  /// **'Upload a document to begin.'**
   String get knowledgeEmptyDescription;
 
   /// No description provided for @knowledgeEmptySearchDescription.

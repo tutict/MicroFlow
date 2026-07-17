@@ -31,22 +31,21 @@ class MessageBubble extends StatelessWidget {
     final isAgent = message.isAgent;
     final theme = Theme.of(context);
     final backgroundColor = isOwnMessage
-        ? theme.colorScheme.primary
+        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.68)
         : isAgent
         ? theme.colorScheme.primary.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.14 : 0.08,
+            alpha: theme.brightness == Brightness.dark ? 0.12 : 0.06,
           )
-        : theme.cardColor;
+        : theme.colorScheme.surface;
     final borderColor = isOwnMessage
-        ? theme.colorScheme.primary
+        ? theme.colorScheme.primary.withValues(alpha: 0.18)
         : isAgent
-        ? theme.colorScheme.primary.withValues(alpha: 0.2)
+        ? theme.colorScheme.primary.withValues(alpha: 0.14)
         : theme.dividerColor;
     final foregroundColor = isOwnMessage
-        ? Colors.white
+        ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurface;
-    final bubblePadding = compact ? 12.0 : 16.0;
-    final bubbleRadius = compact ? 14.0 : 16.0;
+    final bubblePadding = compact ? 10.0 : 12.0;
     final maxWidth = compact ? 560.0 : 720.0;
     final citations = _extractCitations(message.text, knowledgeDocuments);
 
@@ -57,17 +56,8 @@ class MessageBubble extends StatelessWidget {
         padding: EdgeInsets.all(bubblePadding),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(bubbleRadius),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: borderColor),
-          boxShadow: [
-            BoxShadow(
-              color: theme.brightness == Brightness.dark
-                  ? const Color(0x18000000)
-                  : const Color(0x120E1A22),
-              blurRadius: compact ? 8 : 12,
-              offset: Offset(0, compact ? 3 : 4),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,8 +89,8 @@ class MessageBubble extends StatelessWidget {
                       StatusBadge(
                         label: l10n.aiBadge,
                         color: isOwnMessage
-                            ? Colors.white
-                            : const Color(0xFF1F6F5C),
+                            ? theme.colorScheme.onPrimaryContainer
+                            : theme.colorScheme.primary,
                       ),
                     ],
                   ],
@@ -111,7 +101,7 @@ class MessageBubble extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: isOwnMessage
-                        ? Colors.white.withValues(alpha: 0.78)
+                        ? theme.colorScheme.onPrimaryContainer
                         : theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500,
                   ),
@@ -180,15 +170,17 @@ class _KnowledgeCitationChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final backgroundColor = isOwnMessage
-        ? Colors.white.withValues(alpha: 0.14)
+        ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.08)
         : theme.colorScheme.primary.withValues(alpha: 0.08);
     final borderColor = isOwnMessage
-        ? Colors.white.withValues(alpha: 0.22)
+        ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.14)
         : theme.colorScheme.primary.withValues(alpha: 0.16);
-    final labelColor = isOwnMessage ? Colors.white : theme.colorScheme.primary;
+    final labelColor = isOwnMessage
+        ? theme.colorScheme.onPrimaryContainer
+        : theme.colorScheme.primary;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(6),
       onTap: onKnowledgeCitationTap != null
           ? () => onKnowledgeCitationTap!(citation.documentId)
           : citation.document == null
@@ -201,7 +193,7 @@ class _KnowledgeCitationChip extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(color: borderColor),
         ),
         child: Text(

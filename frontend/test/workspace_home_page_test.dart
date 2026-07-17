@@ -47,17 +47,10 @@ void main() {
     expect(find.text('Workspace hub'), findsWidgets);
     expect(find.text('MicroFlow'), findsWidgets);
     expect(
-      find.text(
-        'Focused collaboration workspace for local AI execution, encrypted storage, and lightweight delivery.',
-      ),
+      find.text('Conversations, teammates, and agents in one place.'),
       findsOneWidget,
     );
-    expect(
-      find.text(
-        'Private conversation entry is ready in the UI. Backend conversation APIs are the next step.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Backend conversation APIs'), findsNothing);
     expect(find.widgetWithText(OutlinedButton, 'Sign out'), findsOneWidget);
   });
 
@@ -217,7 +210,6 @@ void main() {
       expect(find.byType(WorkspacePanel), findsOneWidget);
       expect(find.byType(AgentPanel), findsOneWidget);
       expect(find.text('Run Activity'), findsOneWidget);
-      expect(find.text('Private thread with AI coworker'), findsOneWidget);
     },
   );
 
@@ -613,12 +605,7 @@ void main() {
       );
 
       expect(find.text('No messages yet'), findsOneWidget);
-      expect(
-        find.text(
-          'Start the conversation with a team update, then mention an agent only when you need help.',
-        ),
-        findsOneWidget,
-      );
+      expect(find.text('Send the first message.'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Collaboration'), findsNothing);
       expect(find.widgetWithText(OutlinedButton, 'Agents'), findsNothing);
     },

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../shared/theme/app_theme_extensions.dart';
-import '../../../../shared/widgets/app_pill.dart';
-import '../../../../shared/widgets/app_surface.dart';
-import '../../../../shared/widgets/status_badge.dart';
+import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/widgets/app_layout.dart';
 import '../../domain/entities/agent_descriptor.dart';
 import '../../domain/entities/agent_run.dart';
 
@@ -25,452 +24,151 @@ class AgentPanel extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final enabledAgents = agents.where((agent) => agent.enabled).length;
-    final queuedRuns = runs.where((run) => run.status == 'QUEUED').length;
-    final outerRadius = compact ? 8.0 : 10.0;
-    final outerPadding = compact ? 14.0 : 18.0;
-    if (compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSurface(
-            variant: AppSurfaceVariant.raised,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.14,
-                          ),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.smart_toy_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.agents,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.enabledCount(enabledAgents),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.66,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                Icon(
+                  Icons.smart_toy_outlined,
+                  color: theme.colorScheme.primary,
                 ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _AgentMetricPill(
-                      value: '${agents.length}',
-                      label: l10n.availableAgents,
-                    ),
-                    _AgentMetricPill(value: '$queuedRuns', label: l10n.queued),
-                  ],
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.agents,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        l10n.enabledCount(enabledAgents),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            l10n.availableAgents,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          ...agents.map(
-            (agent) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _AgentTile(agent: agent),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            l10n.runActivity,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 10),
-          if (runs.isEmpty)
-            AppSurface(
-              variant: AppSurfaceVariant.base,
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              child: Text(
+            const SizedBox(height: AppSpacing.lg),
+            _SectionHeader(title: l10n.availableAgents, count: agents.length),
+            const SizedBox(height: AppSpacing.sm),
+            if (agents.isEmpty)
+              AppEmptyState(
+                icon: Icons.smart_toy_outlined,
+                title: l10n.availableAgents,
+                compact: true,
+              )
+            else
+              for (final agent in agents) _AgentRow(agent: agent),
+            const SizedBox(height: AppSpacing.md),
+            Divider(height: 1, color: theme.dividerColor),
+            const SizedBox(height: AppSpacing.md),
+            _SectionHeader(title: l10n.runActivity, count: runs.length),
+            const SizedBox(height: AppSpacing.sm),
+            if (runs.isEmpty)
+              Text(
                 l10n.noAgentExecutions,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
-            )
-          else
-            ...runs.map(
-              (run) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _RunTile(run: run),
-              ),
-            ),
-        ],
-      );
-    }
-
-    return AppSurface(
-      variant: AppSurfaceVariant.raised,
-      borderRadius: outerRadius,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              outerPadding,
-              compact ? 14 : 18,
-              outerPadding,
-              compact ? 14 : 16,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHigh.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.38 : 0.78,
-              ),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(outerRadius),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: compact ? 36 : 40,
-                      height: compact ? 36 : 40,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.smart_toy_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 20,
-                      ),
-                    ),
-                    SizedBox(width: compact ? 10 : 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.agents,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            l10n.enabledCount(enabledAgents),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.66,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: compact ? 12 : 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _AgentMetricPill(
-                      value: '${agents.length}',
-                      label: l10n.availableAgents,
-                    ),
-                    _AgentMetricPill(value: '$queuedRuns', label: l10n.queued),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              outerPadding,
-              compact ? 14 : 18,
-              outerPadding,
-              compact ? 14 : 18,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  l10n.availableAgents,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: compact ? 10 : 12),
-                ...agents.map(
-                  (agent) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _AgentTile(agent: agent),
-                  ),
-                ),
-                SizedBox(height: compact ? 6 : 8),
-                Text(
-                  l10n.runActivity,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                SizedBox(height: compact ? 10 : 12),
-                if (runs.isEmpty)
-                  AppSurface(
-                    variant: AppSurfaceVariant.muted,
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 18,
-                    ),
-                    child: Text(
-                      l10n.noAgentExecutions,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.64,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  ...runs.map(
-                    (run) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _RunTile(run: run),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+              )
+            else
+              for (final run in runs) _RunRow(run: run),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _AgentMetricPill extends StatelessWidget {
-  const _AgentMetricPill({required this.value, required this.label});
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.count});
 
-  final String value;
-  final String label;
+  final String title;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return AppPill(
-      label: label,
-      value: value,
-      backgroundColor: theme.colorScheme.surface.withValues(
-        alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-      ),
-      borderColor: theme.dividerColor.withValues(alpha: 0.82),
-      valueColor: theme.colorScheme.onSurface,
-      labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.66),
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          '$count',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _AgentTile extends StatelessWidget {
-  const _AgentTile({required this.agent});
+class _AgentRow extends StatelessWidget {
+  const _AgentRow({required this.agent});
 
   final AgentDescriptor agent;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+    final semantic = AppSemanticColors.of(context);
+    return AppListRow(
+      title: '@${agent.agentKey}',
+      subtitle: agent.provider,
+      leading: const Icon(Icons.smart_toy_outlined),
+      trailing: AppStatusDot(
+        label: agent.enabled ? l10n.enabled : l10n.disabled,
+        color: agent.enabled ? semantic.success : semantic.neutral,
+        compact: true,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.smart_toy_outlined,
-              size: 20,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '@${agent.agentKey}',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                    StatusBadge(
-                      label: agent.enabled ? l10n.enabled : l10n.disabled,
-                      color: agent.enabled
-                          ? AppSemanticColors.of(context).success
-                          : AppSemanticColors.of(context).neutral,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                AppPill(
-                  label: agent.provider,
-                  backgroundColor: theme.colorScheme.surface.withValues(
-                    alpha: theme.brightness == Brightness.dark ? 0.32 : 0.74,
-                  ),
-                  borderColor: theme.dividerColor.withValues(alpha: 0.82),
-                  labelColor: theme.colorScheme.onSurface.withValues(
-                    alpha: 0.68,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      compact: true,
     );
   }
 }
 
-class _RunTile extends StatelessWidget {
-  const _RunTile({required this.run});
+class _RunRow extends StatelessWidget {
+  const _RunRow({required this.run});
 
   final AgentRun run;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final statusColor = _statusColor(context, run.status);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+    final color = _statusColor(context, run.status);
+    return AppListRow(
+      title: '@${run.agentKey}',
+      subtitle: _formatRunSubtitle(l10n, run.id),
+      leading: const Icon(Icons.play_circle_outline_rounded),
+      trailing: AppStatusDot(
+        label: _formatRunStatus(l10n, run.status),
+        color: color,
+        compact: true,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 14,
-            height: 14,
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: statusColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '@${run.agentKey}',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                    StatusBadge(
-                      label: _formatRunStatus(l10n, run.status),
-                      color: statusColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  _formatRunSubtitle(l10n, run.id),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      compact: true,
     );
   }
 }

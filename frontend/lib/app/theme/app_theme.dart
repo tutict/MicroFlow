@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../shared/theme/app_theme_extensions.dart';
 
 final class AppTheme {
-  static const _lightBackground = Color(0xFFF6F7F5);
+  static const _lightBackground = Color(0xFFF7F8F7);
   static const _lightSurface = Color(0xFFFFFFFF);
   static const _lightPrimary = Color(0xFF176B50);
   static const _lightAccent = Color(0xFF38658A);
@@ -12,8 +12,6 @@ final class AppTheme {
   static const _lightOutline = Color(0xFFDDE4E0);
   static const _lightDivider = Color(0xFFE3E7E4);
   static const _lightInputFill = Color(0xFFFAFBF8);
-  static const _lightShadow = Color(0x0F0F1720);
-
   static const _darkBackground = Color(0xFF060908);
   static const _darkSurface = Color(0xFF111715);
   static const _darkPrimary = Color(0xFF48D597);
@@ -22,7 +20,6 @@ final class AppTheme {
   static const _darkOutline = Color(0xFF2A3831);
   static const _darkDivider = Color(0xFF22302A);
   static const _darkInputFill = Color(0xFF151D1A);
-  static const _darkShadow = Color(0x30000000);
 
   static ThemeData light({ColorScheme? dynamicScheme}) {
     return _buildTheme(
@@ -43,7 +40,6 @@ final class AppTheme {
       outline: dynamicScheme?.outlineVariant ?? _lightOutline,
       divider: _lightDivider,
       inputFill: _lightInputFill,
-      shadow: _lightShadow,
       appBarBackground: _lightBackground,
       semanticColors: const AppSemanticColors(
         success: Color(0xFF168A4D),
@@ -74,7 +70,6 @@ final class AppTheme {
       outline: dynamicScheme?.outlineVariant ?? _darkOutline,
       divider: _darkDivider,
       inputFill: _darkInputFill,
-      shadow: _darkShadow,
       appBarBackground: _darkBackground,
       semanticColors: const AppSemanticColors(
         success: Color(0xFF48D597),
@@ -134,7 +129,6 @@ final class AppTheme {
     required Color outline,
     required Color divider,
     required Color inputFill,
-    required Color shadow,
     required Color appBarBackground,
     required AppSemanticColors semanticColors,
   }) {
@@ -161,7 +155,6 @@ final class AppTheme {
         color: surface,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shadowColor: shadow,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: outline),
@@ -216,7 +209,7 @@ final class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: Colors.white,
+          foregroundColor: baseTheme.colorScheme.onPrimary,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -303,7 +296,7 @@ final class AppTheme {
         ),
         brightness: brightness,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(8),
           side: BorderSide(color: outline),
         ),
       ),
@@ -358,25 +351,25 @@ final class AppTheme {
   static TextTheme _textTheme(TextTheme base) {
     return base.copyWith(
       displayLarge: const TextStyle(
-        fontSize: 56,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0,
-        height: 0.98,
-      ),
-      displayMedium: const TextStyle(
-        fontSize: 42,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0,
-        height: 1,
-      ),
-      displaySmall: const TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.w800,
         letterSpacing: 0,
-        height: 1.02,
+        height: 1.1,
+      ),
+      displayMedium: const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+        height: 1.12,
+      ),
+      displaySmall: const TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+        height: 1.15,
       ),
       headlineLarge: const TextStyle(
-        fontSize: 30,
+        fontSize: 24,
         fontWeight: FontWeight.w700,
         letterSpacing: 0,
       ),
@@ -387,17 +380,17 @@ final class AppTheme {
       ),
       headlineSmall: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
       titleLarge: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-      titleMedium: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      titleMedium: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       titleSmall: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      bodyLarge: const TextStyle(fontSize: 15, height: 1.5),
+      bodyLarge: const TextStyle(fontSize: 16, height: 1.5),
       bodyMedium: const TextStyle(fontSize: 14, height: 1.45),
       bodySmall: const TextStyle(fontSize: 12, height: 1.35),
       labelMedium: const TextStyle(
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: FontWeight.w600,
         letterSpacing: 0,
       ),
-      labelSmall: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+      labelSmall: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
     );
   }
 }

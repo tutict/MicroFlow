@@ -12,6 +12,7 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
   const ServerConnectionRepositoryImpl(this._localStore);
 
   final LocalStore _localStore;
+  static const _pairingTimeout = Duration(seconds: 12);
   static const _legacyConnectionKeys = <String>[
     ServerConnectionKeys.serverOrigin,
     ServerConnectionKeys.apiBaseUrl,
@@ -54,7 +55,9 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
     }
     return decoded
         .cast<Map>()
-        .map((entry) => ServerConnection.fromJson(entry.cast<String, Object?>()))
+        .map(
+          (entry) => ServerConnection.fromJson(entry.cast<String, Object?>()),
+        )
         .toList(growable: false);
   }
 
@@ -64,14 +67,21 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
     required String pairingCode,
   }) async {
     final origin = _normalizeServerOrigin(serverUrl);
-    final response = await http.post(
-      Uri.parse('$origin/api/v1/bootstrap/pair'),
-      headers: const {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({'pairingCode': pairingCode.trim()}),
-    );
+    final response = await http
+        .post(
+          Uri.parse('$origin/api/v1/bootstrap/pair'),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({'pairingCode': pairingCode.trim()}),
+        )
+        .timeout(
+          _pairingTimeout,
+          onTimeout: () => throw const AppException(
+            'Pairing request timed out. Check the device address and network.',
+          ),
+        );
     final payload = response.body.isEmpty
         ? const <String, Object?>{}
         : jsonDecode(response.body);
@@ -148,7 +158,9 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
 
   Future<void> _ensureMigrated() async {
     await _localStore.migrateFromPreferences(_legacyConnectionKeys);
-    final encoded = await _localStore.readString(ServerConnectionKeys.savedConnections);
+    final encoded = await _localStore.readString(
+      ServerConnectionKeys.savedConnections,
+    );
     if (encoded != null && encoded.isNotEmpty) {
       return;
     }
@@ -176,7 +188,9 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
     final instanceName = await _localStore.readString(
       ServerConnectionKeys.instanceName,
     );
-    final pairedAt = await _localStore.readString(ServerConnectionKeys.pairedAt);
+    final pairedAt = await _localStore.readString(
+      ServerConnectionKeys.pairedAt,
+    );
     if (serverOrigin == null ||
         apiBaseUrl == null ||
         wsBaseUrl == null ||
@@ -196,9 +210,14 @@ class ServerConnectionRepositoryImpl implements ServerConnectionRepository {
 
   Future<void> _saveConnections(List<ServerConnection> connections) async {
     final encoded = jsonEncode(
-      connections.map((connection) => connection.toJson()).toList(growable: false),
+      connections
+          .map((connection) => connection.toJson())
+          .toList(growable: false),
     );
-    await _localStore.saveString(ServerConnectionKeys.savedConnections, encoded);
+    await _localStore.saveString(
+      ServerConnectionKeys.savedConnections,
+      encoded,
+    );
   }
 
   Future<void> _persistActive(ServerConnection connection) async {

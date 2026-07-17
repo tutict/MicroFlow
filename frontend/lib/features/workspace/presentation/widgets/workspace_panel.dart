@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../core/utils/date_time_formatter.dart';
-import '../../../../shared/theme/app_theme_extensions.dart';
-import '../../../../shared/widgets/app_pill.dart';
-import '../../../../shared/widgets/app_surface.dart';
-import '../../../../shared/widgets/status_badge.dart';
+import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/widgets/app_layout.dart';
 
 class WorkspacePanel extends StatelessWidget {
   const WorkspacePanel({
@@ -35,457 +33,176 @@ class WorkspacePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final semantic = AppSemanticColors.of(context);
     final unreadTotal = conversations.fold<int>(
       0,
       (sum, conversation) => sum + conversation.unreadCount,
     );
-    final outerRadius = compact ? 8.0 : 10.0;
-    final outerPadding = compact ? 14.0 : 18.0;
-    if (compact) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSurface(
-            variant: AppSurfaceVariant.raised,
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.14,
-                          ),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'MF',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
+
+    return Material(
+      color: theme.colorScheme.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        side: BorderSide(color: theme.dividerColor),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(
+              label: description,
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(AppRadii.small),
+                    ),
+                    child: Text(
+                      'MF',
+                      style: TextStyle(
+                        color: theme.colorScheme.onPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.workspace,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.62,
-                              ),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            workspaceName,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  description,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                    height: 1.45,
                   ),
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _WorkspaceMetric(
-                      value: '${conversations.length}',
-                      label: l10n.conversations,
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          workspaceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          unreadTotal == 0
+                              ? l10n.conversationCountLabel(
+                                  conversations.length,
+                                )
+                              : '$unreadTotal ${l10n.unreadLabel}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                    _WorkspaceMetric(
-                      value: '$unreadTotal',
-                      label: l10n.unreadLabel,
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.conversations,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  l10n.conversationCountLabel(conversations.length),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          AppSurface(
-            variant: AppSurfaceVariant.base,
-            padding: const EdgeInsets.all(14),
-            child: _ConversationInbox(
+            const SizedBox(height: AppSpacing.lg),
+            _SectionLabel(
+              label: l10n.conversations,
+              count: conversations.length,
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _ConversationInbox(
               conversations: conversations,
               selectedConversationId: selectedConversationId,
               onOpenConversation: onOpenConversation,
             ),
-          ),
-          if (members.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.members,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    l10n.membersCountLabel(members.length),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.72,
-                      ),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            AppSurface(
-              variant: AppSurfaceVariant.base,
-              padding: const EdgeInsets.all(14),
-              child: Column(
+            if (members.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              Divider(height: 1, color: theme.dividerColor),
+              _SecondarySection(
+                title: l10n.members,
+                count: members.length,
                 children: [
-                  for (var index = 0; index < members.length; index++) ...[
-                    _MemberListTile(member: members[index]),
-                    if (index != members.length - 1) const SizedBox(height: 10),
-                  ],
+                  for (final member in members) _MemberListRow(member: member),
                 ],
               ),
-            ),
-          ],
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.recentInteractions,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  l10n.messageCountLabel(recentInteractions.length),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+            ],
+            if (recentInteractions.isNotEmpty) ...[
+              Divider(height: 1, color: theme.dividerColor),
+              _SecondarySection(
+                title: l10n.recentInteractions,
+                count: recentInteractions.length,
+                initiallyExpanded: compact,
+                children: [
+                  for (final interaction in recentInteractions)
+                    _RecentInteractionRow(interaction: interaction),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 10),
-          AppSurface(
-            variant: AppSurfaceVariant.base,
-            padding: const EdgeInsets.all(14),
-            child: recentInteractions.isEmpty
-                ? _EmptyCollaborationState(message: l10n.noRecentInteractions)
-                : Column(
-                    children: [
-                      for (
-                        var index = 0;
-                        index < recentInteractions.length;
-                        index++
-                      ) ...[
-                        _RecentInteractionTile(
-                          interaction: recentInteractions[index],
-                        ),
-                        if (index != recentInteractions.length - 1)
-                          const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            l10n.recentActivityLabel,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.56),
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-            ),
-          ),
-        ],
-      );
-    }
-
-    return AppSurface(
-      variant: AppSurfaceVariant.raised,
-      borderRadius: outerRadius,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: EdgeInsets.fromLTRB(
-              outerPadding,
-              compact ? 14 : 18,
-              outerPadding,
-              compact ? 14 : 16,
-            ),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHigh.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.38 : 0.78,
-              ),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(outerRadius),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: compact ? 38 : 42,
-                      height: compact ? 38 : 42,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(
-                          alpha: 0.12,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.14,
-                          ),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'MF',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: compact ? 10 : 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.workspace,
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.62,
-                              ),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            workspaceName,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: compact ? 12 : 14),
-                Text(
-                  description,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                    height: 1.45,
-                  ),
-                ),
-                SizedBox(height: compact ? 12 : 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _WorkspaceMetric(
-                      value: '${conversations.length}',
-                      label: l10n.conversations,
-                    ),
-                    _WorkspaceMetric(
-                      value: '$unreadTotal',
-                      label: l10n.unreadLabel,
-                    ),
-                  ],
-                ),
-                SizedBox(height: compact ? 12 : 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    StatusBadge(
-                      label: l10n.localFirst,
-                      color: semantic.success,
-                    ),
-                    StatusBadge(label: l10n.sqlite, color: semantic.info),
-                    StatusBadge(
-                      label: l10n.virtualThreads,
-                      color: semantic.neutral,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              outerPadding,
-              compact ? 14 : 18,
-              outerPadding,
-              compact ? 14 : 18,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        l10n.conversations,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.55),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: theme.dividerColor),
-                      ),
-                      child: Text(
-                        l10n.conversationCountLabel(conversations.length),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.74,
-                          ),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: compact ? 12 : 14),
-                AppSurface(
-                  variant: AppSurfaceVariant.muted,
-                  padding: EdgeInsets.all(compact ? 12 : 14),
-                  child: _ConversationInbox(
-                    conversations: conversations,
-                    selectedConversationId: selectedConversationId,
-                    onOpenConversation: onOpenConversation,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _WorkspaceMetric extends StatelessWidget {
-  const _WorkspaceMetric({required this.value, required this.label});
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label, required this.count});
 
-  final String value;
   final String label;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Text(
+          '$count',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-    return AppPill(
-      label: label,
-      value: value,
-      backgroundColor: theme.colorScheme.surface.withValues(
-        alpha: theme.brightness == Brightness.dark ? 0.34 : 0.74,
+class _SecondarySection extends StatelessWidget {
+  const _SecondarySection({
+    required this.title,
+    required this.count,
+    required this.children,
+    this.initiallyExpanded = false,
+  });
+
+  final String title;
+  final int count;
+  final List<Widget> children;
+  final bool initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      childrenPadding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      initiallyExpanded: initiallyExpanded,
+      title: Text(title),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$count'),
+          const SizedBox(width: AppSpacing.xs),
+          const Icon(Icons.expand_more_rounded),
+        ],
       ),
-      borderColor: theme.dividerColor.withValues(alpha: 0.82),
-      valueColor: theme.colorScheme.onSurface,
-      labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.66),
+      children: children,
     );
   }
 }
@@ -560,65 +277,70 @@ class _ConversationInbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final teamChannels =
-        conversations
-            .where(
-              (conversation) =>
-                  conversation.kind == WorkspaceConversationKind.channel,
-            )
-            .toList(growable: false)
-          ..sort(_sortByLastActivityDesc);
-    final directMessages =
-        conversations
-            .where(
-              (conversation) =>
-                  conversation.kind == WorkspaceConversationKind.directMessage,
-            )
-            .toList(growable: false)
-          ..sort(_sortByLastActivityDesc);
-    final agentThreads =
-        conversations
-            .where(
-              (conversation) =>
-                  conversation.kind == WorkspaceConversationKind.agentThread,
-            )
-            .toList(growable: false)
-          ..sort(_sortByLastActivityDesc);
+    final groups =
+        <
+          ({
+            String title,
+            IconData icon,
+            List<WorkspaceConversationSummary> items,
+          })
+        >[
+          (
+            title: l10n.teamChannels,
+            icon: Icons.tag_rounded,
+            items: _byKind(WorkspaceConversationKind.channel),
+          ),
+          (
+            title: l10n.directMessages,
+            icon: Icons.person_outline_rounded,
+            items: _byKind(WorkspaceConversationKind.directMessage),
+          ),
+          (
+            title: l10n.agentThreads,
+            icon: Icons.smart_toy_outlined,
+            items: _byKind(WorkspaceConversationKind.agentThread),
+          ),
+        ];
+    final visibleGroups = groups
+        .where((group) => group.items.isNotEmpty)
+        .toList(growable: false);
+
+    if (visibleGroups.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (teamChannels.isNotEmpty)
-          _ConversationSection(
-            title: l10n.teamChannels,
-            icon: Icons.forum_rounded,
-            conversations: teamChannels,
-            selectedConversationId: selectedConversationId,
-            onOpenConversation: onOpenConversation,
+        for (
+          var groupIndex = 0;
+          groupIndex < visibleGroups.length;
+          groupIndex++
+        )
+          Padding(
+            padding: EdgeInsets.only(
+              bottom: groupIndex == visibleGroups.length - 1
+                  ? 0
+                  : AppSpacing.md,
+            ),
+            child: _ConversationSection(
+              title: visibleGroups[groupIndex].title,
+              icon: visibleGroups[groupIndex].icon,
+              conversations: visibleGroups[groupIndex].items,
+              selectedConversationId: selectedConversationId,
+              onOpenConversation: onOpenConversation,
+            ),
           ),
-        if (directMessages.isNotEmpty) ...[
-          if (teamChannels.isNotEmpty) const SizedBox(height: 12),
-          _ConversationSection(
-            title: l10n.directMessages,
-            icon: Icons.person_rounded,
-            conversations: directMessages,
-            selectedConversationId: selectedConversationId,
-            onOpenConversation: onOpenConversation,
-          ),
-        ],
-        if (agentThreads.isNotEmpty) ...[
-          if (teamChannels.isNotEmpty || directMessages.isNotEmpty)
-            const SizedBox(height: 12),
-          _ConversationSection(
-            title: l10n.agentThreads,
-            icon: Icons.smart_toy_rounded,
-            conversations: agentThreads,
-            selectedConversationId: selectedConversationId,
-            onOpenConversation: onOpenConversation,
-          ),
-        ],
       ],
     );
+  }
+
+  List<WorkspaceConversationSummary> _byKind(WorkspaceConversationKind kind) {
+    final result = conversations
+        .where((conversation) => conversation.kind == kind)
+        .toList(growable: false);
+    result.sort(_sortByLastActivityDesc);
+    return result;
   }
 }
 
@@ -640,394 +362,142 @@ class _ConversationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          padding: const EdgeInsets.only(left: AppSpacing.xs),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 14,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-              const SizedBox(width: 6),
+              Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: AppSpacing.xs),
               Text(
                 title,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
         ),
-        ...conversations.map(
-          (conversation) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ConversationTile(
-              conversation: conversation,
-              isSelected: conversation.id == selectedConversationId,
-              onTap: () => onOpenConversation(conversation),
-            ),
+        const SizedBox(height: AppSpacing.xs),
+        for (final conversation in conversations)
+          _ConversationRow(
+            conversation: conversation,
+            selected: conversation.id == selectedConversationId,
+            onTap: () => onOpenConversation(conversation),
           ),
-        ),
       ],
     );
   }
 }
 
-class _ConversationTile extends StatelessWidget {
-  const _ConversationTile({
+class _ConversationRow extends StatelessWidget {
+  const _ConversationRow({
     required this.conversation,
-    required this.isSelected,
+    required this.selected,
     required this.onTap,
   });
 
   final WorkspaceConversationSummary conversation;
-  final bool isSelected;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    final selectedBackground = theme.colorScheme.primary.withValues(
-      alpha: theme.brightness == Brightness.dark ? 0.18 : 0.12,
-    );
-    final leadingBackground = isSelected
-        ? theme.colorScheme.primary
-        : conversation.accent.withValues(alpha: 0.12);
-    final activityLabel = conversation.lastActivityAt == null
+    final timestamp = conversation.lastActivityAt == null
         ? ''
         : _formatConversationTimestamp(conversation.lastActivityAt!);
+    final subtitle = [
+      if (conversation.subtitle.isNotEmpty) conversation.subtitle,
+      if (timestamp.isNotEmpty) timestamp,
+    ].join(' - ');
+    final trailing = !conversation.isAvailable
+        ? Text(l10n.previewLabel)
+        : conversation.unreadCount > 0
+        ? _UnreadCount(value: conversation.unreadCount)
+        : null;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? selectedBackground : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.24)
-                  : theme.dividerColor.withValues(alpha: 0.48),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: leadingBackground,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  _iconForConversation(conversation.kind),
-                  size: 18,
-                  color: isSelected ? Colors.white : conversation.accent,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            conversation.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        if (activityLabel.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Text(
-                              activityLabel,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.54,
-                                ),
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        if (!conversation.isAvailable)
-                          AppPill(
-                            label: l10n.previewLabel,
-                            backgroundColor:
-                                theme.colorScheme.surfaceContainerHigh,
-                            borderColor: theme.dividerColor.withValues(
-                              alpha: 0.72,
-                            ),
-                            labelColor: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.72,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                          )
-                        else if (conversation.unreadCount > 0)
-                          AppPill(
-                            label: '${conversation.unreadCount}',
-                            backgroundColor: theme.colorScheme.primary
-                                .withValues(alpha: 0.12),
-                            borderColor: theme.colorScheme.primary.withValues(
-                              alpha: 0.18,
-                            ),
-                            labelColor: theme.colorScheme.primary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      conversation.subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.62,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return AppListRow(
+      title: conversation.title,
+      subtitle: subtitle,
+      leading: Icon(_iconForConversation(conversation.kind)),
+      trailing: trailing,
+      selected: selected,
+      compact: true,
+      onTap: onTap,
+    );
+  }
+}
+
+class _UnreadCount extends StatelessWidget {
+  const _UnreadCount({required this.value});
+
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary,
+        borderRadius: BorderRadius.circular(AppRadii.small),
+      ),
+      child: Text(
+        '$value',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onPrimary,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
   }
 }
 
-class _MemberListTile extends StatelessWidget {
-  const _MemberListTile({required this.member});
+class _MemberListRow extends StatelessWidget {
+  const _MemberListRow({required this.member});
 
   final WorkspaceMemberSummary member;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+    return AppListRow(
+      title: member.displayName,
+      subtitle: member.subtitle,
+      leading: CircleAvatar(
+        radius: 14,
+        backgroundColor: member.accent.withValues(alpha: 0.14),
+        foregroundColor: member.accent,
+        child: Text(_initialsFor(member.displayName)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: member.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              _initialsFor(member.displayName),
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: member.accent,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        member.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    if (member.isCurrentUser)
-                      AppPill(
-                        label: l10n.memberYouLabel,
-                        backgroundColor: theme.colorScheme.primary.withValues(
-                          alpha: 0.1,
-                        ),
-                        borderColor: theme.colorScheme.primary.withValues(
-                          alpha: 0.16,
-                        ),
-                        labelColor: theme.colorScheme.primary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  member.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      trailing: member.isCurrentUser ? Text(l10n.memberYouLabel) : null,
+      compact: true,
     );
   }
 }
 
-class _RecentInteractionTile extends StatelessWidget {
-  const _RecentInteractionTile({required this.interaction});
+class _RecentInteractionRow extends StatelessWidget {
+  const _RecentInteractionRow({required this.interaction});
 
   final WorkspaceRecentInteractionSummary interaction;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+    return AppListRow(
+      title: interaction.authorLabel,
+      subtitle: interaction.preview,
+      leading: Icon(
+        interaction.isAgent ? Icons.smart_toy_outlined : Icons.person_outline,
+        color: interaction.accent,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: interaction.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              _initialsFor(interaction.authorLabel),
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: interaction.accent,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        interaction.authorLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    if (interaction.isAgent)
-                      StatusBadge(
-                        label: l10n.aiBadge,
-                        color: AppSemanticColors.of(context).success,
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  interaction.preview,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                    height: 1.45,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  interaction.timestampLabel,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.56),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyCollaborationState extends StatelessWidget {
-  const _EmptyCollaborationState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.3 : 0.58,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
-      ),
-      child: Text(
-        message,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
-          height: 1.45,
-        ),
-      ),
+      trailing: Text(interaction.timestampLabel),
+      compact: true,
     );
   }
 }
@@ -1035,16 +505,14 @@ class _EmptyCollaborationState extends StatelessWidget {
 IconData _iconForConversation(WorkspaceConversationKind kind) {
   return switch (kind) {
     WorkspaceConversationKind.channel => Icons.tag_rounded,
-    WorkspaceConversationKind.directMessage => Icons.person_rounded,
-    WorkspaceConversationKind.agentThread => Icons.smart_toy_rounded,
+    WorkspaceConversationKind.directMessage => Icons.person_outline_rounded,
+    WorkspaceConversationKind.agentThread => Icons.smart_toy_outlined,
   };
 }
 
 String _initialsFor(String value) {
   final cleaned = value.replaceAll('@', '').trim();
-  if (cleaned.isEmpty) {
-    return 'MF';
-  }
+  if (cleaned.isEmpty) return 'MF';
   final parts = cleaned
       .split(RegExp(r'[\s_-]+'))
       .where((part) => part.isNotEmpty)
@@ -1064,25 +532,17 @@ int _sortByLastActivityDesc(
   if (leftTime == null && rightTime == null) {
     return left.title.compareTo(right.title);
   }
-  if (leftTime == null) {
-    return 1;
-  }
-  if (rightTime == null) {
-    return -1;
-  }
+  if (leftTime == null) return 1;
+  if (rightTime == null) return -1;
   return rightTime.compareTo(leftTime);
 }
 
 String _formatConversationTimestamp(String value) {
   final parsed = DateTime.tryParse(value)?.toLocal();
-  if (parsed == null) {
-    return '';
-  }
+  if (parsed == null) return '';
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(parsed.year, parsed.month, parsed.day);
-  if (day == today) {
-    return formatShortTimestamp(parsed);
-  }
+  if (day == today) return formatShortTimestamp(parsed);
   return '${parsed.month}/${parsed.day}';
 }

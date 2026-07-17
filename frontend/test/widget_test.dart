@@ -35,7 +35,13 @@ void main() {
 
     expect(find.byType(ConnectServerPage), findsOneWidget);
     expect(find.text('My devices'), findsOneWidget);
+    expect(find.text('Scan QR code'), findsOneWidget);
     expect(find.text('Add device manually'), findsOneWidget);
+    expect(find.text('Save and continue'), findsNothing);
+
+    await tester.tap(find.text('Add device manually'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Save and continue'), findsOneWidget);
   });
 }

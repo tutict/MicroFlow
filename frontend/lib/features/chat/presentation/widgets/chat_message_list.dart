@@ -4,7 +4,6 @@ import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../core/utils/date_time_formatter.dart';
 import '../../../workspace/domain/entities/knowledge_document.dart';
-import '../../../../shared/widgets/app_pill.dart';
 import '../../domain/entities/chat_message.dart';
 import 'message_bubble.dart';
 
@@ -60,7 +59,9 @@ class _ChatMessageListState extends State<ChatMessageList> {
     }
     Scrollable.ensureVisible(
       context,
-      duration: const Duration(milliseconds: 220),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
       alignment: 1,
     );
@@ -174,14 +175,12 @@ class _DateDivider extends StatelessWidget {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: AppPill(
-            label: label,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            backgroundColor: theme.colorScheme.surface.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.34 : 0.68,
+          child: Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
             ),
-            borderColor: theme.dividerColor.withValues(alpha: 0.82),
-            labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.68),
           ),
         ),
         Expanded(
@@ -213,58 +212,39 @@ class _EmptyChatState extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-            Container(
-              width: compact ? 52 : 64,
-              height: compact ? 52 : 64,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.16),
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: compact ? 28 : 34,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title ?? l10n.noMessagesTitle,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              alignment: Alignment.center,
-              child: Icon(
-                icon,
-                size: compact ? 24 : 30,
-                color: theme.colorScheme.primary,
+              const SizedBox(height: 6),
+              Text(
+                description ?? l10n.noMessagesDescription,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
               ),
-            ),
-            SizedBox(height: compact ? 12 : 16),
-            Text(
-              title ?? l10n.noMessagesTitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            SizedBox(height: compact ? 6 : 8),
-            Text(
-              description ?? l10n.noMessagesDescription,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 14),
-            AppPill(
-              label: l10n.chatTab,
-              icon: Icons.chat_bubble_outline_rounded,
-              backgroundColor: theme.colorScheme.surface.withValues(
-                alpha: theme.brightness == Brightness.dark ? 0.3 : 0.6,
-              ),
-              borderColor: theme.dividerColor.withValues(alpha: 0.82),
-              labelColor: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-              iconColor: theme.colorScheme.onSurface.withValues(alpha: 0.62),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

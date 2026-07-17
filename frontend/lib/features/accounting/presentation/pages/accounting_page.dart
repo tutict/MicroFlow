@@ -5,8 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/providers/app_providers.dart';
 import '../../../../shared/theme/app_theme_extensions.dart';
-import '../../../../shared/widgets/app_metric_tile.dart';
-import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/theme/app_tokens.dart';
 import '../../../../shared/widgets/app_surface.dart';
 import '../../../../shared/widgets/app_skeletons.dart';
 import '../../../../shared/widgets/status_badge.dart';
@@ -227,31 +226,28 @@ class _DashboardContent extends StatelessWidget {
               onCreateAccount: onCreateAccount,
               onCreateVoucher: onCreateVoucher,
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Theme.of(context).dividerColor),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                border: Border(
+                  bottom: BorderSide(color: Theme.of(context).dividerColor),
                 ),
-                child: TabBar(
-                  tabs: [
-                    Tab(
-                      icon: const Icon(Icons.receipt_long_rounded),
-                      text: copy.vouchers,
-                    ),
-                    Tab(
-                      icon: const Icon(Icons.account_tree_rounded),
-                      text: copy.accounts,
-                    ),
-                    Tab(
-                      icon: const Icon(Icons.balance_rounded),
-                      text: copy.trialBalance,
-                    ),
-                  ],
-                ),
+              ),
+              child: TabBar(
+                tabs: [
+                  Tab(
+                    icon: const Icon(Icons.receipt_long_rounded),
+                    text: copy.vouchers,
+                  ),
+                  Tab(
+                    icon: const Icon(Icons.account_tree_rounded),
+                    text: copy.accounts,
+                  ),
+                  Tab(
+                    icon: const Icon(Icons.balance_rounded),
+                    text: copy.trialBalance,
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -295,109 +291,118 @@ class _AccountingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = _AccountingCopy.of(context);
-    final semantic = AppSemanticColors.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 720;
+    final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-      child: AppSurface(
-        variant: AppSurfaceVariant.raised,
-        padding: EdgeInsets.all(compact ? 14 : 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                AppPill(
-                  label: '${copy.workspace}: $workspaceId',
-                  icon: Icons.hub_rounded,
-                ),
-                AppPill(
-                  label: '${copy.period}: $period',
-                  icon: Icons.calendar_month_rounded,
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                AppMetricTile(
-                  label: copy.accounts,
-                  value: '${dashboard.accounts.length}',
-                  icon: Icons.account_tree_rounded,
-                  color: semantic.info,
-                  width: compact ? 160 : 176,
-                ),
-                AppMetricTile(
-                  label: copy.postedVouchers,
-                  value: '${dashboard.postedVoucherCount}',
-                  icon: Icons.task_alt_rounded,
-                  color: semantic.success,
-                  width: compact ? 160 : 176,
-                ),
-                AppMetricTile(
-                  label: copy.debit,
-                  value: _money(dashboard.periodDebitTotal),
-                  icon: Icons.south_west_rounded,
-                  color: semantic.warning,
-                  width: compact ? 160 : 176,
-                ),
-                AppMetricTile(
-                  label: copy.credit,
-                  value: _money(dashboard.periodCreditTotal),
-                  icon: Icons.north_east_rounded,
-                  color: semantic.danger,
-                  width: compact ? 160 : 176,
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                SizedBox(
-                  width: compact ? 170 : 180,
-                  child: TextField(
-                    controller: periodController,
-                    decoration: InputDecoration(
-                      labelText: copy.period,
-                      prefixIcon: const Icon(Icons.calendar_month_rounded),
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
-                      LengthLimitingTextInputFormatter(7),
-                    ],
-                    onSubmitted: (_) => onApplyPeriod(),
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed: onApplyPeriod,
-                  icon: const Icon(Icons.search_rounded, size: 18),
-                  label: Text(copy.apply),
-                ),
-                OutlinedButton.icon(
-                  onPressed: onCreateAccount,
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(copy.newAccount),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: onCreateVoucher,
-                  icon: const Icon(Icons.post_add_rounded, size: 18),
-                  label: Text(copy.newVoucher),
-                ),
-              ],
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: compact ? 160 : 172,
+                child: TextField(
+                  controller: periodController,
+                  decoration: InputDecoration(
+                    labelText: copy.period,
+                    prefixIcon: const Icon(Icons.calendar_month_rounded),
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                    LengthLimitingTextInputFormatter(7),
+                  ],
+                  onSubmitted: (_) => onApplyPeriod(),
+                ),
+              ),
+              IconButton.filledTonal(
+                tooltip: copy.apply,
+                onPressed: onApplyPeriod,
+                icon: const Icon(Icons.search_rounded),
+              ),
+              OutlinedButton.icon(
+                onPressed: onCreateAccount,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(copy.newAccount),
+              ),
+              FilledButton.icon(
+                onPressed: onCreateVoucher,
+                icon: const Icon(Icons.post_add_rounded, size: 18),
+                label: Text(copy.newVoucher),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _AccountingStat(
+                label: copy.accounts,
+                value: '${dashboard.accounts.length}',
+              ),
+              _AccountingStat(
+                label: copy.postedVouchers,
+                value: '${dashboard.postedVoucherCount}',
+              ),
+              _AccountingStat(
+                label: copy.debit,
+                value: _money(dashboard.periodDebitTotal),
+              ),
+              _AccountingStat(
+                label: copy.credit,
+                value: _money(dashboard.periodCreditTotal),
+              ),
+              Text(
+                '${copy.workspace}: $workspaceId',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountingStat extends StatelessWidget {
+  const _AccountingStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -440,71 +445,63 @@ class _VoucherCard extends StatelessWidget {
     final copy = _AccountingCopy.of(context);
     final theme = Theme.of(context);
 
-    return AppSurface(
-      variant: AppSurfaceVariant.raised,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: theme.colorScheme.surface,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        side: BorderSide(color: theme.dividerColor),
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          0,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        leading: Icon(
+          Icons.receipt_long_outlined,
+          color: _statusColor(context, voucher.status),
+        ),
+        title: Text(
+          voucher.voucherNo,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Text(
+          '${voucher.voucherDate}  ${voucher.description}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: StatusBadge(
+          label: _statusLabel(copy, voucher.status),
+          color: _statusColor(context, voucher.status),
+        ),
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      voucher.voucherNo,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${voucher.voucherDate}  ${voucher.description}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.66,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text('${copy.debit} ${_money(voucher.totalDebit)}'),
+              ),
+              Expanded(
+                child: Text(
+                  '${copy.credit} ${_money(voucher.totalCredit)}',
+                  textAlign: TextAlign.right,
                 ),
               ),
-              const SizedBox(width: 10),
-              StatusBadge(
-                label: _statusLabel(copy, voucher.status),
-                color: _statusColor(context, voucher.status),
-              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            children: [
-              AppPill(
-                label: '${copy.debit} ${_money(voucher.totalDebit)}',
-                icon: Icons.south_west_rounded,
-              ),
-              AppPill(
-                label: '${copy.credit} ${_money(voucher.totalCredit)}',
-                icon: Icons.north_east_rounded,
-              ),
-              AppPill(
-                label: '${voucher.lines.length} ${copy.lines}',
-                icon: Icons.format_list_numbered_rounded,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           ...voucher.lines.map((line) => _VoucherLineRow(line: line)),
           if (onPost != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.centerRight,
               child: FilledButton.icon(
                 onPressed: onPost,
                 icon: const Icon(Icons.task_alt_rounded, size: 18),

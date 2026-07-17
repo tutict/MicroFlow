@@ -48,23 +48,13 @@ class AppSurface extends StatelessWidget {
         ),
       },
       borderRadius: radius,
-      border: Border.all(
-        color: switch (variant) {
-          AppSurfaceVariant.selected => accent.withValues(alpha: 0.22),
-          _ => theme.dividerColor,
-        },
-      ),
-      boxShadow: variant == AppSurfaceVariant.raised
-          ? [
-              BoxShadow(
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0x24000000)
-                    : const Color(0x0D0F1720),
-                blurRadius: 14,
-                offset: const Offset(0, 8),
-              ),
-            ]
-          : null,
+      border: switch (variant) {
+        AppSurfaceVariant.muted => null,
+        AppSurfaceVariant.selected => Border.all(
+          color: accent.withValues(alpha: 0.28),
+        ),
+        _ => Border.all(color: theme.dividerColor),
+      },
     );
 
     final content = Padding(

@@ -82,7 +82,8 @@ MicroFlow
 配对连接用于解决前后端分离部署下的首次连接问题。
 
 - 后端生成一次性配对码与二维码内容
-- 前端输入服务器地址和配对码完成握手
+- Android / iOS 客户端可扫描二维码，确认设备后完成握手
+- 桌面与 Web 客户端保留服务器地址和配对码手动输入方式
 - 后端返回 `serverOrigin`、`apiBaseUrl`、`wsBaseUrl`
 - 前端保存连接配置后进入登录流程
 - 配对入口受本地访问、Host 信任边界和有效期约束
@@ -116,6 +117,7 @@ Windows 环境可直接运行：
 后端服务：http://127.0.0.1:8080
 健康检查：http://127.0.0.1:8080/api/v1/system/health
 前端预览：http://127.0.0.1:3000
+配对控制台：http://127.0.0.1:8080/api/v1/bootstrap/console
 ```
 
 常用参数：
@@ -125,6 +127,12 @@ Windows 环境可直接运行：
 .\scripts\start-debug-preview.ps1 -SeedDemo
 .\scripts\start-debug-preview.ps1 -NoBrowser
 .\scripts\start-debug-preview.ps1 -SkipPubGet
+```
+
+手机扫码配对时，将 `HostName` 设置为手机可访问的局域网地址，然后在电脑浏览器打开脚本输出的配对控制台：
+
+```powershell
+.\scripts\start-debug-preview.ps1 -HostName 192.168.1.20
 ```
 
 脚本会自动为前端注入：

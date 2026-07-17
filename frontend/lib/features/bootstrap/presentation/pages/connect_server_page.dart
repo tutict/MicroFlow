@@ -1,12 +1,15 @@
-import 'dart:ui';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/router.dart';
+import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/widgets/app_layout.dart';
 import '../../../auth/presentation/providers/auth_session_controller.dart';
+import '../../domain/entities/pairing_qr_payload.dart';
 import '../../domain/entities/server_connection.dart';
 import '../../domain/entities/server_connection_catalog.dart';
+import 'pairing_scanner_page.dart';
 import '../providers/server_connection_controller.dart';
 
 class ConnectServerPage extends ConsumerStatefulWidget {
@@ -36,16 +39,27 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
     super.dispose();
   }
 
-  Future<void> _pair(_Copy copy) async {
+  Future<void> _pair(_ConnectCopy copy) async {
     final serverUrl = _serverUrlController.text.trim();
     final pairingCode = _pairingCodeController.text.trim();
+    await _pairCredentials(
+      copy,
+      serverUrl: serverUrl,
+      pairingCode: pairingCode,
+    );
+  }
 
-    if (serverUrl.isEmpty) {
-      setState(() => _errorText = copy.deviceAddressRequired);
-      return;
-    }
-    if (pairingCode.isEmpty) {
-      setState(() => _errorText = copy.pairingCodeRequired);
+  Future<void> _pairCredentials(
+    _ConnectCopy copy, {
+    required String serverUrl,
+    required String pairingCode,
+  }) async {
+    if (serverUrl.isEmpty || pairingCode.isEmpty) {
+      setState(() {
+        _errorText = serverUrl.isEmpty
+            ? copy.deviceAddressRequired
+            : copy.pairingCodeRequired;
+      });
       return;
     }
 
@@ -55,13 +69,53 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
       await ref
           .read(serverConnectionControllerProvider.notifier)
           .pair(serverUrl: serverUrl, pairingCode: pairingCode);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(AppRoutes.signIn);
     } catch (error) {
-      setState(() => _errorText = error.toString());
+      if (mounted) setState(() => _errorText = error.toString());
     }
+  }
+
+  Future<void> _scanQrCode(_ConnectCopy copy) async {
+    final payload = await Navigator.of(context).push<PairingQrPayload>(
+      MaterialPageRoute<PairingQrPayload>(
+        fullscreenDialog: true,
+        builder: (context) => const PairingScannerPage(),
+      ),
+    );
+    if (!mounted || payload == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(copy.confirmDevice),
+        content: ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.computer_rounded),
+          title: Text(payload.instanceName),
+          subtitle: Text(payload.serverOrigin),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(copy.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(copy.connect),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    _serverUrlController.text = payload.serverOrigin;
+    _pairingCodeController.text = payload.pairingCode;
+    await _pairCredentials(
+      copy,
+      serverUrl: payload.serverOrigin,
+      pairingCode: payload.pairingCode,
+    );
   }
 
   Future<void> _activate(ServerConnection connection) async {
@@ -71,598 +125,346 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
       await ref
           .read(serverConnectionControllerProvider.notifier)
           .activateConnection(connection.id);
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(AppRoutes.signIn);
     } catch (error) {
-      setState(() => _errorText = error.toString());
+      if (mounted) setState(() => _errorText = error.toString());
+    }
+  }
+
+  Future<void> _remove(ServerConnection connection) async {
+    setState(() => _errorText = null);
+    try {
+      await ref
+          .read(serverConnectionControllerProvider.notifier)
+          .removeConnection(connection.id);
+    } catch (error) {
+      if (mounted) setState(() => _errorText = error.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final copy = _Copy.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final isWide = width >= 1040;
-    final compactPanelHeader = width < 620;
+    final copy = _ConnectCopy.of(context);
     final connectionAsync = ref.watch(serverConnectionControllerProvider);
     final catalog = connectionAsync.value ?? const ServerConnectionCatalog();
     final isBusy = connectionAsync.isLoading;
-
-    final introPanel = _FrostPanel(
-      padding: EdgeInsets.all(isWide ? 32 : 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionEyebrow(label: copy.eyebrow),
-          const SizedBox(height: 20),
-          Text(
-            copy.title,
-            style:
-                (isWide
-                        ? theme.textTheme.displaySmall
-                        : theme.textTheme.headlineMedium)
-                    ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: 0),
-          ),
-          const SizedBox(height: 12),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 580),
-            child: Text(
-              copy.description,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                height: 1.55,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          for (var index = 0; index < copy.steps.length; index++) ...[
-            _StepRow(index: index + 1, label: copy.steps[index]),
-            if (index < copy.steps.length - 1) const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 24),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              _InlinePill(icon: Icons.lan_rounded, label: copy.localNetwork),
-              _InlinePill(icon: Icons.shield_rounded, label: copy.remoteAccess),
-              _InlinePill(
-                icon: Icons.password_rounded,
-                label: copy.pairingCode,
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: theme.dividerColor.withValues(alpha: 0.84),
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.phone_iphone_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    copy.note,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.82,
-                      ),
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-
-    final devicePanel = _FrostPanel(
-      padding: EdgeInsets.all(isWide ? 28 : 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          compactPanelHeader
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      copy.panelTitle,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      catalog.savedConnections.isEmpty
-                          ? copy.emptyState
-                          : copy.savedState,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.76,
-                        ),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: isBusy
-                          ? null
-                          : () {
-                              setState(() {
-                                _showManualForm = !_showManualForm;
-                                _errorText = null;
-                              });
-                            },
-                      icon: Icon(
-                        _showManualForm
-                            ? Icons.close_rounded
-                            : Icons.add_rounded,
-                      ),
-                      label: Text(
-                        _showManualForm
-                            ? copy.hideManualAction
-                            : copy.addDeviceAction,
-                      ),
-                    ),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            copy.panelTitle,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            catalog.savedConnections.isEmpty
-                                ? copy.emptyState
-                                : copy.savedState,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.76,
-                              ),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    OutlinedButton.icon(
-                      onPressed: isBusy
-                          ? null
-                          : () {
-                              setState(() {
-                                _showManualForm = !_showManualForm;
-                                _errorText = null;
-                              });
-                            },
-                      icon: Icon(
-                        _showManualForm
-                            ? Icons.close_rounded
-                            : Icons.add_rounded,
-                      ),
-                      label: Text(
-                        _showManualForm
-                            ? copy.hideManualAction
-                            : copy.addDeviceAction,
-                      ),
-                    ),
-                  ],
-                ),
-          const SizedBox(height: 22),
-          if (catalog.savedConnections.isNotEmpty)
-            ...catalog.savedConnections.map(
-              (connection) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _DeviceTile(
-                  connection: connection,
-                  isCurrent: connection.id == catalog.currentConnection?.id,
-                  copy: copy,
-                  isBusy: isBusy,
-                  onUse: () => _activate(connection),
-                  onRemove: () {
-                    setState(() => _errorText = null);
-                    ref
-                        .read(serverConnectionControllerProvider.notifier)
-                        .removeConnection(connection.id);
-                  },
-                ),
-              ),
-            )
-          else
-            _EmptyHint(copy: copy),
-          if (_showManualForm || catalog.savedConnections.isEmpty) ...[
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withValues(alpha: 0.72),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: theme.dividerColor.withValues(alpha: 0.84),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    copy.manualTitle,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    copy.manualDescription,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.76,
-                      ),
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  TextField(
-                    controller: _serverUrlController,
-                    decoration: InputDecoration(
-                      labelText: copy.deviceAddress,
-                      hintText: copy.deviceAddressHint,
-                      prefixIcon: const Icon(Icons.computer_rounded),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  TextField(
-                    controller: _pairingCodeController,
-                    decoration: InputDecoration(
-                      labelText: copy.codeLabel,
-                      hintText: 'ABCD-7KQ2',
-                      prefixIcon: const Icon(Icons.password_rounded),
-                    ),
-                    onSubmitted: (_) => _pair(copy),
-                  ),
-                  if (_errorText != null) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFBA3B2F).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: const Color(
-                            0xFFBA3B2F,
-                          ).withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Text(
-                        _errorText!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFFBA3B2F),
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 18),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: isBusy ? null : () => _pair(copy),
-                      child: Text(
-                        isBusy ? copy.connecting : copy.saveAndContinue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    final canScanQr =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    final showForm =
+        _showManualForm || (catalog.savedConnections.isEmpty && !canScanQr);
+    final onScanQr = canScanQr && !isBusy ? () => _scanQrCode(copy) : null;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: theme.brightness == Brightness.dark
-                ? const [
-                    Color(0xFF081015),
-                    Color(0xFF10191F),
-                    Color(0xFF152229),
-                  ]
-                : const [
-                    Color(0xFFF7F9F9),
-                    Color(0xFFEEF2F3),
-                    Color(0xFFE3EAEC),
-                  ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              left: -100,
-              top: -80,
-              child: _AmbientOrb(
-                size: 260,
-                color: theme.colorScheme.primary.withValues(alpha: 0.16),
-              ),
+      appBar: AppBar(
+        toolbarHeight: 60,
+        titleSpacing: AppSpacing.md,
+        title: Text(copy.pageTitle),
+      ),
+      body: SafeArea(
+        top: false,
+        child: Center(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.fromLTRB(
+              compact ? AppSpacing.sm : AppSpacing.lg,
+              AppSpacing.lg,
+              compact ? AppSpacing.sm : AppSpacing.lg,
+              MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
             ),
-            Positioned(
-              right: -60,
-              bottom: -120,
-              child: _AmbientOrb(
-                size: 320,
-                color: const Color(0xFF3D7EA6).withValues(alpha: 0.1),
-              ),
-            ),
-            SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1260),
-                  child: Padding(
-                    padding: EdgeInsets.all(width < 640 ? 18 : 24),
-                    child: isWide
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(child: introPanel),
-                              const SizedBox(width: 24),
-                              SizedBox(
-                                width: 470,
-                                child: SingleChildScrollView(
-                                  child: devicePanel,
-                                ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: AppPane(
+                padding: EdgeInsets.all(
+                  compact ? AppSpacing.md : AppSpacing.lg,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _DeviceHeader(
+                      copy: copy,
+                      hasConnections: catalog.savedConnections.isNotEmpty,
+                      showForm: showForm,
+                      isBusy: isBusy,
+                      onScanQr: onScanQr,
+                      onToggleForm: () {
+                        setState(() {
+                          _showManualForm = !_showManualForm;
+                          _errorText = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    if (catalog.savedConnections.isEmpty)
+                      AppEmptyState(
+                        icon: Icons.devices_outlined,
+                        title: copy.emptyTitle,
+                        message: copy.emptyMessage,
+                        compact: true,
+                        action: !canScanQr
+                            ? null
+                            : Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: AppSpacing.sm,
+                                runSpacing: AppSpacing.xs,
+                                children: [
+                                  FilledButton.icon(
+                                    onPressed: onScanQr,
+                                    icon: isBusy
+                                        ? const SizedBox.square(
+                                            dimension: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.qr_code_scanner_rounded,
+                                          ),
+                                    label: Text(
+                                      isBusy ? copy.connecting : copy.scanQr,
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: isBusy
+                                        ? null
+                                        : () => setState(
+                                            () => _showManualForm = true,
+                                          ),
+                                    child: Text(copy.manualTitle),
+                                  ),
+                                ],
                               ),
-                            ],
-                          )
-                        : SingleChildScrollView(
-                            keyboardDismissBehavior:
-                                ScrollViewKeyboardDismissBehavior.onDrag,
-                            padding: EdgeInsets.only(
-                              bottom:
-                                  MediaQuery.viewInsetsOf(context).bottom + 20,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                introPanel,
-                                const SizedBox(height: 18),
-                                devicePanel,
-                              ],
-                            ),
-                          ),
-                  ),
+                      )
+                    else
+                      _DeviceList(
+                        catalog: catalog,
+                        copy: copy,
+                        isBusy: isBusy,
+                        onActivate: _activate,
+                        onRemove: _remove,
+                      ),
+                    if (showForm) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Divider(color: Theme.of(context).dividerColor),
+                      const SizedBox(height: AppSpacing.md),
+                      _ManualConnectionForm(
+                        serverUrlController: _serverUrlController,
+                        pairingCodeController: _pairingCodeController,
+                        copy: copy,
+                        errorText: _errorText,
+                        isBusy: isBusy,
+                        onSubmit: () => _pair(copy),
+                      ),
+                    ] else if (_errorText != null) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _InlineError(message: _errorText!),
+                    ],
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _DeviceTile extends StatelessWidget {
-  const _DeviceTile({
-    required this.connection,
-    required this.isCurrent,
+class _DeviceHeader extends StatelessWidget {
+  const _DeviceHeader({
     required this.copy,
+    required this.hasConnections,
+    required this.showForm,
     required this.isBusy,
-    required this.onUse,
-    required this.onRemove,
+    required this.onScanQr,
+    required this.onToggleForm,
   });
 
-  final ServerConnection connection;
-  final bool isCurrent;
-  final _Copy copy;
+  final _ConnectCopy copy;
+  final bool hasConnections;
+  final bool showForm;
   final bool isBusy;
-  final VoidCallback onUse;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCurrent
-            ? theme.colorScheme.primary.withValues(alpha: 0.1)
-            : theme.colorScheme.surface.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isCurrent
-              ? theme.colorScheme.primary.withValues(alpha: 0.22)
-              : theme.dividerColor.withValues(alpha: 0.82),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      connection.instanceName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      connection.serverOrigin,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.78,
-                        ),
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (isCurrent)
-                _InlinePill(
-                  icon: Icons.check_circle_rounded,
-                  label: copy.currentDevice,
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton(
-                  onPressed: isBusy ? null : onUse,
-                  child: Text(
-                    isCurrent ? copy.continueWithDevice : copy.useDevice,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                onPressed: isBusy ? null : onRemove,
-                tooltip: copy.removeDevice,
-                icon: const Icon(Icons.delete_outline_rounded),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyHint extends StatelessWidget {
-  const _EmptyHint({required this.copy});
-
-  final _Copy copy;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.84)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              Icons.devices_rounded,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              copy.discoveryHint,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StepRow extends StatelessWidget {
-  const _StepRow({required this.index, required this.label});
-
-  final int index;
-  final String label;
+  final VoidCallback? onScanQr;
+  final VoidCallback onToggleForm;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '$index',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.w800,
-            ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(copy.panelTitle, style: theme.textTheme.headlineMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                hasConnections ? copy.savedMessage : copy.panelMessage,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
-                height: 1.5,
+        if (hasConnections) ...[
+          if (onScanQr != null) ...[
+            const SizedBox(width: AppSpacing.sm),
+            IconButton.filledTonal(
+              tooltip: copy.scanQr,
+              onPressed: onScanQr,
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+            ),
+          ],
+          const SizedBox(width: AppSpacing.sm),
+          IconButton.filledTonal(
+            tooltip: showForm ? copy.hideManualAction : copy.addDeviceAction,
+            onPressed: isBusy ? null : onToggleForm,
+            icon: Icon(showForm ? Icons.close_rounded : Icons.add_rounded),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _DeviceList extends StatelessWidget {
+  const _DeviceList({
+    required this.catalog,
+    required this.copy,
+    required this.isBusy,
+    required this.onActivate,
+    required this.onRemove,
+  });
+
+  final ServerConnectionCatalog catalog;
+  final _ConnectCopy copy;
+  final bool isBusy;
+  final ValueChanged<ServerConnection> onActivate;
+  final ValueChanged<ServerConnection> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final connection in catalog.savedConnections)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+            child: AppListRow(
+              title: connection.instanceName,
+              subtitle: connection.id == catalog.currentConnection?.id
+                  ? '${connection.serverOrigin} - ${copy.currentDevice}'
+                  : connection.serverOrigin,
+              leading: const Icon(Icons.computer_rounded),
+              selected: connection.id == catalog.currentConnection?.id,
+              onTap: isBusy ? null : () => onActivate(connection),
+              trailing: PopupMenuButton<_DeviceAction>(
+                tooltip: copy.deviceActions,
+                enabled: !isBusy,
+                onSelected: (action) {
+                  switch (action) {
+                    case _DeviceAction.use:
+                      onActivate(connection);
+                    case _DeviceAction.remove:
+                      onRemove(connection);
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: _DeviceAction.use,
+                    child: Text(copy.useDevice),
+                  ),
+                  PopupMenuItem(
+                    value: _DeviceAction.remove,
+                    child: Text(copy.removeDevice),
+                  ),
+                ],
               ),
             ),
+          ),
+      ],
+    );
+  }
+}
+
+enum _DeviceAction { use, remove }
+
+class _ManualConnectionForm extends StatelessWidget {
+  const _ManualConnectionForm({
+    required this.serverUrlController,
+    required this.pairingCodeController,
+    required this.copy,
+    required this.errorText,
+    required this.isBusy,
+    required this.onSubmit,
+  });
+
+  final TextEditingController serverUrlController;
+  final TextEditingController pairingCodeController;
+  final _ConnectCopy copy;
+  final String? errorText;
+  final bool isBusy;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(copy.manualTitle, style: theme.textTheme.titleLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          copy.manualMessage,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        TextField(
+          controller: serverUrlController,
+          enabled: !isBusy,
+          keyboardType: TextInputType.url,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+            labelText: copy.deviceAddress,
+            hintText: copy.deviceAddressHint,
+            prefixIcon: const Icon(Icons.link_rounded),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        TextField(
+          controller: pairingCodeController,
+          enabled: !isBusy,
+          textCapitalization: TextCapitalization.characters,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => onSubmit(),
+          decoration: InputDecoration(
+            labelText: copy.codeLabel,
+            hintText: 'ABCD-7KQ2',
+            prefixIcon: const Icon(Icons.password_rounded),
+          ),
+        ),
+        if (errorText != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          _InlineError(message: errorText!),
+        ],
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          height: 48,
+          child: FilledButton.icon(
+            onPressed: isBusy ? null : onSubmit,
+            icon: isBusy
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.arrow_forward_rounded),
+            label: Text(isBusy ? copy.connecting : copy.saveAndContinue),
           ),
         ),
       ],
@@ -670,56 +472,31 @@ class _StepRow extends StatelessWidget {
   }
 }
 
-class _SectionEyebrow extends StatelessWidget {
-  const _SectionEyebrow({required this.label});
+class _InlineError extends StatelessWidget {
+  const _InlineError({required this.message});
 
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.primary,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _InlinePill extends StatelessWidget {
-  const _InlinePill({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
-      ),
+    return Semantics(
+      liveRegion: true,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.w800,
+          Icon(
+            Icons.error_outline_rounded,
+            size: 18,
+            color: theme.colorScheme.error,
+          ),
+          const SizedBox(width: AppSpacing.xs),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+              ),
             ),
           ),
         ],
@@ -728,81 +505,16 @@ class _InlinePill extends StatelessWidget {
   }
 }
 
-class _FrostPanel extends StatelessWidget {
-  const _FrostPanel({
-    required this.child,
-    this.padding = const EdgeInsets.all(24),
-  });
-
-  final Widget child;
-  final EdgeInsets padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: padding,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(
-              alpha: theme.brightness == Brightness.dark ? 0.78 : 0.92,
-            ),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.84),
-            ),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _AmbientOrb extends StatelessWidget {
-  const _AmbientOrb({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color,
-            color.withValues(alpha: color.a * 0.4),
-            Colors.transparent,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Copy {
-  const _Copy({
-    required this.eyebrow,
-    required this.title,
-    required this.description,
-    required this.steps,
-    required this.note,
-    required this.localNetwork,
-    required this.remoteAccess,
-    required this.pairingCode,
+class _ConnectCopy {
+  const _ConnectCopy({
+    required this.pageTitle,
     required this.panelTitle,
-    required this.emptyState,
-    required this.savedState,
-    required this.discoveryHint,
+    required this.panelMessage,
+    required this.savedMessage,
+    required this.emptyTitle,
+    required this.emptyMessage,
     required this.manualTitle,
-    required this.manualDescription,
+    required this.manualMessage,
     required this.deviceAddress,
     required this.deviceAddressHint,
     required this.deviceAddressRequired,
@@ -811,27 +523,25 @@ class _Copy {
     required this.connecting,
     required this.saveAndContinue,
     required this.currentDevice,
-    required this.continueWithDevice,
     required this.useDevice,
     required this.removeDevice,
     required this.addDeviceAction,
     required this.hideManualAction,
+    required this.deviceActions,
+    required this.scanQr,
+    required this.confirmDevice,
+    required this.cancel,
+    required this.connect,
   });
 
-  final String eyebrow;
-  final String title;
-  final String description;
-  final List<String> steps;
-  final String note;
-  final String localNetwork;
-  final String remoteAccess;
-  final String pairingCode;
+  final String pageTitle;
   final String panelTitle;
-  final String emptyState;
-  final String savedState;
-  final String discoveryHint;
+  final String panelMessage;
+  final String savedMessage;
+  final String emptyTitle;
+  final String emptyMessage;
   final String manualTitle;
-  final String manualDescription;
+  final String manualMessage;
   final String deviceAddress;
   final String deviceAddressHint;
   final String deviceAddressRequired;
@@ -840,35 +550,27 @@ class _Copy {
   final String connecting;
   final String saveAndContinue;
   final String currentDevice;
-  final String continueWithDevice;
   final String useDevice;
   final String removeDevice;
   final String addDeviceAction;
   final String hideManualAction;
+  final String deviceActions;
+  final String scanQr;
+  final String confirmDevice;
+  final String cancel;
+  final String connect;
 
-  static _Copy of(BuildContext context) {
-    final isChinese = Localizations.localeOf(context).languageCode == 'zh';
-    if (isChinese) {
-      return const _Copy(
-        eyebrow: '设备连接',
-        title: '先选设备，再进入工作区',
-        description: '用户真正要连接的是自己的电脑，不是地址本身。所以首页先展示已保存设备，把常用机器留在第一层。',
-        steps: [
-          '优先使用已保存设备，避免每次重新输入地址。',
-          '新设备只需要录入一次地址和配对码，之后就能快速切换。',
-          '远程访问优先使用 Tailscale 地址，不建议直接暴露公网端口。',
-        ],
-        note: '在同一局域网时填写电脑内网地址；外出时填写 Tailscale IP 或 MagicDNS 名称即可。',
-        localNetwork: '同一网络',
-        remoteAccess: '远程访问',
-        pairingCode: '配对码',
+  static _ConnectCopy of(BuildContext context) {
+    if (Localizations.localeOf(context).languageCode == 'zh') {
+      return const _ConnectCopy(
+        pageTitle: '设备连接',
         panelTitle: '我的设备',
-        emptyState: '还没有已保存设备。先添加一台电脑，之后手机就能把它当成默认工作入口。',
-        savedState: '这里保留你已经配对过的电脑。继续使用当前设备，或者随时切换到另一台机器。',
-        discoveryHint: '这一版先把“保存多台设备并快速切换”做好。自动发现可以作为后续增强，不占用户当前主路径。',
+        panelMessage: '连接一台运行微澜协作的电脑。',
+        savedMessage: '选择设备继续，或添加新设备。',
+        emptyTitle: '暂无设备',
+        emptyMessage: '扫描设备二维码，或手动输入连接信息。',
         manualTitle: '手动添加设备',
-        manualDescription:
-            '适合你已经知道设备地址的场景，例如局域网 IP、Tailscale IP，或者 MagicDNS 名称。',
+        manualMessage: '可使用局域网地址或 Tailscale 地址。',
         deviceAddress: '设备地址',
         deviceAddressHint: 'http://100.x.y.z:8080',
         deviceAddressRequired: '请输入设备地址',
@@ -877,38 +579,26 @@ class _Copy {
         connecting: '连接中...',
         saveAndContinue: '保存并继续',
         currentDevice: '当前设备',
-        continueWithDevice: '继续使用',
-        useDevice: '切换到这台',
+        useDevice: '使用此设备',
         removeDevice: '移除设备',
         addDeviceAction: '添加设备',
         hideManualAction: '收起',
+        deviceActions: '设备操作',
+        scanQr: '扫描二维码',
+        confirmDevice: '确认设备',
+        cancel: '取消',
+        connect: '连接',
       );
     }
-    return const _Copy(
-      eyebrow: 'Device connection',
-      title: 'Choose a device before you enter the workspace',
-      description:
-          'People connect to their computer, not to an address string. This screen starts with saved devices so the common path stays fast.',
-      steps: [
-        'Start with saved devices instead of typing an address every time.',
-        'A new device only needs its address and pairing code once.',
-        'For remote access, prefer a Tailscale address over exposing a public port.',
-      ],
-      note:
-          'Use a LAN address when you are on the same network. Use a Tailscale IP or MagicDNS hostname when you are away.',
-      localNetwork: 'Local network',
-      remoteAccess: 'Remote access',
-      pairingCode: 'Pairing code',
+    return const _ConnectCopy(
+      pageTitle: 'Device connection',
       panelTitle: 'My devices',
-      emptyState:
-          'No saved devices yet. Add one computer first so the app has a default place to connect.',
-      savedState:
-          'Saved computers appear here. Continue with the current device or switch to another machine.',
-      discoveryHint:
-          'This release focuses on saving multiple devices and switching fast. Auto-discovery can be layered in later without changing the main flow.',
+      panelMessage: 'Connect a computer running MicroFlow.',
+      savedMessage: 'Choose a device or add a new one.',
+      emptyTitle: 'No devices yet',
+      emptyMessage: 'Scan a device QR code or enter connection details.',
       manualTitle: 'Add device manually',
-      manualDescription:
-          'Use this when you already know the device address, such as a LAN IP, Tailscale IP, or MagicDNS hostname.',
+      manualMessage: 'Use a local network or Tailscale address.',
       deviceAddress: 'Device address',
       deviceAddressHint: 'http://100.x.y.z:8080',
       deviceAddressRequired: 'Enter the device address',
@@ -917,11 +607,15 @@ class _Copy {
       connecting: 'Connecting...',
       saveAndContinue: 'Save and continue',
       currentDevice: 'Current device',
-      continueWithDevice: 'Continue',
       useDevice: 'Use this device',
       removeDevice: 'Remove device',
       addDeviceAction: 'Add device',
       hideManualAction: 'Hide',
+      deviceActions: 'Device actions',
+      scanQr: 'Scan QR code',
+      confirmDevice: 'Confirm device',
+      cancel: 'Cancel',
+      connect: 'Connect',
     );
   }
 }

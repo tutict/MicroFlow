@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
-import '../../../../shared/widgets/app_pill.dart';
+import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/widgets/app_layout.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/app_skeletons.dart';
 import '../../domain/entities/agent_diagnostic.dart';
@@ -22,11 +23,9 @@ class AgentDiagnosticsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final copy = _AgentDiagnosticsCopy.of(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(copy.title),
         actions: [
@@ -39,38 +38,19 @@ class AgentDiagnosticsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: theme.brightness == Brightness.dark
-                ? const [
-                    Color(0xFF081015),
-                    Color(0xFF10191F),
-                    Color(0xFF152229),
-                  ]
-                : const [
-                    Color(0xFFF7F9F9),
-                    Color(0xFFEEF2F3),
-                    Color(0xFFE3EAEC),
-                  ],
-          ),
-        ),
-        child: workspaceId.isEmpty
-            ? _EmptyState(message: copy.workspaceRequired)
-            : ref
-                  .watch(_agentDiagnosticsProvider(workspaceId))
-                  .when(
-                    data: (diagnostics) => _DiagnosticsList(
-                      workspaceId: workspaceId,
-                      diagnostics: diagnostics,
-                    ),
-                    loading: () => const AgentDiagnosticsSkeleton(),
-                    error: (error, _) =>
-                        _EmptyState(message: '${copy.loadFailed}: $error'),
+      body: workspaceId.isEmpty
+          ? _EmptyState(message: copy.workspaceRequired)
+          : ref
+                .watch(_agentDiagnosticsProvider(workspaceId))
+                .when(
+                  data: (diagnostics) => _DiagnosticsList(
+                    workspaceId: workspaceId,
+                    diagnostics: diagnostics,
                   ),
-      ),
+                  loading: () => const AgentDiagnosticsSkeleton(),
+                  error: (error, _) =>
+                      _EmptyState(message: '${copy.loadFailed}: $error'),
+                ),
     );
   }
 }
@@ -86,92 +66,23 @@ class _DiagnosticsList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final copy = _AgentDiagnosticsCopy.of(context);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: theme.brightness == Brightness.dark
-                  ? const [Color(0xFF162229), Color(0xFF111C22)]
-                  : const [Color(0xFFFCFDFD), Color(0xFFF2F6F7)],
-            ),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: theme.dividerColor.withValues(alpha: 0.82),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: theme.brightness == Brightness.dark
-                    ? const Color(0x26000000)
-                    : const Color(0x140E1A22),
-                blurRadius: 24,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                copy.title,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                copy.subtitle,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                  height: 1.45,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  AppPill(
-                    label: '${copy.workspace}: $workspaceId',
-                    icon: Icons.hub_rounded,
-                    backgroundColor: theme.colorScheme.surface.withValues(
-                      alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-                    ),
-                    borderColor: theme.dividerColor.withValues(alpha: 0.82),
-                    labelColor: theme.colorScheme.onSurface.withValues(
-                      alpha: 0.76,
-                    ),
-                    iconColor: theme.colorScheme.primary,
-                  ),
-                  AppPill(
-                    label: '${copy.agents}: ${diagnostics.length}',
-                    icon: Icons.smart_toy_rounded,
-                    backgroundColor: theme.colorScheme.surface.withValues(
-                      alpha: theme.brightness == Brightness.dark ? 0.34 : 0.64,
-                    ),
-                    borderColor: theme.dividerColor.withValues(alpha: 0.82),
-                    labelColor: theme.colorScheme.onSurface.withValues(
-                      alpha: 0.76,
-                    ),
-                    iconColor: const Color(0xFF1F8A5C),
-                  ),
-                ],
-              ),
-            ],
-          ),
+        AppToolbar(
+          title: copy.title,
+          subtitle: '${copy.workspace}: $workspaceId',
+          leading: const Icon(Icons.health_and_safety_outlined),
+          actions: [Text('${copy.agents}: ${diagnostics.length}')],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.sm),
+        Text(copy.subtitle),
+        const SizedBox(height: AppSpacing.md),
         ...diagnostics.map(
           (diagnostic) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: _DiagnosticCard(
               diagnostic: diagnostic,
               onEditRoleStrategy: () async {
@@ -214,13 +125,11 @@ class _DiagnosticCard extends StatelessWidget {
     final statusColor = _statusColor(diagnostic.status);
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.34 : 0.72,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,17 +138,17 @@ class _DiagnosticCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadii.small),
                 ),
                 alignment: Alignment.center,
                 child: Icon(
                   Icons.health_and_safety_rounded,
                   color: statusColor,
-                  size: 22,
+                  size: 20,
                 ),
               ),
               const SizedBox(width: 14),
