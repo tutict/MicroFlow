@@ -5,6 +5,7 @@ import 'package:microflow_frontend/l10n/app_localizations.dart';
 import '../../../../app/router.dart';
 import '../../../../core/providers/locale_controller.dart';
 import '../../../../core/providers/theme_mode_controller.dart';
+import '../../../../shared/layout/window_class.dart';
 import '../../../../shared/theme/app_tokens.dart';
 import '../../../../shared/widgets/app_layout.dart';
 import '../../../bootstrap/presentation/providers/server_connection_controller.dart';
@@ -20,6 +21,8 @@ class SignInPage extends ConsumerStatefulWidget {
 class _SignInPageState extends ConsumerState<SignInPage> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
+  late final FocusNode _emailFocus;
+  late final FocusNode _passwordFocus;
   String? _errorText;
   bool _obscurePassword = true;
 
@@ -28,12 +31,16 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _emailFocus = FocusNode();
+    _passwordFocus = FocusNode();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
@@ -53,6 +60,16 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     } catch (error) {
       if (mounted) {
         setState(() => _errorText = error.toString());
+        final email = _emailController.text.trim();
+        final FocusNode target;
+        if (email.isEmpty || !email.contains('@')) {
+          target = _emailFocus;
+        } else if (_passwordController.text.isEmpty) {
+          target = _passwordFocus;
+        } else {
+          target = _emailFocus;
+        }
+        target.requestFocus();
       }
     }
   }
@@ -98,7 +115,12 @@ class _SignInPageState extends ConsumerState<SignInPage> {
         .value
         ?.currentConnection;
     final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 760;
+    final compact =
+        AppWindowClassResolver.resolve(
+          width: width,
+          textScale: MediaQuery.textScalerOf(context).scale(1),
+        ) ==
+        AppWindowClass.compact;
     final theme = Theme.of(context);
 
     final form = _SignInForm(
@@ -107,6 +129,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
       obscurePassword: _obscurePassword,
       isLoading: authState.isLoading,
       errorText: _errorText,
+      emailFocus: _emailFocus,
+      passwordFocus: _passwordFocus,
       connectionName: connection?.instanceName,
       connectionOrigin: connection?.serverOrigin,
       copy: copy,
@@ -158,44 +182,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: EdgeInsets.all(compact ? AppSpacing.md : AppSpacing.lg),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 920),
-              child: compact
-                  ? form
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: AppSpacing.md,
-                              right: AppSpacing.xl,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.appTitle,
-                                  style: theme.textTheme.displayLarge,
-                                ),
-                                const SizedBox(height: AppSpacing.sm),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 440,
-                                  ),
-                                  child: Text(
-                                    l10n.signInDescription,
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 420, child: form),
-                      ],
-                    ),
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: form,
             ),
           ),
         ),
@@ -211,6 +199,8 @@ class _SignInForm extends StatelessWidget {
     required this.obscurePassword,
     required this.isLoading,
     required this.errorText,
+    required this.emailFocus,
+    required this.passwordFocus,
     required this.connectionName,
     required this.connectionOrigin,
     required this.copy,
@@ -225,6 +215,8 @@ class _SignInForm extends StatelessWidget {
   final bool obscurePassword;
   final bool isLoading;
   final String? errorText;
+  final FocusNode emailFocus;
+  final FocusNode passwordFocus;
   final String? connectionName;
   final String? connectionOrigin;
   final _SignInCopy copy;
@@ -243,56 +235,7 @@ class _SignInForm extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(l10n.signInTitle, style: theme.textTheme.headlineMedium),
-            if (connectionName != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              AppListRow(
-                title: connectionName!,
-                subtitle: connectionOrigin,
-                leading: const Icon(Icons.computer_rounded),
-                selected: true,
-                trailing: TextButton(
-                  onPressed: isLoading ? null : onChangeServer,
-                  child: Text(copy.manageDevice),
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            TextField(
-              controller: emailController,
-              enabled: !isLoading,
-              autofillHints: const [
-                AutofillHints.username,
-                AutofillHints.email,
-              ],
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
-                labelText: l10n.email,
-                prefixIcon: const Icon(Icons.alternate_email_rounded),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            TextField(
-              controller: passwordController,
-              enabled: !isLoading,
-              autofillHints: const [AutofillHints.password],
-              obscureText: obscurePassword,
-              textInputAction: TextInputAction.done,
-              onSubmitted: (_) => onSubmit(),
-              decoration: InputDecoration(
-                labelText: l10n.password,
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                suffixIcon: IconButton(
-                  tooltip: copy.togglePassword,
-                  onPressed: onTogglePassword,
-                  icon: Icon(
-                    obscurePassword
-                        ? Icons.visibility_rounded
-                        : Icons.visibility_off_rounded,
-                  ),
-                ),
-              ),
-            ),
+
             if (errorText != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Semantics(
@@ -318,6 +261,58 @@ class _SignInForm extends StatelessWidget {
                 ),
               ),
             ],
+            if (connectionName != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              AppListRow(
+                title: connectionName!,
+                subtitle: connectionOrigin,
+                leading: const Icon(Icons.computer_rounded),
+                selected: true,
+                trailing: TextButton(
+                  onPressed: isLoading ? null : onChangeServer,
+                  child: Text(copy.manageDevice),
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            TextField(
+              focusNode: emailFocus,
+              controller: emailController,
+              enabled: !isLoading,
+              autofillHints: const [
+                AutofillHints.username,
+                AutofillHints.email,
+              ],
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: l10n.email,
+                prefixIcon: const Icon(Icons.alternate_email_rounded),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              focusNode: passwordFocus,
+              controller: passwordController,
+              enabled: !isLoading,
+              autofillHints: const [AutofillHints.password],
+              obscureText: obscurePassword,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => onSubmit(),
+              decoration: InputDecoration(
+                labelText: l10n.password,
+                prefixIcon: const Icon(Icons.lock_outline_rounded),
+                suffixIcon: IconButton(
+                  tooltip: copy.togglePassword,
+                  onPressed: onTogglePassword,
+                  icon: Icon(
+                    obscurePassword
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: AppSpacing.lg),
             SizedBox(
               height: 48,
@@ -361,7 +356,7 @@ class _BrandMark extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onPrimary,
             fontSize: 12,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),

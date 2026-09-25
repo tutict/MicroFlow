@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../core/providers/theme_mode_controller.dart';
+import '../theme/app_tokens.dart';
 
 class ThemeModeSwitcher extends ConsumerWidget {
   const ThemeModeSwitcher({super.key});
@@ -26,12 +27,13 @@ class ThemeModeSwitcher extends ConsumerWidget {
         PopupMenuItem(value: ThemeMode.dark, child: Text(l10n.darkMode)),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.44 : 0.9,
-          ),
-          borderRadius: BorderRadius.circular(12),
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadii.medium),
           border: Border.all(
             color: theme.colorScheme.outline.withValues(alpha: 0.82),
           ),
@@ -42,7 +44,7 @@ class ThemeModeSwitcher extends ConsumerWidget {
             Icon(
               isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
               size: 18,
-              color: isDark ? const Color(0xFFF2C14E) : const Color(0xFF5D6A73),
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 8),
             Text(

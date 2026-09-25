@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_tokens.dart';
 import 'app_pill.dart';
 
 class StatusBadge extends StatelessWidget {
-  const StatusBadge({
-    super.key,
-    required this.label,
-    required this.color,
-  });
+  const StatusBadge({super.key, required this.label, required this.color});
 
   final String label;
   final Color color;
@@ -19,7 +16,10 @@ class StatusBadge extends StatelessWidget {
       backgroundColor: color.withValues(alpha: 0.12),
       borderColor: color.withValues(alpha: 0.18),
       labelColor: color,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xxs,
+      ),
     );
   }
 }

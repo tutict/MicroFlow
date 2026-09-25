@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
+import 'package:microflow_frontend/core/providers/app_providers.dart';
+import 'package:microflow_frontend/features/accounting/domain/entities/accounting_account.dart';
+import 'package:microflow_frontend/features/accounting/domain/entities/accounting_voucher.dart';
+import 'package:microflow_frontend/features/accounting/domain/entities/trial_balance_row.dart';
+import 'package:microflow_frontend/features/accounting/domain/repositories/accounting_repository.dart';
+import 'package:microflow_frontend/features/agents/domain/repositories/agent_repository.dart';
 import 'package:microflow_frontend/features/agents/domain/entities/agent_descriptor.dart';
+import 'package:microflow_frontend/features/agents/domain/entities/agent_diagnostic.dart';
 import 'package:microflow_frontend/features/agents/domain/entities/agent_run.dart';
 import 'package:microflow_frontend/features/agents/presentation/widgets/agent_panel.dart';
 import 'package:microflow_frontend/features/chat/domain/entities/channel_summary.dart';
@@ -10,11 +17,14 @@ import 'package:microflow_frontend/features/chat/domain/entities/chat_message.da
 import 'package:microflow_frontend/features/chat/domain/entities/collaboration_event.dart';
 import 'package:microflow_frontend/features/chat/domain/entities/collaboration_run.dart';
 import 'package:microflow_frontend/features/chat/presentation/state/chat_connection_status.dart';
+import 'package:microflow_frontend/features/chat/presentation/widgets/input_box.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/workspace_conversation.dart';
+import 'package:microflow_frontend/features/workspace/domain/entities/workspace_summary.dart';
 import 'package:microflow_frontend/features/workspace/presentation/pages/workspace_home_page.dart';
 import 'package:microflow_frontend/features/workspace/presentation/providers/workspace_shell_controller.dart';
 import 'package:microflow_frontend/features/workspace/presentation/state/workspace_selected_conversation.dart';
 import 'package:microflow_frontend/features/workspace/presentation/state/workspace_shell_state.dart';
+import 'package:microflow_frontend/features/workspace/presentation/shell/workspace_destination_rail.dart';
 import 'package:microflow_frontend/features/workspace/presentation/widgets/workspace_panel.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
@@ -80,12 +90,9 @@ void main() {
       );
 
       expect(find.text('No messages yet'), findsOneWidget);
-      expect(
-        find.widgetWithText(FilledButton, 'Collaboration'),
-        findsOneWidget,
-      );
+      expect(find.widgetWithText(FilledButton, 'Index'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Collaboration'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Index'));
       await tester.pumpAndSettle();
 
       expect(find.byType(WorkspacePanel), findsOneWidget);
@@ -123,13 +130,11 @@ void main() {
         size: const Size(390, 844),
       );
 
-      expect(find.widgetWithText(OutlinedButton, 'Agents'), findsOneWidget);
-
-      await tester.tap(find.widgetWithText(OutlinedButton, 'Agents'));
+      await tester.tap(find.text('Tools'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(AgentPanel), findsOneWidget);
-      expect(find.text('Available agents'), findsWidgets);
+      expect(find.text('Diagnostics'), findsWidgets);
+      expect(find.text('Accounting'), findsWidgets);
     },
   );
 
@@ -171,7 +176,7 @@ void main() {
         size: const Size(390, 844),
       );
 
-      await tester.tap(find.text('Collaboration'));
+      await tester.tap(find.text('Index'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Alex Chen'));
@@ -208,8 +213,7 @@ void main() {
 
       expect(find.text('No messages yet'), findsOneWidget);
       expect(find.byType(WorkspacePanel), findsOneWidget);
-      expect(find.byType(AgentPanel), findsOneWidget);
-      expect(find.text('Run Activity'), findsOneWidget);
+      expect(find.byType(AgentPanel), findsNothing);
     },
   );
 
@@ -325,8 +329,13 @@ void main() {
       expect(find.text('round 1 of 3'), findsOneWidget);
       expect(find.text('@reviewer'), findsWidgets);
       expect(find.text('@team'), findsWidgets);
+      expect(find.text('Analyze'), findsNothing);
+
+      await tester.tap(find.byTooltip('Show collaboration details'));
+      await tester.pumpAndSettle();
+
       expect(find.text('Analyze'), findsWidgets);
-      expect(find.text('Run history'), findsOneWidget);
+      expect(find.text('Run history'), findsWidgets);
       expect(
         find.text('Need evidence from the uploaded runbook.'),
         findsWidgets,
@@ -415,10 +424,15 @@ void main() {
 
       expect(find.text('Team mode'), findsWidgets);
       expect(find.text('History'), findsOneWidget);
+      expect(find.text('Recent runs'), findsNothing);
+
+      await tester.tap(find.byTooltip('Show collaboration details'));
+      await tester.pumpAndSettle();
+
       expect(find.text('Recent runs'), findsOneWidget);
       expect(
         find.text('Persisted team runs are available for this conversation.'),
-        findsOneWidget,
+        findsWidgets,
       );
       expect(find.text('Prepared final summary.'), findsOneWidget);
     },
@@ -549,6 +563,9 @@ void main() {
       size: const Size(1280, 900),
     );
 
+    await tester.tap(find.byTooltip('Show collaboration details'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Blocked on missing evidence.'), findsOneWidget);
     expect(find.text('Prepared final summary.'), findsNothing);
 
@@ -606,8 +623,222 @@ void main() {
 
       expect(find.text('No messages yet'), findsOneWidget);
       expect(find.text('Send the first message.'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Collaboration'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Index'), findsNothing);
       expect(find.widgetWithText(OutlinedButton, 'Agents'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'shell keeps navigation while opening accounting and diagnostics',
+    (tester) async {
+      await _pumpWorkspaceHomePage(
+        tester,
+        state: _buildState(
+          workspaceId: 'ws_1',
+          workspaceName: 'MicroFlow',
+          selectedConversation: const WorkspaceSelectedConversation(
+            id: 'chn_1',
+            title: 'general',
+            kind: WorkspaceSelectedConversationKind.channel,
+            isAvailable: true,
+          ),
+          conversations: const [
+            WorkspaceConversation(
+              id: 'chn_1',
+              title: 'general',
+              subtitle: 'Team updates',
+              kind: 'CHANNEL',
+              unreadCount: 0,
+              available: true,
+              lastActivityAt: null,
+            ),
+          ],
+        ),
+        size: const Size(390, 844),
+        silentRepositories: true,
+      );
+
+      expect(find.byType(InputBox), findsOneWidget);
+      await tester.tap(find.text('Index'));
+      await tester.pumpAndSettle();
+      expect(find.byType(WorkspacePanel), findsOneWidget);
+
+      await tester.tap(find.text('Tools'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Accounting'));
+      await tester.tap(find.text('Accounting'));
+      await tester.pumpAndSettle();
+      expect(find.text('Chat'), findsWidgets);
+      expect(find.byTooltip('Back to conversation'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Back to conversation'));
+      await tester.pumpAndSettle();
+      expect(find.text('general'), findsWidgets);
+
+      await tester.tap(find.text('Tools'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Diagnostics'));
+      await tester.tap(find.text('Diagnostics'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Back to conversation'), findsOneWidget);
+      expect(find.text('Chat'), findsWidgets);
+    },
+  );
+
+  testWidgets('medium and expanded widths keep the index beside the composer', (
+    tester,
+  ) async {
+    final state = _buildState(
+      workspaceId: 'ws_1',
+      workspaceName: 'MicroFlow',
+      selectedConversation: const WorkspaceSelectedConversation(
+        id: 'chn_1',
+        title: 'general',
+        kind: WorkspaceSelectedConversationKind.channel,
+        isAvailable: true,
+      ),
+      conversations: const [
+        WorkspaceConversation(
+          id: 'chn_1',
+          title: 'general',
+          subtitle: 'Team updates',
+          kind: 'CHANNEL',
+          unreadCount: 0,
+          available: true,
+          lastActivityAt: null,
+        ),
+      ],
+    );
+
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: state,
+      size: const Size(820, 900),
+    );
+    expect(find.byType(WorkspacePanel), findsOneWidget);
+    expect(find.byType(InputBox), findsOneWidget);
+    expect(find.byType(WorkspaceDestinationRail), findsNothing);
+
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: state,
+      size: const Size(1100, 900),
+    );
+    expect(find.byType(WorkspacePanel), findsOneWidget);
+    expect(find.byType(InputBox), findsOneWidget);
+    expect(find.byType(WorkspaceDestinationRail), findsOneWidget);
+  });
+
+  testWidgets('large text scale drops the fixed inspector column', (
+    tester,
+  ) async {
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: _buildState(
+        workspaceId: 'ws_1',
+        workspaceName: 'MicroFlow',
+        selectedConversation: const WorkspaceSelectedConversation(
+          id: 'chn_1',
+          title: 'general',
+          kind: WorkspaceSelectedConversationKind.channel,
+          isAvailable: true,
+        ),
+        conversations: const [
+          WorkspaceConversation(
+            id: 'chn_1',
+            title: 'general',
+            subtitle: 'Team updates',
+            kind: 'CHANNEL',
+            unreadCount: 1,
+            available: true,
+            lastActivityAt: null,
+          ),
+        ],
+      ),
+      size: const Size(1440, 900),
+      textScale: 1.4,
+    );
+
+    expect(find.byKey(const Key('workspace-inspector')), findsNothing);
+    expect(find.byType(WorkspacePanel), findsOneWidget);
+    expect(find.byType(InputBox), findsOneWidget);
+  });
+
+  testWidgets('large layout keeps the inspector beside the conversation', (
+    tester,
+  ) async {
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: _buildState(
+        workspaceId: 'ws_1',
+        workspaceName: 'MicroFlow',
+        selectedConversation: const WorkspaceSelectedConversation(
+          id: 'chn_1',
+          title: 'general',
+          kind: WorkspaceSelectedConversationKind.channel,
+          isAvailable: true,
+        ),
+        conversations: const [
+          WorkspaceConversation(
+            id: 'chn_1',
+            title: 'general',
+            subtitle: 'Team updates',
+            kind: 'CHANNEL',
+            unreadCount: 0,
+            available: true,
+            lastActivityAt: null,
+          ),
+        ],
+      ),
+      size: const Size(1440, 900),
+    );
+
+    expect(find.byKey(const Key('workspace-inspector')), findsOneWidget);
+    expect(find.text('Current'), findsOneWidget);
+    expect(find.byType(InputBox), findsOneWidget);
+  });
+
+  testWidgets(
+    'narrow top bar keeps the workspace name and offers switching in the overflow menu',
+    (tester) async {
+      await _pumpWorkspaceHomePage(
+        tester,
+        state: _buildState(
+          workspaceId: 'ws_1',
+          workspaceName: 'North Lab',
+          workspaces: const [
+            WorkspaceSummary(id: 'ws_1', name: 'North Lab', memberCount: 1),
+            WorkspaceSummary(id: 'ws_2', name: 'South Lab', memberCount: 2),
+          ],
+          selectedConversation: const WorkspaceSelectedConversation(
+            id: 'chn_1',
+            title: 'general',
+            kind: WorkspaceSelectedConversationKind.channel,
+            isAvailable: true,
+          ),
+          conversations: const [
+            WorkspaceConversation(
+              id: 'chn_1',
+              title: 'general',
+              subtitle: 'Team updates',
+              kind: 'CHANNEL',
+              unreadCount: 0,
+              available: true,
+              lastActivityAt: null,
+            ),
+          ],
+        ),
+        size: const Size(390, 844),
+      );
+
+      expect(find.text('North Lab'), findsOneWidget);
+      expect(find.text('Weilan'), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+
+      expect(find.text('South Lab'), findsOneWidget);
+      expect(find.text('New workspace'), findsOneWidget);
     },
   );
 }
@@ -616,6 +847,8 @@ Future<void> _pumpWorkspaceHomePage(
   WidgetTester tester, {
   required WorkspaceShellState state,
   required Size size,
+  double textScale = 1,
+  bool silentRepositories = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -630,12 +863,25 @@ Future<void> _pumpWorkspaceHomePage(
         workspaceShellControllerProvider.overrideWith(
           () => _FakeWorkspaceShellController(state),
         ),
+        if (silentRepositories)
+          accountingRepositoryProvider.overrideWithValue(
+            _SilentAccountingRepository(),
+          ),
+        if (silentRepositories)
+          agentRepositoryProvider.overrideWithValue(_SilentAgentRepository()),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
         locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
+        builder: (context, child) {
+          final media = MediaQuery.of(context);
+          return MediaQuery(
+            data: media.copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
         home: const WorkspaceHomePage(),
       ),
     ),
@@ -649,6 +895,7 @@ WorkspaceShellState _buildState({
   required WorkspaceSelectedConversation selectedConversation,
   List<WorkspaceConversation> conversations = const [],
   List<AgentDescriptor> agents = const [],
+  List<WorkspaceSummary> workspaces = const [],
   Map<String, CollaborationStatusSnapshot> collaborationStatusByConversation =
       const {},
   Map<String, List<CollaborationRun>> collaborationRunsByConversation =
@@ -662,6 +909,7 @@ WorkspaceShellState _buildState({
     selectedConversation: selectedConversation,
     messages: const <ChatMessage>[],
     agents: agents,
+    workspaces: workspaces,
     agentRuns: const <AgentRun>[],
     connectionStatus: ChatConnectionStatus.idle,
     currentUserId: 'usr_1',
@@ -700,4 +948,77 @@ class _FakeWorkspaceShellController extends WorkspaceShellController {
     );
     state = AsyncData(_state);
   }
+}
+
+class _SilentAccountingRepository implements AccountingRepository {
+  @override
+  Future<AccountingAccount> createAccount({
+    required String workspaceId,
+    required String code,
+    required String name,
+    required String category,
+    required String normalBalance,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<AccountingVoucher> createVoucher({
+    required String workspaceId,
+    required String voucherDate,
+    required String description,
+    required List<CreateAccountingVoucherLineInput> lines,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<AccountingAccount>> listAccounts(String workspaceId) async {
+    return const [];
+  }
+
+  @override
+  Future<List<AccountingVoucher>> listVouchers(String workspaceId) async {
+    return const [];
+  }
+
+  @override
+  Future<AccountingVoucher> postVoucher({
+    required String workspaceId,
+    required String voucherId,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<TrialBalanceRow>> trialBalance({
+    required String workspaceId,
+    String? period,
+  }) async {
+    return const [];
+  }
+}
+
+class _SilentAgentRepository implements AgentRepository {
+  @override
+  Future<List<AgentDescriptor>> listAgents(String workspaceId) async {
+    return const [];
+  }
+
+  @override
+  Future<List<AgentDiagnostic>> listDiagnostics(String workspaceId) async {
+    return const [];
+  }
+
+  @override
+  Future<List<AgentRun>> listRuns(String workspaceId) async {
+    return const [];
+  }
+
+  @override
+  Future<void> updateRoleStrategy({
+    required String workspaceId,
+    required String agentKey,
+    required String roleStrategy,
+  }) async {}
 }

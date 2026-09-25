@@ -14,6 +14,21 @@ import '../../domain/entities/chat_message.dart';
 import 'chat_message_list.dart';
 import 'input_box.dart';
 
+class _CanvasExtent extends InheritedWidget {
+  const _CanvasExtent({required this.height, required super.child});
+
+  final double height;
+
+  static double heightOf(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_CanvasExtent>();
+    return scope?.height ?? MediaQuery.sizeOf(context).height;
+  }
+
+  @override
+  bool updateShouldNotify(_CanvasExtent oldWidget) =>
+      height != oldWidget.height;
+}
+
 class ChatPanel extends StatelessWidget {
   const ChatPanel({
     super.key,
@@ -117,21 +132,18 @@ class ChatPanel extends StatelessWidget {
               ],
             ),
             if (hasCollaboration)
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: compact ? 170 : 210),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                    AppSpacing.sm,
-                    0,
-                  ),
-                  child: _CollaborationStatusPanel(
-                    snapshot: collaborationSnapshot,
-                    compact: compact,
-                    statusText: collaborationStatusText,
-                    runs: collaborationRuns,
-                  ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  0,
+                ),
+                child: _CollaborationStatusPanel(
+                  snapshot: collaborationSnapshot,
+                  compact: compact,
+                  statusText: collaborationStatusText,
+                  runs: collaborationRuns,
                 ),
               ),
             Expanded(
@@ -175,10 +187,14 @@ class ChatPanel extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final height = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : (compact ? 600.0 : 760.0);
+        final scoped = _CanvasExtent(height: height, child: content);
         if (constraints.maxHeight.isFinite) {
-          return content;
+          return scoped;
         }
-        return SizedBox(height: compact ? 600 : 760, child: content);
+        return SizedBox(height: height, child: scoped);
       },
     );
   }
@@ -208,6 +224,7 @@ class _CollaborationStatusPanelState extends State<_CollaborationStatusPanel> {
   _CollaborationRunStatusFilter _statusFilter =
       _CollaborationRunStatusFilter.all;
   String? _agentFilter;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -257,229 +274,262 @@ class _CollaborationStatusPanelState extends State<_CollaborationStatusPanel> {
       (group) => group.collaborationId == activeSnapshot?.collaborationId,
     );
 
-    return Container(
-      padding: EdgeInsets.all(widget.compact ? 14 : 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.14 : 0.08,
-        ),
-        borderRadius: BorderRadius.circular(widget.compact ? 18 : 20),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.18),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.collaborationMode,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      if (widget.statusText != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.statusText!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.72,
-                            ),
-                            height: 1.45,
+    final agentLabel = activeSnapshot?.activeAgentKey;
+    final summary = _CollaborationSummary(
+      expanded: _expanded,
+      title: l10n.collaborationMode,
+      roundLabel: roundLabel,
+      trigger: activeSnapshot?.trigger,
+      agentLabel: agentLabel == null || agentLabel.isEmpty
+          ? null
+          : '@$agentLabel',
+      historyLabel: activeSnapshot == null && widget.runs.isNotEmpty
+          ? l10n.history
+          : null,
+      onToggle: () => setState(() => _expanded = !_expanded),
+    );
+    if (!_expanded) {
+      return summary;
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        summary,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: _CanvasExtent.heightOf(context) * 0.4,
+          ),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppRadii.medium),
+                border: Border.all(color: theme.dividerColor),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.collaborationMode,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (widget.statusText != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  widget.statusText!,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ] else if (widget.runs.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  l10n.teamRunsAvailable,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                      ] else if (widget.runs.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.teamRunsAvailable,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.72,
+                        const SizedBox(width: 12),
+                        if (activeSnapshot != null)
+                          StatusBadge(
+                            label: _formatCollaborationStatusLabel(
+                              l10n,
+                              activeSnapshot.status,
                             ),
-                            height: 1.45,
+                            color: statusColor,
+                          )
+                        else
+                          Text(
+                            l10n.history,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
                       ],
+                    ),
+                    if (roundLabel != null && progress != null) ...[
+                      SizedBox(height: widget.compact ? 12 : 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.small,
+                              ),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: widget.compact ? 7 : 8,
+                                backgroundColor: statusColor.withValues(
+                                  alpha: 0.12,
+                                ),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  statusColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          const SizedBox.shrink(),
+                        ],
+                      ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                if (activeSnapshot != null)
-                  StatusBadge(
-                    label: _formatCollaborationStatusLabel(
-                      l10n,
-                      activeSnapshot.status,
-                    ),
-                    color: statusColor,
-                  )
-                else
-                  Text(
-                    l10n.history,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.72,
+                    if (stageSequence.isNotEmpty) ...[
+                      SizedBox(height: widget.compact ? 12 : 14),
+                      Text(
+                        stageSequence
+                            .map(
+                              (stage) => _formatCollaborationStage(l10n, stage),
+                            )
+                            .join(' / '),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-              ],
+                    ],
+                    if (activeSnapshot != null) ...[
+                      SizedBox(height: widget.compact ? 12 : 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          AppPill(
+                            label: activeSnapshot.trigger,
+                            icon: Icons.alternate_email_rounded,
+                            backgroundColor: theme.colorScheme.surface
+                                .withValues(
+                                  alpha: theme.brightness == Brightness.dark
+                                      ? 0.32
+                                      : 0.7,
+                                ),
+                            borderColor: theme.dividerColor.withValues(
+                              alpha: 0.82,
+                            ),
+                          ),
+                          if (activeSnapshot.activeAgentKey != null &&
+                              activeSnapshot.activeAgentKey!.isNotEmpty)
+                            AppPill(
+                              label: '@${activeSnapshot.activeAgentKey}',
+                              icon: Icons.smart_toy_rounded,
+                              backgroundColor: statusColor.withValues(
+                                alpha: 0.12,
+                              ),
+                              borderColor: statusColor.withValues(alpha: 0.18),
+                              labelColor: statusColor,
+                              iconColor: statusColor,
+                            ),
+                          AppPill(
+                            label: _compactCollaborationId(
+                              activeSnapshot.collaborationId,
+                            ),
+                            icon: Icons.route_rounded,
+                            backgroundColor: theme.colorScheme.surface
+                                .withValues(
+                                  alpha: theme.brightness == Brightness.dark
+                                      ? 0.32
+                                      : 0.7,
+                                ),
+                            borderColor: theme.dividerColor.withValues(
+                              alpha: 0.82,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (activeSnapshot != null &&
+                        activeSnapshot.detail != null &&
+                        activeSnapshot.detail!.trim().isNotEmpty) ...[
+                      SizedBox(height: widget.compact ? 10 : 12),
+                      Text(
+                        activeSnapshot.detail!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                    if (widget.runs.isNotEmpty) ...[
+                      SizedBox(height: widget.compact ? 12 : 14),
+                      Text(
+                        activeSnapshot == null
+                            ? l10n.recentRuns
+                            : l10n.runHistory,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _CollaborationRunFilters(
+                        compact: widget.compact,
+                        activeSnapshot: activeSnapshot,
+                        runScopeFilter: _runScopeFilter,
+                        statusFilter: _statusFilter,
+                        agentFilter: _agentFilter,
+                        availableAgents: availableAgents,
+                        onRunScopeChanged: (value) {
+                          setState(() => _runScopeFilter = value);
+                        },
+                        onStatusChanged: (value) {
+                          setState(() => _statusFilter = value);
+                        },
+                        onAgentChanged: (value) {
+                          setState(() => _agentFilter = value);
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      if (filteredRuns.isEmpty)
+                        Text(
+                          l10n.noRunsMatchFilters,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        )
+                      else
+                        ...filteredRuns.asMap().entries.map((groupEntry) {
+                          final group = groupEntry.value;
+                          final isInitiallyExpanded =
+                              group.collaborationId ==
+                                  activeSnapshot?.collaborationId
+                              ? true
+                              : !hasActiveFilteredRun && groupEntry.key == 0;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _CollaborationRunCard(
+                              group: group,
+                              compact: widget.compact,
+                              initiallyExpanded: isInitiallyExpanded,
+                              isActiveRun:
+                                  group.collaborationId ==
+                                  activeSnapshot?.collaborationId,
+                            ),
+                          );
+                        }),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            if (roundLabel != null && progress != null) ...[
-              SizedBox(height: widget.compact ? 12 : 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: widget.compact ? 7 : 8,
-                        backgroundColor: statusColor.withValues(alpha: 0.12),
-                        valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    roundLabel,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.72,
-                      ),
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-            if (stageSequence.isNotEmpty) ...[
-              SizedBox(height: widget.compact ? 12 : 14),
-              Text(
-                stageSequence
-                    .map((stage) => _formatCollaborationStage(l10n, stage))
-                    .join(' / '),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-            if (activeSnapshot != null) ...[
-              SizedBox(height: widget.compact ? 12 : 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  AppPill(
-                    label: activeSnapshot.trigger,
-                    icon: Icons.alternate_email_rounded,
-                    backgroundColor: theme.colorScheme.surface.withValues(
-                      alpha: theme.brightness == Brightness.dark ? 0.32 : 0.7,
-                    ),
-                    borderColor: theme.dividerColor.withValues(alpha: 0.82),
-                  ),
-                  if (activeSnapshot.activeAgentKey != null &&
-                      activeSnapshot.activeAgentKey!.isNotEmpty)
-                    AppPill(
-                      label: '@${activeSnapshot.activeAgentKey}',
-                      icon: Icons.smart_toy_rounded,
-                      backgroundColor: statusColor.withValues(alpha: 0.12),
-                      borderColor: statusColor.withValues(alpha: 0.18),
-                      labelColor: statusColor,
-                      iconColor: statusColor,
-                    ),
-                  AppPill(
-                    label: _compactCollaborationId(
-                      activeSnapshot.collaborationId,
-                    ),
-                    icon: Icons.route_rounded,
-                    backgroundColor: theme.colorScheme.surface.withValues(
-                      alpha: theme.brightness == Brightness.dark ? 0.32 : 0.7,
-                    ),
-                    borderColor: theme.dividerColor.withValues(alpha: 0.82),
-                  ),
-                ],
-              ),
-            ],
-            if (activeSnapshot != null &&
-                activeSnapshot.detail != null &&
-                activeSnapshot.detail!.trim().isNotEmpty) ...[
-              SizedBox(height: widget.compact ? 10 : 12),
-              Text(
-                activeSnapshot.detail!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.74),
-                  height: 1.5,
-                ),
-              ),
-            ],
-            if (widget.runs.isNotEmpty) ...[
-              SizedBox(height: widget.compact ? 12 : 14),
-              Text(
-                activeSnapshot == null ? l10n.recentRuns : l10n.runHistory,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _CollaborationRunFilters(
-                compact: widget.compact,
-                activeSnapshot: activeSnapshot,
-                runScopeFilter: _runScopeFilter,
-                statusFilter: _statusFilter,
-                agentFilter: _agentFilter,
-                availableAgents: availableAgents,
-                onRunScopeChanged: (value) {
-                  setState(() => _runScopeFilter = value);
-                },
-                onStatusChanged: (value) {
-                  setState(() => _statusFilter = value);
-                },
-                onAgentChanged: (value) {
-                  setState(() => _agentFilter = value);
-                },
-              ),
-              const SizedBox(height: 10),
-              if (filteredRuns.isEmpty)
-                Text(
-                  l10n.noRunsMatchFilters,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                    height: 1.45,
-                  ),
-                )
-              else
-                ...filteredRuns.asMap().entries.map((groupEntry) {
-                  final group = groupEntry.value;
-                  final isInitiallyExpanded =
-                      group.collaborationId == activeSnapshot?.collaborationId
-                      ? true
-                      : !hasActiveFilteredRun && groupEntry.key == 0;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _CollaborationRunCard(
-                      group: group,
-                      compact: widget.compact,
-                      initiallyExpanded: isInitiallyExpanded,
-                      isActiveRun:
-                          group.collaborationId ==
-                          activeSnapshot?.collaborationId,
-                    ),
-                  );
-                }),
-            ],
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
@@ -514,6 +564,73 @@ class _CollaborationStatusPanelState extends State<_CollaborationStatusPanel> {
   }
 }
 
+class _CollaborationSummary extends StatelessWidget {
+  const _CollaborationSummary({
+    required this.expanded,
+    required this.title,
+    required this.onToggle,
+    this.roundLabel,
+    this.trigger,
+    this.agentLabel,
+    this.historyLabel,
+  });
+
+  final bool expanded;
+  final String title;
+  final VoidCallback onToggle;
+  final String? roundLabel;
+  final String? trigger;
+  final String? agentLabel;
+  final String? historyLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+          child: Row(
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: AppSpacing.xs,
+                  runSpacing: AppSpacing.xxs,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(title, style: theme.textTheme.titleSmall),
+                    if (roundLabel != null) Text(roundLabel!),
+                    if (agentLabel != null) Text(agentLabel!),
+                    if (trigger != null) Text(trigger!),
+                    if (historyLabel != null) Text(historyLabel!),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: expanded
+                    ? l10n.hideCollaborationDetails
+                    : l10n.showCollaborationDetails,
+                onPressed: onToggle,
+                icon: Icon(
+                  expanded
+                      ? Icons.expand_less_rounded
+                      : Icons.expand_more_rounded,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CollaborationRunFilters extends StatelessWidget {
   const _CollaborationRunFilters({
     required this.compact,
@@ -542,7 +659,7 @@ class _CollaborationRunFilters extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final helperStyle = theme.textTheme.labelSmall?.copyWith(
-      color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+      color: theme.colorScheme.onSurfaceVariant,
       fontWeight: FontWeight.w700,
     );
 
@@ -709,8 +826,8 @@ class _CollaborationRunCard extends StatelessWidget {
             compact ? 12 : 14,
           ),
           leading: Container(
-            width: 10,
-            height: 10,
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(
               color: statusColor,
               shape: BoxShape.circle,
@@ -723,7 +840,7 @@ class _CollaborationRunCard extends StatelessWidget {
                   _compactCollaborationId(group.collaborationId),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -742,8 +859,7 @@ class _CollaborationRunCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-              height: 1.45,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           children: [
@@ -755,9 +871,7 @@ class _CollaborationRunCard extends StatelessWidget {
                   Text(
                     summaryParts.join(' • '),
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.76,
-                      ),
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -766,10 +880,7 @@ class _CollaborationRunCard extends StatelessWidget {
                     Text(
                       detailParts.join(' • '),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.66,
-                        ),
-                        height: 1.45,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -781,12 +892,11 @@ class _CollaborationRunCard extends StatelessWidget {
               Text(
                 l10n.reasonLabel(group.reason!),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
-                  height: 1.45,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.xs),
             ...group.events.map(
               (entry) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -822,13 +932,11 @@ class _CollaborationTimelineTile extends StatelessWidget {
         : 'R0';
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.3 : 0.68,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.82)),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -836,20 +944,20 @@ class _CollaborationTimelineTile extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 10,
-                height: 10,
+                width: 8,
+                height: 8,
                 decoration: BoxDecoration(
                   color: statusColor,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
                   _collaborationTimelineTitle(l10n, entry),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -857,7 +965,7 @@ class _CollaborationTimelineTile extends StatelessWidget {
                 Text(
                   '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}:${timestamp.second.toString().padLeft(2, '0')}',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -897,8 +1005,7 @@ class _CollaborationTimelineTile extends StatelessWidget {
             Text(
               entry.detail!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
-                height: 1.45,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -923,7 +1030,8 @@ class _ParticipantAvatarStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final visibleParticipants = participants.take(4).toList();
+    final visibleParticipants = participants.take(3).toList();
+    final extra = participants.length - visibleParticipants.length;
 
     if (visibleParticipants.isEmpty) {
       return const SizedBox.shrink();
@@ -931,9 +1039,19 @@ class _ParticipantAvatarStack extends StatelessWidget {
 
     return SizedBox(
       height: 34,
-      width: 26.0 * (visibleParticipants.length - 1) + 34,
+      width:
+          26.0 * (visibleParticipants.length - 1) + 34 + (extra > 0 ? 28 : 0),
       child: Stack(
         children: [
+          if (extra > 0)
+            Positioned(
+              left: visibleParticipants.length * 26,
+              child: SizedBox(
+                width: 28,
+                height: 34,
+                child: Center(child: Text('+$extra')),
+              ),
+            ),
           for (var index = 0; index < visibleParticipants.length; index++)
             Positioned(
               left: index * 26,
@@ -952,7 +1070,7 @@ class _ParticipantAvatarStack extends StatelessWidget {
                   _initialsFor(visibleParticipants[index].label),
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: visibleParticipants[index].accent,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

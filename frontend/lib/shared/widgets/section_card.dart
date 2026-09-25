@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_tokens.dart';
+
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -14,10 +16,15 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 1,
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        border: Border.all(color: theme.dividerColor),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,13 +35,13 @@ class SectionCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: theme.textTheme.titleLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (trailing != null) ...[
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.sm),
                   Flexible(
                     fit: FlexFit.loose,
                     child: Align(
@@ -45,7 +52,7 @@ class SectionCard extends StatelessWidget {
                 ],
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.sm),
             child,
           ],
         ),

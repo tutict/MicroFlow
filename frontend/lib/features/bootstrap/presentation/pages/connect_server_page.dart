@@ -22,6 +22,8 @@ class ConnectServerPage extends ConsumerStatefulWidget {
 class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
   late final TextEditingController _serverUrlController;
   late final TextEditingController _pairingCodeController;
+  late final FocusNode _serverFocus;
+  late final FocusNode _codeFocus;
   bool _showManualForm = false;
   String? _errorText;
 
@@ -30,12 +32,16 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
     super.initState();
     _serverUrlController = TextEditingController();
     _pairingCodeController = TextEditingController();
+    _serverFocus = FocusNode();
+    _codeFocus = FocusNode();
   }
 
   @override
   void dispose() {
     _serverUrlController.dispose();
     _pairingCodeController.dispose();
+    _serverFocus.dispose();
+    _codeFocus.dispose();
     super.dispose();
   }
 
@@ -60,6 +66,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
             ? copy.deviceAddressRequired
             : copy.pairingCodeRequired;
       });
+      (serverUrl.isEmpty ? _serverFocus : _codeFocus).requestFocus();
       return;
     }
 
@@ -72,7 +79,11 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(AppRoutes.signIn);
     } catch (error) {
-      if (mounted) setState(() => _errorText = error.toString());
+      if (mounted) {
+        setState(() => _errorText = error.toString());
+        (_serverUrlController.text.trim().isEmpty ? _serverFocus : _codeFocus)
+            .requestFocus();
+      }
     }
   }
 
@@ -133,6 +144,35 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
   }
 
   Future<void> _remove(ServerConnection connection) async {
+    final copy = _ConnectCopy.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        return AlertDialog(
+          title: Text(copy.removeDeviceTitle),
+          content: Text(copy.removeMessage(connection.instanceName)),
+          actions: [
+            TextButton(
+              autofocus: true,
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(copy.cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(copy.removeDevice),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
     setState(() => _errorText = null);
     try {
       await ref
@@ -176,7 +216,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
               MediaQuery.viewInsetsOf(context).bottom + AppSpacing.lg,
             ),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: AppPane(
                 padding: EdgeInsets.all(
                   compact ? AppSpacing.md : AppSpacing.lg,
@@ -253,6 +293,8 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
                       _ManualConnectionForm(
                         serverUrlController: _serverUrlController,
                         pairingCodeController: _pairingCodeController,
+                        serverFocus: _serverFocus,
+                        codeFocus: _codeFocus,
                         copy: copy,
                         errorText: _errorText,
                         isBusy: isBusy,
@@ -397,6 +439,8 @@ class _ManualConnectionForm extends StatelessWidget {
   const _ManualConnectionForm({
     required this.serverUrlController,
     required this.pairingCodeController,
+    required this.serverFocus,
+    required this.codeFocus,
     required this.copy,
     required this.errorText,
     required this.isBusy,
@@ -405,6 +449,8 @@ class _ManualConnectionForm extends StatelessWidget {
 
   final TextEditingController serverUrlController;
   final TextEditingController pairingCodeController;
+  final FocusNode serverFocus;
+  final FocusNode codeFocus;
   final _ConnectCopy copy;
   final String? errorText;
   final bool isBusy;
@@ -416,6 +462,10 @@ class _ManualConnectionForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (errorText != null) ...[
+          _InlineError(message: errorText!),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         Text(copy.manualTitle, style: theme.textTheme.titleLarge),
         const SizedBox(height: AppSpacing.xs),
         Text(
@@ -426,6 +476,7 @@ class _ManualConnectionForm extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         TextField(
+          focusNode: serverFocus,
           controller: serverUrlController,
           enabled: !isBusy,
           keyboardType: TextInputType.url,
@@ -438,6 +489,7 @@ class _ManualConnectionForm extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         TextField(
+          focusNode: codeFocus,
           controller: pairingCodeController,
           enabled: !isBusy,
           textCapitalization: TextCapitalization.characters,
@@ -449,10 +501,6 @@ class _ManualConnectionForm extends StatelessWidget {
             prefixIcon: const Icon(Icons.password_rounded),
           ),
         ),
-        if (errorText != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          _InlineError(message: errorText!),
-        ],
         const SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 48,
@@ -525,6 +573,8 @@ class _ConnectCopy {
     required this.currentDevice,
     required this.useDevice,
     required this.removeDevice,
+    required this.removeDeviceTitle,
+    required this.removeDeviceBody,
     required this.addDeviceAction,
     required this.hideManualAction,
     required this.deviceActions,
@@ -552,6 +602,8 @@ class _ConnectCopy {
   final String currentDevice;
   final String useDevice;
   final String removeDevice;
+  final String removeDeviceTitle;
+  final String removeDeviceBody;
   final String addDeviceAction;
   final String hideManualAction;
   final String deviceActions;
@@ -559,6 +611,9 @@ class _ConnectCopy {
   final String confirmDevice;
   final String cancel;
   final String connect;
+
+  String removeMessage(String name) =>
+      removeDeviceBody.replaceAll('{name}', name);
 
   static _ConnectCopy of(BuildContext context) {
     if (Localizations.localeOf(context).languageCode == 'zh') {
@@ -581,6 +636,8 @@ class _ConnectCopy {
         currentDevice: '当前设备',
         useDevice: '使用此设备',
         removeDevice: '移除设备',
+        removeDeviceTitle: '移除设备？',
+        removeDeviceBody: '将从这台设备上移除“{name}”。',
         addDeviceAction: '添加设备',
         hideManualAction: '收起',
         deviceActions: '设备操作',
@@ -609,6 +666,8 @@ class _ConnectCopy {
       currentDevice: 'Current device',
       useDevice: 'Use this device',
       removeDevice: 'Remove device',
+      removeDeviceTitle: 'Remove device?',
+      removeDeviceBody: 'Remove "{name}" from this device.',
       addDeviceAction: 'Add device',
       hideManualAction: 'Hide',
       deviceActions: 'Device actions',

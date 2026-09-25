@@ -64,7 +64,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOutTooltip => 'Sign out';
 
   @override
-  String get workspaceDescription => 'Conversations, teammates, and agents in one place.';
+  String get workspaceDescription =>
+      'Conversations, teammates, and agents in one place.';
 
   @override
   String get workspace => 'Workspace';
@@ -170,7 +171,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentInteractions => 'Recent interactions';
 
   @override
-  String get noRecentInteractions => 'No recent interactions yet. Team messages and agent replies will appear here.';
+  String get noRecentInteractions =>
+      'No recent interactions yet. Team messages and agent replies will appear here.';
 
   @override
   String get aiCoworker => 'AI coworker';
@@ -212,7 +214,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendingMessage => 'Sending message...';
 
   @override
-  String get typeMessageHint => 'Type a message for the team, or use @assistant when needed';
+  String get typeMessageHint =>
+      'Type a message for the team, or use @assistant when needed';
 
   @override
   String membersCountLabel(int count) {
@@ -256,7 +259,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get runActivity => 'Run Activity';
 
   @override
-  String get noAgentExecutions => 'No agent executions yet. Mention an agent in chat to start a run.';
+  String get noAgentExecutions =>
+      'No agent executions yet. Mention an agent in chat to start a run.';
 
   @override
   String get queued => 'Queued';
@@ -302,7 +306,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collaborationMode => 'Team mode';
 
   @override
-  String get collaborationModeHint => 'Auto-route new channel messages through @team.';
+  String get collaborationModeHint =>
+      'Auto-route new channel messages through @team.';
 
   @override
   String collaborationRoundStatus(int round, int total) {
@@ -391,7 +396,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get uploadTargetWorkspaceDescription => 'New files will be available as workspace-wide knowledge across conversations.';
+  String get uploadTargetWorkspaceDescription =>
+      'New files will be available as workspace-wide knowledge across conversations.';
 
   @override
   String get allDocuments => 'All documents';
@@ -403,13 +409,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchDocumentsHint => 'Search documents';
 
   @override
-  String get referencedSourceNotice => 'Referenced source highlighted from chat citation.';
+  String get referencedSourceNotice =>
+      'Referenced source highlighted from chat citation.';
 
   @override
   String get knowledgeEmptyDescription => 'Upload a document to begin.';
 
   @override
-  String get knowledgeEmptySearchDescription => 'No knowledge documents match the current search.';
+  String get knowledgeEmptySearchDescription =>
+      'No knowledge documents match the current search.';
 
   @override
   String snippetsCount(int count) {
@@ -420,7 +428,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get referencedSource => 'Referenced source';
 
   @override
-  String get teamRunsAvailable => 'Persisted team runs are available for this conversation.';
+  String get teamRunsAvailable =>
+      'Persisted team runs are available for this conversation.';
 
   @override
   String get history => 'History';
@@ -518,4 +527,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scopedScopeLabel => 'Scoped';
+
+  @override
+  String get indexTab => 'Index';
+  @override
+  String get toolsTab => 'Tools';
+  @override
+  String get toolsTitle => 'Tools';
+  @override
+  String get toolKnowledgeDescription => 'Open documents for this workspace.';
+  @override
+  String get toolAccountingDescription =>
+      'Review accounts, vouchers, and the trial balance.';
+  @override
+  String get toolDiagnosticsDescription =>
+      'Check agent health and role strategy.';
+  @override
+  String get toolAppearanceDescription => 'Switch between light and dark.';
+  @override
+  String get toolLanguageDescription => 'Use Chinese or English.';
+  @override
+  String get toolSignOutDescription => 'Leave this workspace on this device.';
+  @override
+  String get inspectorCurrent => 'Current';
+  @override
+  String get inspectorCollaboration => 'Collaboration';
+  @override
+  String get inspectorKnowledge => 'Documents';
+  @override
+  String get backToConversation => 'Back to conversation';
+  @override
+  String get signOutConfirmTitle => 'Sign out?';
+  @override
+  String get signOutConfirmBody =>
+      'You will leave this workspace on this device.';
+  @override
+  String get openInspectorTooltip => 'Details';
+  @override
+  String get openToolsTooltip => 'Tools';
+  @override
+  String get destinationConversation => 'Chat';
+  @override
+  String get destinationKnowledge => 'Knowledge';
+  @override
+  String get destinationAccounting => 'Accounting';
+  @override
+  String get destinationDiagnostics => 'Diagnostics';
+  @override
+  String get showCollaborationDetails => 'Show collaboration details';
+  @override
+  String get hideCollaborationDetails => 'Hide collaboration details';
+  @override
+  String unreadCountLabel(int count) {
+    return '$count unread';
+  }
 }

@@ -15,4 +15,3 @@ abstract interface class RealtimeSocketService {
 
   Future<void> disconnect();
 }
-

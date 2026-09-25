@@ -4,10 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_providers.dart';
 
-const supportedAppLocales = <Locale>[
-  Locale('zh'),
-  Locale('en'),
-];
+const supportedAppLocales = <Locale>[Locale('zh'), Locale('en')];
 
 final localeControllerProvider =
     AsyncNotifierProvider<LocaleController, Locale>(LocaleController.new);
@@ -25,7 +22,9 @@ class LocaleController extends AsyncNotifier<Locale> {
   }
 
   Future<void> setLocale(Locale locale) async {
-    await ref.read(localStoreProvider).saveString(_localeKey, locale.languageCode);
+    await ref
+        .read(localStoreProvider)
+        .saveString(_localeKey, locale.languageCode);
     state = AsyncData(_normalizeLocale(locale.languageCode));
   }
 

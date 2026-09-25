@@ -20,10 +20,6 @@ class WorkspaceSummaryDto {
   }
 
   WorkspaceSummary toDomain() {
-    return WorkspaceSummary(
-      id: id,
-      name: name,
-      memberCount: memberCount,
-    );
+    return WorkspaceSummary(id: id, name: name, memberCount: memberCount);
   }
 }

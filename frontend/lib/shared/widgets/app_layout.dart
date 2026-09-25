@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme_extensions.dart';
 import '../theme/app_tokens.dart';
 
 class AppPane extends StatelessWidget {
@@ -125,8 +126,8 @@ class AppStatusDot extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: compact ? 7 : 8,
-            height: compact ? 7 : 8,
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: AppSpacing.xs),
@@ -156,6 +157,7 @@ class AppListRow extends StatelessWidget {
     this.onTap,
     this.selected = false,
     this.compact = false,
+    this.titleMaxLines = 1,
   });
 
   final String title;
@@ -165,10 +167,12 @@ class AppListRow extends StatelessWidget {
   final VoidCallback? onTap;
   final bool selected;
   final bool compact;
+  final int titleMaxLines;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final semantic = AppSemanticColors.of(context);
     final radius = BorderRadius.circular(AppRadii.small);
     final content = AnimatedContainer(
       duration: MediaQuery.disableAnimationsOf(context)
@@ -181,10 +185,14 @@ class AppListRow extends StatelessWidget {
         vertical: compact ? AppSpacing.xs : AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: selected
-            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.46)
-            : Colors.transparent,
+        color: selected ? semantic.selectedOverlay : Colors.transparent,
         borderRadius: radius,
+        border: Border(
+          left: BorderSide(
+            color: selected ? semantic.focus : Colors.transparent,
+            width: 2,
+          ),
+        ),
       ),
       child: Row(
         children: [
@@ -207,7 +215,7 @@ class AppListRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  maxLines: 1,
+                  maxLines: titleMaxLines,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w600,

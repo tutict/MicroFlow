@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/providers/app_providers.dart';
+import '../../../../shared/layout/window_class.dart';
 import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/theme/app_tokens.dart';
 import '../../../../shared/widgets/app_surface.dart';
@@ -58,9 +59,14 @@ class AccountingDashboard {
 }
 
 class AccountingPage extends ConsumerStatefulWidget {
-  const AccountingPage({super.key, required this.workspaceId});
+  const AccountingPage({
+    super.key,
+    required this.workspaceId,
+    this.embedded = false,
+  });
 
   final String workspaceId;
+  final bool embedded;
 
   @override
   ConsumerState<AccountingPage> createState() => _AccountingPageState();
@@ -69,6 +75,7 @@ class AccountingPage extends ConsumerStatefulWidget {
 class _AccountingPageState extends ConsumerState<AccountingPage> {
   late final TextEditingController _periodController;
   late String _period;
+  String? _periodError;
 
   @override
   void initState() {
@@ -90,20 +97,23 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     final dashboardAsync = ref.watch(_accountingDashboardProvider(query));
     final theme = Theme.of(context);
 
-    return Scaffold(
+    final page = Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(copy.title),
-        actions: [
-          IconButton(
-            tooltip: copy.refresh,
-            onPressed: widget.workspaceId.isEmpty
-                ? null
-                : () => ref.invalidate(_accountingDashboardProvider(query)),
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              title: Text(copy.title),
+              actions: [
+                IconButton(
+                  tooltip: copy.refresh,
+                  onPressed: widget.workspaceId.isEmpty
+                      ? null
+                      : () =>
+                            ref.invalidate(_accountingDashboardProvider(query)),
+                  icon: const Icon(Icons.refresh_rounded),
+                ),
+              ],
+            ),
       body: ColoredBox(
         color: theme.scaffoldBackgroundColor,
         child: widget.workspaceId.isEmpty
@@ -119,11 +129,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     if (RegExp(r'^\d{4}-\d{2}$').hasMatch(value)) {
                       setState(() {
                         _period = value;
+                        _periodError = null;
                       });
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(copy.periodFormatError)),
-                      );
+                      setState(() => _periodError = copy.periodFormatError);
                     }
                   },
                   onCreateAccount: () async {
@@ -153,6 +162,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ref.invalidate(_accountingDashboardProvider(query));
                     }
                   },
+                  periodError: _periodError,
                   onPostVoucher: (voucherId) async {
                     try {
                       await ref
@@ -182,6 +192,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
       ),
     );
+    if (!widget.embedded) {
+      return page;
+    }
+    return page.body ?? const SizedBox.shrink();
   }
 }
 
@@ -195,6 +209,7 @@ class _DashboardContent extends StatelessWidget {
     required this.onCreateAccount,
     required this.onCreateVoucher,
     required this.onPostVoucher,
+    required this.periodError,
   });
 
   final String workspaceId;
@@ -205,6 +220,7 @@ class _DashboardContent extends StatelessWidget {
   final Future<void> Function() onCreateAccount;
   final Future<void> Function() onCreateVoucher;
   final Future<void> Function(String voucherId) onPostVoucher;
+  final String? periodError;
 
   @override
   Widget build(BuildContext context) {
@@ -225,6 +241,7 @@ class _DashboardContent extends StatelessWidget {
               onApplyPeriod: onApplyPeriod,
               onCreateAccount: onCreateAccount,
               onCreateVoucher: onCreateVoucher,
+              periodError: periodError,
             ),
             Container(
               decoration: BoxDecoration(
@@ -278,6 +295,7 @@ class _AccountingHeader extends StatelessWidget {
     required this.onApplyPeriod,
     required this.onCreateAccount,
     required this.onCreateVoucher,
+    this.periodError,
   });
 
   final String workspaceId;
@@ -287,92 +305,105 @@ class _AccountingHeader extends StatelessWidget {
   final VoidCallback onApplyPeriod;
   final Future<void> Function() onCreateAccount;
   final Future<void> Function() onCreateVoucher;
+  final String? periodError;
 
   @override
   Widget build(BuildContext context) {
     final copy = _AccountingCopy.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 720;
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(bottom: BorderSide(color: theme.dividerColor)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            crossAxisAlignment: WrapCrossAlignment.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final available = constraints.maxWidth;
+        final inner = available.isFinite
+            ? (available - AppSpacing.md * 2).clamp(160.0, available)
+            : 240.0;
+        final fieldWidth = !available.isFinite
+            ? 240.0
+            : available < 600
+            ? inner.toDouble()
+            : 240.0;
+        return Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border(bottom: BorderSide(color: theme.dividerColor)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                width: compact ? 160 : 172,
-                child: TextField(
-                  controller: periodController,
-                  decoration: InputDecoration(
-                    labelText: copy.period,
-                    prefixIcon: const Icon(Icons.calendar_month_rounded),
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SizedBox(
+                    width: fieldWidth,
+                    child: TextField(
+                      controller: periodController,
+                      decoration: InputDecoration(
+                        labelText: copy.period,
+                        errorText: periodError,
+                        prefixIcon: const Icon(Icons.calendar_month_rounded),
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+                        LengthLimitingTextInputFormatter(7),
+                      ],
+                      onSubmitted: (_) => onApplyPeriod(),
+                    ),
                   ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
-                    LengthLimitingTextInputFormatter(7),
-                  ],
-                  onSubmitted: (_) => onApplyPeriod(),
-                ),
+                  IconButton.filledTonal(
+                    tooltip: copy.apply,
+                    onPressed: onApplyPeriod,
+                    icon: const Icon(Icons.search_rounded),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onCreateAccount,
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text(copy.newAccount),
+                  ),
+                  FilledButton.icon(
+                    onPressed: onCreateVoucher,
+                    icon: const Icon(Icons.post_add_rounded, size: 18),
+                    label: Text(copy.newVoucher),
+                  ),
+                ],
               ),
-              IconButton.filledTonal(
-                tooltip: copy.apply,
-                onPressed: onApplyPeriod,
-                icon: const Icon(Icons.search_rounded),
-              ),
-              OutlinedButton.icon(
-                onPressed: onCreateAccount,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(copy.newAccount),
-              ),
-              FilledButton.icon(
-                onPressed: onCreateVoucher,
-                icon: const Icon(Icons.post_add_rounded, size: 18),
-                label: Text(copy.newVoucher),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.lg,
-            runSpacing: AppSpacing.sm,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _AccountingStat(
-                label: copy.accounts,
-                value: '${dashboard.accounts.length}',
-              ),
-              _AccountingStat(
-                label: copy.postedVouchers,
-                value: '${dashboard.postedVoucherCount}',
-              ),
-              _AccountingStat(
-                label: copy.debit,
-                value: _money(dashboard.periodDebitTotal),
-              ),
-              _AccountingStat(
-                label: copy.credit,
-                value: _money(dashboard.periodCreditTotal),
-              ),
-              Text(
-                '${copy.workspace}: $workspaceId',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.sm,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  _AccountingStat(
+                    label: copy.accounts,
+                    value: '${dashboard.accounts.length}',
+                  ),
+                  _AccountingStat(
+                    label: copy.postedVouchers,
+                    value: '${dashboard.postedVoucherCount}',
+                  ),
+                  _AccountingStat(
+                    label: copy.debit,
+                    value: _money(dashboard.periodDebitTotal),
+                  ),
+                  _AccountingStat(
+                    label: copy.credit,
+                    value: _money(dashboard.periodCreditTotal),
+                  ),
+                  Text(
+                    '${copy.workspace}: $workspaceId',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -536,7 +567,7 @@ class _VoucherLineRow extends StatelessWidget {
               '#${line.lineNo}',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.56),
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -571,7 +602,7 @@ class _VoucherLineRow extends StatelessWidget {
                   : '${copy.credit} ${_money(line.creditAmount)}',
               textAlign: TextAlign.right,
               style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -628,7 +659,7 @@ class _AccountList extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -671,40 +702,138 @@ class _TrialBalanceTable extends StatelessWidget {
     if (rows.isEmpty) {
       return _EmptyState(message: copy.noTrialBalance);
     }
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-      children: [
-        AppSurface(
-          variant: AppSurfaceVariant.base,
-          clipBehavior: Clip.antiAlias,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columns: [
-                DataColumn(label: Text(copy.account)),
-                DataColumn(label: Text(copy.category)),
-                DataColumn(label: Text(copy.debit)),
-                DataColumn(label: Text(copy.credit)),
-                DataColumn(label: Text(copy.balance)),
-              ],
-              rows: rows
-                  .map(
-                    (row) => DataRow(
-                      cells: [
-                        DataCell(Text('${row.accountCode} ${row.accountName}')),
-                        DataCell(Text(_categoryLabel(copy, row.category))),
-                        DataCell(Text(_money(row.debitAmount))),
-                        DataCell(Text(_money(row.creditAmount))),
-                        DataCell(
-                          Text(
-                            '${_money(row.balanceAmount)} ${_balanceLabel(copy, row.balanceDirection)}',
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                  .toList(),
+    final windowClass = AppWindowClassResolver.resolve(
+      width: MediaQuery.sizeOf(context).width,
+      textScale: MediaQuery.textScalerOf(context).scale(1),
+    );
+    if (windowClass == AppWindowClass.compact) {
+      return ListView.separated(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        itemCount: rows.length,
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xs),
+        itemBuilder: (context, index) {
+          final row = rows[index];
+          return AppSurface(
+            variant: AppSurfaceVariant.base,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "${row.accountCode} ${row.accountName}",
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(_categoryLabel(copy, row.category)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text("${copy.debit} ${_money(row.debitAmount)}"),
+                  Text("${copy.credit} ${_money(row.creditAmount)}"),
+                  Text(
+                    "${copy.balance} ${_money(row.balanceAmount)} ${_balanceLabel(copy, row.balanceDirection)}",
+                  ),
+                ],
+              ),
             ),
+          );
+        },
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ColoredBox(
+          color: Theme.of(context).colorScheme.surfaceContainerLowest,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: _TrialHeader(copy: copy),
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            itemCount: rows.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final row = rows[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                ),
+                child: _TrialRow(copy: copy, row: row),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrialHeader extends StatelessWidget {
+  const _TrialHeader({required this.copy});
+
+  final _AccountingCopy copy;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelSmall;
+    return Row(
+      children: [
+        Expanded(flex: 3, child: Text(copy.account, style: style)),
+        Expanded(child: Text(copy.category, style: style)),
+        Expanded(
+          child: Text(copy.debit, textAlign: TextAlign.right, style: style),
+        ),
+        Expanded(
+          child: Text(copy.credit, textAlign: TextAlign.right, style: style),
+        ),
+        Expanded(
+          child: Text(copy.balance, textAlign: TextAlign.right, style: style),
+        ),
+      ],
+    );
+  }
+}
+
+class _TrialRow extends StatelessWidget {
+  const _TrialRow({required this.copy, required this.row});
+
+  final _AccountingCopy copy;
+  final TrialBalanceRow row;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodySmall;
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Text("${row.accountCode} ${row.accountName}", style: style),
+        ),
+        Expanded(child: Text(_categoryLabel(copy, row.category), style: style)),
+        Expanded(
+          child: Text(
+            _money(row.debitAmount),
+            textAlign: TextAlign.right,
+            style: style,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            _money(row.creditAmount),
+            textAlign: TextAlign.right,
+            style: style,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            "${_money(row.balanceAmount)} ${_balanceLabel(copy, row.balanceDirection)}",
+            textAlign: TextAlign.right,
+            style: style,
           ),
         ),
       ],
@@ -1059,7 +1188,7 @@ class _VoucherLineEditorRow extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compact = constraints.maxWidth < 620;
+        final compact = constraints.maxWidth < 600;
         final accountPicker = DropdownButtonFormField<String>(
           initialValue: editor.accountId,
           isExpanded: true,

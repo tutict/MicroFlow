@@ -1,8 +1,4 @@
-enum WorkspaceSelectedConversationKind {
-  channel,
-  directMessage,
-  agentThread,
-}
+enum WorkspaceSelectedConversationKind { channel, directMessage, agentThread }
 
 class WorkspaceSelectedConversation {
   const WorkspaceSelectedConversation({
@@ -21,7 +17,8 @@ class WorkspaceSelectedConversation {
 
   bool get isChannelBacked =>
       kind == WorkspaceSelectedConversationKind.channel ||
-      (kind == WorkspaceSelectedConversationKind.directMessage && isAvailable) ||
+      (kind == WorkspaceSelectedConversationKind.directMessage &&
+          isAvailable) ||
       (kind == WorkspaceSelectedConversationKind.agentThread && isAvailable);
 
   WorkspaceSelectedConversation copyWith({

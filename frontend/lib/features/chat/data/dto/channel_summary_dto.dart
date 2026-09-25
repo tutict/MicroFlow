@@ -20,10 +20,6 @@ class ChannelSummaryDto {
   }
 
   ChannelSummary toDomain() {
-    return ChannelSummary(
-      id: id,
-      name: name,
-      unreadCount: unreadCount,
-    );
+    return ChannelSummary(id: id, name: name, unreadCount: unreadCount);
   }
 }

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_providers.dart';
 
 final themeModeControllerProvider =
-    AsyncNotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
+    AsyncNotifierProvider<ThemeModeController, ThemeMode>(
+      ThemeModeController.new,
+    );
 
 class ThemeModeController extends AsyncNotifier<ThemeMode> {
   static const _themeModeKey = 'app.theme_mode';

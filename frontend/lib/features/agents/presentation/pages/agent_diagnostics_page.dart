@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
+import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/theme/app_tokens.dart';
+import '../diagnostic_tone.dart';
 import '../../../../shared/widgets/app_layout.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../../../shared/widgets/app_skeletons.dart';
@@ -17,14 +19,35 @@ final _agentDiagnosticsProvider = FutureProvider.family
 const _maxRoleStrategyLength = 1000;
 
 class AgentDiagnosticsPage extends ConsumerWidget {
-  const AgentDiagnosticsPage({super.key, required this.workspaceId});
+  const AgentDiagnosticsPage({
+    super.key,
+    required this.workspaceId,
+    this.embedded = false,
+  });
 
   final String workspaceId;
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final copy = _AgentDiagnosticsCopy.of(context);
 
+    final body = workspaceId.isEmpty
+        ? _EmptyState(message: copy.workspaceRequired)
+        : ref
+              .watch(_agentDiagnosticsProvider(workspaceId))
+              .when(
+                data: (diagnostics) => _DiagnosticsList(
+                  workspaceId: workspaceId,
+                  diagnostics: diagnostics,
+                ),
+                loading: () => const AgentDiagnosticsSkeleton(),
+                error: (error, _) =>
+                    _EmptyState(message: '${copy.loadFailed}: $error'),
+              );
+    if (embedded) {
+      return body;
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(copy.title),
@@ -38,19 +61,7 @@ class AgentDiagnosticsPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: workspaceId.isEmpty
-          ? _EmptyState(message: copy.workspaceRequired)
-          : ref
-                .watch(_agentDiagnosticsProvider(workspaceId))
-                .when(
-                  data: (diagnostics) => _DiagnosticsList(
-                    workspaceId: workspaceId,
-                    diagnostics: diagnostics,
-                  ),
-                  loading: () => const AgentDiagnosticsSkeleton(),
-                  error: (error, _) =>
-                      _EmptyState(message: '${copy.loadFailed}: $error'),
-                ),
+      body: body,
     );
   }
 }
@@ -122,7 +133,7 @@ class _DiagnosticCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final copy = _AgentDiagnosticsCopy.of(context);
-    final statusColor = _statusColor(diagnostic.status);
+    final statusColor = _statusColor(context, diagnostic.status);
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -162,7 +173,7 @@ class _DiagnosticCard extends StatelessWidget {
                           child: Text(
                             '@${diagnostic.agentKey}',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -235,23 +246,15 @@ class _DiagnosticCard extends StatelessWidget {
     );
   }
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'HEALTHY':
-      case 'REACHABLE':
-        return const Color(0xFF1E8E5A);
-      case 'SIMULATED':
-        return const Color(0xFF3D7EA6);
-      case 'AUTH_REQUIRED':
-      case 'DEGRADED':
-        return const Color(0xFFC86A3B);
-      case 'DISABLED':
-        return const Color(0xFF7A8791);
-      case 'UNCONFIGURED':
-      case 'UNREACHABLE':
-      default:
-        return const Color(0xFFB23A48);
-    }
+  Color _statusColor(BuildContext context, String status) {
+    final semantic = AppSemanticColors.of(context);
+    return switch (diagnosticToneFor(status)) {
+      DiagnosticTone.success => semantic.success,
+      DiagnosticTone.info => semantic.info,
+      DiagnosticTone.warning => semantic.warning,
+      DiagnosticTone.danger => semantic.danger,
+      DiagnosticTone.neutral => semantic.neutral,
+    };
   }
 
   String _statusLabel(_AgentDiagnosticsCopy copy, String status) {
@@ -379,14 +382,10 @@ Future<bool> _showRoleStrategyEditor({
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer.withValues(alpha: 0.34),
-                        borderRadius: BorderRadius.circular(16),
+                        color: AppSemanticColors.of(context).infoContainer,
+                        borderRadius: BorderRadius.circular(AppRadii.medium),
                         border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.32),
+                          color: Theme.of(context).dividerColor,
                         ),
                       ),
                       child: Column(
@@ -395,7 +394,7 @@ Future<bool> _showRoleStrategyEditor({
                           Text(
                             copy.recommendedTemplate,
                             style: Theme.of(context).textTheme.labelMedium
-                                ?.copyWith(fontWeight: FontWeight.w800),
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -437,7 +436,7 @@ Future<bool> _showRoleStrategyEditor({
                   Text(
                     copy.templates,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -506,7 +505,7 @@ Future<bool> _showRoleStrategyEditor({
                     Text(
                       errorText!,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: const Color(0xFFBA3B2F),
+                        color: Theme.of(context).colorScheme.error,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

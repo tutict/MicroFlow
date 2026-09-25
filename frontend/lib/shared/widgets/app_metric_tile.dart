@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_tokens.dart';
 import 'app_surface.dart';
 
 class AppMetricTile extends StatelessWidget {
@@ -28,7 +29,7 @@ class AppMetricTile extends StatelessWidget {
       width: width,
       child: AppSurface(
         variant: AppSurfaceVariant.muted,
-        padding: EdgeInsets.all(compact ? 10 : 12),
+        padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(
           children: [
             Container(
@@ -36,12 +37,12 @@ class AppMetricTile extends StatelessWidget {
               height: compact ? 32 : 34,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadii.medium),
               ),
               alignment: Alignment.center,
               child: Icon(icon, color: color, size: compact ? 17 : 18),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,7 +53,7 @@ class AppMetricTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontFeatures: const [FontFeature.tabularFigures()],
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w600,
                       letterSpacing: 0,
                     ),
                   ),
@@ -62,10 +63,7 @@ class AppMetricTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.64,
-                      ),
-                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurfaceVariant,
                       letterSpacing: 0,
                     ),
                   ),

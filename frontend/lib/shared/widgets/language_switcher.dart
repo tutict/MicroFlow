@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../core/providers/locale_controller.dart';
+import '../theme/app_tokens.dart';
 
 class LanguageSwitcher extends ConsumerWidget {
   const LanguageSwitcher({super.key});
@@ -28,12 +29,13 @@ class LanguageSwitcher extends ConsumerWidget {
         ),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.44 : 0.9,
-          ),
-          borderRadius: BorderRadius.circular(12),
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadii.medium),
           border: Border.all(
             color: theme.colorScheme.outline.withValues(alpha: 0.82),
           ),
@@ -44,7 +46,7 @@ class LanguageSwitcher extends ConsumerWidget {
             Icon(
               Icons.language_rounded,
               size: 18,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 8),
             Text(

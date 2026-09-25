@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:microflow_frontend/app/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -179,6 +180,7 @@ Future<void> _pumpDiagnosticsPage(
     ProviderScope(
       overrides: [agentRepositoryProvider.overrideWithValue(repository)],
       child: MaterialApp(
+        theme: AppTheme.light(),
         locale: locale,
         supportedLocales: const [Locale('en'), Locale('zh')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,

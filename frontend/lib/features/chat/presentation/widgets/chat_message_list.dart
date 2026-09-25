@@ -5,6 +5,7 @@ import 'package:microflow_frontend/l10n/app_localizations.dart';
 import '../../../../core/utils/date_time_formatter.dart';
 import '../../../workspace/domain/entities/knowledge_document.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../../../shared/theme/app_tokens.dart';
 import 'message_bubble.dart';
 
 class ChatMessageList extends StatefulWidget {
@@ -61,7 +62,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
       context,
       duration: MediaQuery.disableAnimationsOf(context)
           ? Duration.zero
-          : const Duration(milliseconds: 220),
+          : const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
       alignment: 1,
     );
@@ -79,40 +80,48 @@ class _ChatMessageListState extends State<ChatMessageList> {
       );
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(widget.compact ? 10 : 18),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return switch (entry) {
-          _DateDividerEntry() => Padding(
-            padding: EdgeInsets.only(
-              top: index == 0 ? 0 : 8,
-              bottom: widget.compact ? 12 : 18,
-            ),
-            child: _DateDivider(label: entry.label),
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView.builder(
+          padding: EdgeInsets.all(
+            widget.compact ? AppSpacing.xs : AppSpacing.md,
           ),
-          _MessageEntry() => Padding(
-            padding: EdgeInsets.only(bottom: widget.compact ? 8 : 12),
-            child: MessageBubble(
-              key: index == entries.length - 1 ? _latestMessageKey : null,
-              message: entry.message,
-              isOwnMessage: entry.message.author == widget.currentUserId,
-              authorLabel: _formatAuthorLabel(
-                context: context,
-                author: entry.message.author,
-                isAgent: entry.message.isAgent,
-                currentUserId: widget.currentUserId,
-                currentUserLabel: widget.currentUserLabel,
+          itemCount: entries.length,
+          itemBuilder: (context, index) {
+            final entry = entries[index];
+            return switch (entry) {
+              _DateDividerEntry() => Padding(
+                padding: EdgeInsets.only(
+                  top: index == 0 ? 0 : 8,
+                  bottom: widget.compact ? 12 : 18,
+                ),
+                child: _DateDivider(label: entry.label),
               ),
-              timestampLabel: _formatTimestamp(entry.message.createdAt),
-              knowledgeDocuments: widget.knowledgeDocuments,
-              onKnowledgeCitationTap: widget.onKnowledgeCitationTap,
-              compact: widget.compact,
-            ),
-          ),
-        };
-      },
+              _MessageEntry() => Padding(
+                padding: EdgeInsets.only(bottom: widget.compact ? 8 : 12),
+                child: MessageBubble(
+                  key: index == entries.length - 1 ? _latestMessageKey : null,
+                  message: entry.message,
+                  isOwnMessage: entry.message.author == widget.currentUserId,
+                  authorLabel: _formatAuthorLabel(
+                    context: context,
+                    author: entry.message.author,
+                    isAgent: entry.message.isAgent,
+                    currentUserId: widget.currentUserId,
+                    currentUserLabel: widget.currentUserLabel,
+                  ),
+                  timestampLabel: _formatTimestamp(entry.message.createdAt),
+                  knowledgeDocuments: widget.knowledgeDocuments,
+                  onKnowledgeCitationTap: widget.onKnowledgeCitationTap,
+                  compact: widget.compact,
+                ),
+              ),
+            };
+          },
+        ),
+      ),
     );
   }
 
@@ -214,7 +223,7 @@ class _EmptyChatState extends StatelessWidget {
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: Column(
@@ -229,17 +238,14 @@ class _EmptyChatState extends StatelessWidget {
               Text(
                 title ?? l10n.noMessagesTitle,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: theme.textTheme.titleMedium,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 description ?? l10n.noMessagesDescription,
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
                 ),
               ),
             ],

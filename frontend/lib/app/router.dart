@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../features/accounting/presentation/pages/accounting_page.dart';
-import '../features/agents/presentation/pages/agent_diagnostics_page.dart';
 import '../features/bootstrap/presentation/pages/connect_server_page.dart';
-import '../features/auth/presentation/widgets/session_gate.dart';
 import '../features/auth/presentation/pages/sign_in_page.dart';
+import '../features/auth/presentation/widgets/session_gate.dart';
+import '../features/workspace/presentation/shell/shell_destination.dart';
 
 final class AppRoutes {
   static const connect = '/connect';
@@ -30,13 +29,19 @@ final class AppRouter {
       case AppRoutes.agents:
         final workspaceId = settings.arguments as String? ?? '';
         return MaterialPageRoute<void>(
-          builder: (_) => AgentDiagnosticsPage(workspaceId: workspaceId),
+          builder: (_) => SessionGate(
+            initialDestination: ShellDestination.diagnostics,
+            initialWorkspaceId: workspaceId,
+          ),
           settings: settings,
         );
       case AppRoutes.accounting:
         final workspaceId = settings.arguments as String? ?? '';
         return MaterialPageRoute<void>(
-          builder: (_) => AccountingPage(workspaceId: workspaceId),
+          builder: (_) => SessionGate(
+            initialDestination: ShellDestination.accounting,
+            initialWorkspaceId: workspaceId,
+          ),
           settings: settings,
         );
       case AppRoutes.workspace:

@@ -17,6 +17,7 @@ class WorkspacePanel extends StatelessWidget {
     required this.selectedConversationId,
     required this.onOpenConversation,
     this.compact = false,
+    this.titleMaxLines = 1,
   });
 
   final String workspaceName;
@@ -28,115 +29,64 @@ class WorkspacePanel extends StatelessWidget {
   final String selectedConversationId;
   final ValueChanged<WorkspaceConversationSummary> onOpenConversation;
   final bool compact;
+  final int titleMaxLines;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final unreadTotal = conversations.fold<int>(
-      0,
-      (sum, conversation) => sum + conversation.unreadCount,
-    );
-
-    return Material(
-      color: theme.colorScheme.surface,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.medium),
-        side: BorderSide(color: theme.dividerColor),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Semantics(
-              label: description,
-              child: Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(AppRadii.small),
-                    ),
-                    child: Text(
-                      'MF',
-                      style: TextStyle(
-                        color: theme.colorScheme.onPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          workspaceName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(
-                          unreadTotal == 0
-                              ? l10n.conversationCountLabel(
-                                  conversations.length,
-                                )
-                              : '$unreadTotal ${l10n.unreadLabel}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+    return Semantics(
+      container: true,
+      label: description,
+      child: Material(
+        color: theme.colorScheme.surface,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.medium),
+          side: BorderSide(color: theme.dividerColor),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SectionLabel(
+                label: l10n.conversations,
+                count: conversations.length,
               ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            _SectionLabel(
-              label: l10n.conversations,
-              count: conversations.length,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _ConversationInbox(
-              conversations: conversations,
-              selectedConversationId: selectedConversationId,
-              onOpenConversation: onOpenConversation,
-            ),
-            if (members.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.md),
-              Divider(height: 1, color: theme.dividerColor),
-              _SecondarySection(
-                title: l10n.members,
-                count: members.length,
-                children: [
-                  for (final member in members) _MemberListRow(member: member),
-                ],
+              const SizedBox(height: AppSpacing.sm),
+              _ConversationInbox(
+                conversations: conversations,
+                selectedConversationId: selectedConversationId,
+                titleMaxLines: titleMaxLines,
+                onOpenConversation: onOpenConversation,
               ),
+              if (members.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.md),
+                Divider(height: 1, color: theme.dividerColor),
+                _SecondarySection(
+                  title: l10n.members,
+                  count: members.length,
+                  children: [
+                    for (final member in members)
+                      _MemberListRow(member: member),
+                  ],
+                ),
+              ],
+              if (recentInteractions.isNotEmpty) ...[
+                Divider(height: 1, color: theme.dividerColor),
+                _SecondarySection(
+                  title: l10n.recentInteractions,
+                  count: recentInteractions.length,
+                  initiallyExpanded: compact,
+                  children: [
+                    for (final interaction in recentInteractions)
+                      _RecentInteractionRow(interaction: interaction),
+                  ],
+                ),
+              ],
             ],
-            if (recentInteractions.isNotEmpty) ...[
-              Divider(height: 1, color: theme.dividerColor),
-              _SecondarySection(
-                title: l10n.recentInteractions,
-                count: recentInteractions.length,
-                initiallyExpanded: compact,
-                children: [
-                  for (final interaction in recentInteractions)
-                    _RecentInteractionRow(interaction: interaction),
-                ],
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -268,11 +218,13 @@ class _ConversationInbox extends StatelessWidget {
     required this.conversations,
     required this.selectedConversationId,
     required this.onOpenConversation,
+    required this.titleMaxLines,
   });
 
   final List<WorkspaceConversationSummary> conversations;
   final String selectedConversationId;
   final ValueChanged<WorkspaceConversationSummary> onOpenConversation;
+  final int titleMaxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -328,6 +280,7 @@ class _ConversationInbox extends StatelessWidget {
               icon: visibleGroups[groupIndex].icon,
               conversations: visibleGroups[groupIndex].items,
               selectedConversationId: selectedConversationId,
+              titleMaxLines: titleMaxLines,
               onOpenConversation: onOpenConversation,
             ),
           ),
@@ -339,7 +292,15 @@ class _ConversationInbox extends StatelessWidget {
     final result = conversations
         .where((conversation) => conversation.kind == kind)
         .toList(growable: false);
-    result.sort(_sortByLastActivityDesc);
+    result.sort((left, right) {
+      final unread = (left.unreadCount > 0 ? 0 : 1).compareTo(
+        right.unreadCount > 0 ? 0 : 1,
+      );
+      if (unread != 0) {
+        return unread;
+      }
+      return _sortByLastActivityDesc(left, right);
+    });
     return result;
   }
 }
@@ -351,6 +312,7 @@ class _ConversationSection extends StatelessWidget {
     required this.conversations,
     required this.selectedConversationId,
     required this.onOpenConversation,
+    required this.titleMaxLines,
   });
 
   final String title;
@@ -358,6 +320,7 @@ class _ConversationSection extends StatelessWidget {
   final List<WorkspaceConversationSummary> conversations;
   final String selectedConversationId;
   final ValueChanged<WorkspaceConversationSummary> onOpenConversation;
+  final int titleMaxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -369,13 +332,17 @@ class _ConversationSection extends StatelessWidget {
           padding: const EdgeInsets.only(left: AppSpacing.xs),
           child: Row(
             children: [
-              Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
+              Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSpacing.xs),
-              Text(
-                title,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -386,6 +353,7 @@ class _ConversationSection extends StatelessWidget {
           _ConversationRow(
             conversation: conversation,
             selected: conversation.id == selectedConversationId,
+            titleMaxLines: titleMaxLines,
             onTap: () => onOpenConversation(conversation),
           ),
       ],
@@ -398,11 +366,13 @@ class _ConversationRow extends StatelessWidget {
     required this.conversation,
     required this.selected,
     required this.onTap,
+    required this.titleMaxLines,
   });
 
   final WorkspaceConversationSummary conversation;
   final bool selected;
   final VoidCallback onTap;
+  final int titleMaxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -422,6 +392,7 @@ class _ConversationRow extends StatelessWidget {
 
     return AppListRow(
       title: conversation.title,
+      titleMaxLines: titleMaxLines,
       subtitle: subtitle,
       leading: Icon(_iconForConversation(conversation.kind)),
       trailing: trailing,
@@ -439,20 +410,24 @@ class _UnreadCount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    return Container(
-      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(AppRadii.small),
-      ),
-      child: Text(
-        '$value',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onPrimary,
-          fontWeight: FontWeight.w700,
+    return Semantics(
+      label: l10n.unreadCountLabel(value),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          borderRadius: BorderRadius.circular(AppRadii.small),
+        ),
+        child: Text(
+          value.toString(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

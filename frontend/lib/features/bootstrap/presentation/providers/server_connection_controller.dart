@@ -4,12 +4,13 @@ import '../../domain/entities/server_connection.dart';
 import '../../domain/entities/server_connection_catalog.dart';
 import '../../../../core/providers/app_providers.dart';
 
-final serverConnectionControllerProvider = AsyncNotifierProvider<
-  ServerConnectionController,
-  ServerConnectionCatalog
->(ServerConnectionController.new);
+final serverConnectionControllerProvider =
+    AsyncNotifierProvider<ServerConnectionController, ServerConnectionCatalog>(
+      ServerConnectionController.new,
+    );
 
-class ServerConnectionController extends AsyncNotifier<ServerConnectionCatalog> {
+class ServerConnectionController
+    extends AsyncNotifier<ServerConnectionCatalog> {
   @override
   Future<ServerConnectionCatalog> build() async {
     final repository = ref.read(serverConnectionRepositoryProvider);

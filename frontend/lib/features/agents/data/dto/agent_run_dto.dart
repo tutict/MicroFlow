@@ -20,11 +20,6 @@ class AgentRunDto {
   }
 
   AgentRun toDomain() {
-    return AgentRun(
-      id: id,
-      agentKey: agentKey,
-      status: status,
-    );
+    return AgentRun(id: id, agentKey: agentKey, status: status);
   }
 }
-

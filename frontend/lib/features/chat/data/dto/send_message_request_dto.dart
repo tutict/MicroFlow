@@ -8,9 +8,6 @@ class SendMessageRequestDto {
   final String content;
 
   Map<String, Object?> toJson() {
-    return {
-      'workspaceId': workspaceId,
-      'content': content,
-    };
+    return {'workspaceId': workspaceId, 'content': content};
   }
 }

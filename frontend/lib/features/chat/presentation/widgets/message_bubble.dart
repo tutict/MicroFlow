@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../workspace/domain/entities/knowledge_document.dart';
+import '../../../../shared/theme/app_theme_extensions.dart';
+import '../../../../shared/theme/app_tokens.dart';
 import '../../../../shared/widgets/status_badge.dart';
 import '../../domain/entities/chat_message.dart';
 
@@ -30,23 +32,16 @@ class MessageBubble extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isAgent = message.isAgent;
     final theme = Theme.of(context);
+    final semantic = AppSemanticColors.of(context);
     final backgroundColor = isOwnMessage
-        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.68)
+        ? semantic.selectedOverlay
         : isAgent
-        ? theme.colorScheme.primary.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.12 : 0.06,
-          )
+        ? theme.colorScheme.tertiaryContainer
         : theme.colorScheme.surface;
-    final borderColor = isOwnMessage
-        ? theme.colorScheme.primary.withValues(alpha: 0.18)
-        : isAgent
-        ? theme.colorScheme.primary.withValues(alpha: 0.14)
-        : theme.dividerColor;
-    final foregroundColor = isOwnMessage
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.onSurface;
-    final bubblePadding = compact ? 10.0 : 12.0;
-    final maxWidth = compact ? 560.0 : 720.0;
+    final borderColor = theme.dividerColor;
+    final foregroundColor = theme.colorScheme.onSurface;
+    final bubblePadding = compact ? AppSpacing.xs : AppSpacing.sm;
+    const maxWidth = 720.0;
     final citations = _extractCitations(message.text, knowledgeDocuments);
 
     return Align(
@@ -86,11 +81,14 @@ class MessageBubble extends StatelessWidget {
                               ),
                     ),
                     if (isAgent) ...[
+                      Icon(
+                        Icons.smart_toy_outlined,
+                        size: 16,
+                        color: theme.colorScheme.tertiary,
+                      ),
                       StatusBadge(
                         label: l10n.aiBadge,
-                        color: isOwnMessage
-                            ? theme.colorScheme.onPrimaryContainer
-                            : theme.colorScheme.primary,
+                        color: theme.colorScheme.tertiary,
                       ),
                     ],
                   ],
@@ -100,25 +98,20 @@ class MessageBubble extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: isOwnMessage
-                        ? theme.colorScheme.onPrimaryContainer
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: compact ? 8 : 10),
+            SizedBox(height: compact ? AppSpacing.xs : AppSpacing.sm),
             SelectableText(
               message.text,
-              style:
-                  (compact
-                          ? theme.textTheme.bodySmall
-                          : theme.textTheme.bodyMedium)
-                      ?.copyWith(color: foregroundColor, height: 1.55),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: foregroundColor,
+              ),
             ),
             if (citations.isNotEmpty) ...[
-              SizedBox(height: compact ? 10 : 12),
+              SizedBox(height: AppSpacing.sm),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -126,8 +119,6 @@ class MessageBubble extends StatelessWidget {
                     .map(
                       (citation) => _KnowledgeCitationChip(
                         citation: citation,
-                        compact: compact,
-                        isOwnMessage: isOwnMessage,
                         onKnowledgeCitationTap: onKnowledgeCitationTap,
                       ),
                     )
@@ -156,55 +147,57 @@ final class _KnowledgeCitation {
 class _KnowledgeCitationChip extends StatelessWidget {
   const _KnowledgeCitationChip({
     required this.citation,
-    required this.compact,
-    required this.isOwnMessage,
     this.onKnowledgeCitationTap,
   });
 
   final _KnowledgeCitation citation;
-  final bool compact;
-  final bool isOwnMessage;
   final ValueChanged<String>? onKnowledgeCitationTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final backgroundColor = isOwnMessage
-        ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.08)
-        : theme.colorScheme.primary.withValues(alpha: 0.08);
-    final borderColor = isOwnMessage
-        ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.14)
-        : theme.colorScheme.primary.withValues(alpha: 0.16);
-    final labelColor = isOwnMessage
-        ? theme.colorScheme.onPrimaryContainer
-        : theme.colorScheme.primary;
+    final semantic = AppSemanticColors.of(context);
+    final backgroundColor = semantic.infoContainer;
+    final borderColor = theme.dividerColor;
+    final labelColor = semantic.info;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(6),
-      onTap: onKnowledgeCitationTap != null
-          ? () => onKnowledgeCitationTap!(citation.documentId)
-          : citation.document == null
+      borderRadius: BorderRadius.circular(AppRadii.small),
+      onTap: citation.document == null && onKnowledgeCitationTap == null
           ? null
-          : () => _showKnowledgeDocument(context, citation.document!),
+          : () => _openCitation(context),
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? 10 : 12,
-          vertical: compact ? 6 : 7,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xxs,
         ),
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(AppRadii.small),
           border: Border.all(color: borderColor),
         ),
         child: Text(
           citation.label,
           style: theme.textTheme.labelMedium?.copyWith(
             color: labelColor,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _openCitation(BuildContext context) async {
+    final previous = FocusManager.instance.primaryFocus;
+    final document = citation.document;
+    if (document != null) {
+      await _showKnowledgeDocument(context, document);
+      if (previous != null && previous.canRequestFocus) {
+        previous.requestFocus();
+      }
+      return;
+    }
+    onKnowledgeCitationTap?.call(citation.documentId);
   }
 
   Future<void> _showKnowledgeDocument(
@@ -225,7 +218,7 @@ class _KnowledgeCitationChip extends StatelessWidget {
                 '[kb:${document.id}]',
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 10),
@@ -233,14 +226,17 @@ class _KnowledgeCitationChip extends StatelessWidget {
                 document.summary.isEmpty
                     ? document.contentType
                     : document.summary,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                style: theme.textTheme.bodyMedium,
               ),
             ],
           ),
           actions: [
             TextButton(
+              autofocus: true,
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
+              child: Text(
+                MaterialLocalizations.of(dialogContext).closeButtonLabel,
+              ),
             ),
           ],
         );

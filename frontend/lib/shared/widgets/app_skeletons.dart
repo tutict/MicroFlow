@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import '../layout/window_class.dart';
+import '../theme/app_tokens.dart';
+
 class AppLoadingScaffold extends StatelessWidget {
   const AppLoadingScaffold({super.key, this.title, this.child});
 
@@ -31,22 +34,25 @@ class AppPageSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final width = MediaQuery.sizeOf(context).width;
-    final isWide = width >= 900;
+    final windowClass = AppWindowClassResolver.resolve(
+      width: MediaQuery.sizeOf(context).width,
+      textScale: MediaQuery.textScalerOf(context).scale(1),
+    );
+    final isWide = windowClass != AppWindowClass.compact;
     final sections = List<Widget>.generate(
       sectionCount,
       (index) => _SkeletonSection(lines: index == 0 ? 4 : 3),
     );
 
     final content = Padding(
-      padding: EdgeInsets.all(isWide ? 20 : 14),
+      padding: EdgeInsets.all(isWide ? AppSpacing.md : AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (showHeader) ...[
             _SkeletonBlock(
               height: isWide ? 112 : 104,
-              borderRadius: 12,
+              borderRadius: AppRadii.medium,
               child: const _SkeletonHeader(),
             ),
             SizedBox(height: isWide ? 16 : 12),
@@ -170,13 +176,13 @@ class _SkeletonSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return _SkeletonBlock(
       height: 96 + (lines * 12),
-      borderRadius: 10,
+      borderRadius: AppRadii.medium,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const _SkeletonLine(width: 180, height: 18),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.sm),
           for (var i = 0; i < lines; i++) ...[
             _SkeletonLine(
               width: i == lines - 1 ? 220 : double.infinity,
@@ -231,7 +237,7 @@ class _SkeletonLine extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadii.small),
       ),
     );
   }

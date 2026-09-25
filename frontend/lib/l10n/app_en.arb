@@ -317,5 +317,36 @@
     }
   },
   "workspaceScopeLabel": "Workspace",
-  "scopedScopeLabel": "Scoped"
+  "scopedScopeLabel": "Scoped",
+  "indexTab": "Index",
+  "toolsTab": "Tools",
+  "toolsTitle": "Tools",
+  "toolKnowledgeDescription": "Open documents for this workspace.",
+  "toolAccountingDescription": "Review accounts, vouchers, and the trial balance.",
+  "toolDiagnosticsDescription": "Check agent health and role strategy.",
+  "toolAppearanceDescription": "Switch between light and dark.",
+  "toolLanguageDescription": "Use Chinese or English.",
+  "toolSignOutDescription": "Leave this workspace on this device.",
+  "inspectorCurrent": "Current",
+  "inspectorCollaboration": "Collaboration",
+  "inspectorKnowledge": "Documents",
+  "backToConversation": "Back to conversation",
+  "signOutConfirmTitle": "Sign out?",
+  "signOutConfirmBody": "You will leave this workspace on this device.",
+  "openInspectorTooltip": "Details",
+  "openToolsTooltip": "Tools",
+  "destinationConversation": "Chat",
+  "destinationKnowledge": "Knowledge",
+  "destinationAccounting": "Accounting",
+  "destinationDiagnostics": "Diagnostics",
+  "unreadCountLabel": "{count} unread",
+  "showCollaborationDetails": "Show collaboration details",
+  "hideCollaborationDetails": "Hide collaboration details",
+  "@unreadCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

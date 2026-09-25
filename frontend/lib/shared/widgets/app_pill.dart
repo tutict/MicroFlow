@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_tokens.dart';
+
 class AppPill extends StatelessWidget {
   const AppPill({
     super.key,
@@ -14,7 +16,7 @@ class AppPill extends StatelessWidget {
     this.valueColor,
     this.iconColor,
     this.borderRadius,
-    this.gap = 8,
+    this.gap = AppSpacing.xs,
   });
 
   final String label;
@@ -43,12 +45,13 @@ class AppPill extends StatelessWidget {
     final border =
         borderColor ?? theme.colorScheme.outline.withValues(alpha: 0.64);
     final resolvedRadius =
-        borderRadius ?? BorderRadius.circular(_isMetric ? 8 : 999);
+        borderRadius ?? BorderRadius.circular(AppRadii.medium);
     final resolvedPadding =
         padding ??
-        (_isMetric
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 10)
-            : const EdgeInsets.symmetric(horizontal: 12, vertical: 8));
+        const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        );
 
     final child = Container(
       constraints: onTap == null
@@ -68,7 +71,7 @@ class AppPill extends StatelessWidget {
                   value!,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: valueColor ?? theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0,
                   ),
                 ),
@@ -76,9 +79,7 @@ class AppPill extends StatelessWidget {
                 Text(
                   label,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color:
-                        labelColor ??
-                        theme.colorScheme.onSurface.withValues(alpha: 0.78),
+                    color: labelColor ?? theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0,
                   ),
@@ -95,7 +96,7 @@ class AppPill extends StatelessWidget {
                     color:
                         iconColor ??
                         labelColor ??
-                        theme.colorScheme.onSurface.withValues(alpha: 0.74),
+                        theme.colorScheme.onSurfaceVariant,
                   ),
                   SizedBox(width: gap),
                 ],

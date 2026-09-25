@@ -518,4 +518,55 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scopedScopeLabel => '局部';
+
+  @override
+  String get indexTab => '索引';
+  @override
+  String get toolsTab => '工具';
+  @override
+  String get toolsTitle => '工具';
+  @override
+  String get toolKnowledgeDescription => '打开当前工作区的资料。';
+  @override
+  String get toolAccountingDescription => '查看科目、凭证和试算平衡。';
+  @override
+  String get toolDiagnosticsDescription => '检查 Agent 健康状态和角色策略。';
+  @override
+  String get toolAppearanceDescription => '在浅色和深色之间切换。';
+  @override
+  String get toolLanguageDescription => '使用中文或英文。';
+  @override
+  String get toolSignOutDescription => '退出这台设备上的当前工作区。';
+  @override
+  String get inspectorCurrent => '当前';
+  @override
+  String get inspectorCollaboration => '协作';
+  @override
+  String get inspectorKnowledge => '资料';
+  @override
+  String get backToConversation => '返回会话';
+  @override
+  String get signOutConfirmTitle => '退出登录？';
+  @override
+  String get signOutConfirmBody => '将退出这台设备上的当前工作区。';
+  @override
+  String get openInspectorTooltip => '详情';
+  @override
+  String get openToolsTooltip => '工具';
+  @override
+  String get destinationConversation => '会话';
+  @override
+  String get destinationKnowledge => '知识库';
+  @override
+  String get destinationAccounting => '会计';
+  @override
+  String get destinationDiagnostics => '诊断';
+  @override
+  String get showCollaborationDetails => '展开协作详情';
+  @override
+  String get hideCollaborationDetails => '收起协作详情';
+  @override
+  String unreadCountLabel(int count) {
+    return '$count 条未读';
+  }
 }

@@ -112,45 +112,6 @@ class _InputBoxState extends State<InputBox> {
               _ComposerError(message: l10n.messageSendFailed(effectiveError)),
               const SizedBox(height: AppSpacing.sm),
             ],
-            if (widget.collaborationModeVisible) ...[
-              Row(
-                children: [
-                  Icon(
-                    Icons.groups_2_outlined,
-                    size: 20,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.collaborationMode,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        if (widget.collaborationStatusText != null)
-                          Text(
-                            widget.collaborationStatusText!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Switch.adaptive(
-                    value: widget.collaborationModeEnabled,
-                    onChanged: widget.onCollaborationModeChanged,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
-            ],
             if (widget.enabled && widget.suggestedMentions.isNotEmpty) ...[
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -160,7 +121,6 @@ class _InputBoxState extends State<InputBox> {
                       Padding(
                         padding: const EdgeInsets.only(right: AppSpacing.xs),
                         child: ActionChip(
-                          visualDensity: VisualDensity.compact,
                           avatar: const Icon(Icons.alternate_email, size: 16),
                           label: Text(mention),
                           onPressed: () => _insertMention(mention),
@@ -189,25 +149,47 @@ class _InputBoxState extends State<InputBox> {
                         decoration: InputDecoration(
                           hintText: hint,
                           filled: true,
-                          isDense: widget.compact,
                           fillColor: theme.colorScheme.surfaceContainerLowest,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.md,
-                            vertical: 13,
+                            vertical: AppSpacing.sm,
                           ),
                         ),
                       ),
                     ),
+                    if (widget.collaborationModeVisible) ...[
+                      const SizedBox(width: AppSpacing.xs),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 96),
+                        child: Text(
+                          l10n.collaborationMode,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelMedium,
+                        ),
+                      ),
+                      Semantics(
+                        label: l10n.collaborationMode,
+                        child: Switch.adaptive(
+                          value: widget.collaborationModeEnabled,
+                          onChanged: widget.onCollaborationModeChanged,
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: AppSpacing.sm),
                     if (iconOnly)
-                      SizedBox.square(
-                        dimension: 48,
-                        child: FilledButton(
-                          onPressed: _canSubmit ? _submit : null,
-                          style: FilledButton.styleFrom(
-                            padding: EdgeInsets.zero,
+                      Semantics(
+                        button: true,
+                        label: widget.isSending ? l10n.sending : l10n.send,
+                        child: SizedBox.square(
+                          dimension: 44,
+                          child: FilledButton(
+                            onPressed: _canSubmit ? _submit : null,
+                            style: FilledButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: _SendIcon(isSending: widget.isSending),
                           ),
-                          child: _SendIcon(isSending: widget.isSending),
                         ),
                       )
                     else
@@ -225,6 +207,20 @@ class _InputBoxState extends State<InputBox> {
                 );
               },
             ),
+            if (widget.collaborationModeVisible &&
+                widget.collaborationModeEnabled &&
+                widget.collaborationStatusText != null) ...[
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                widget.collaborationStatusText!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ],
         ),
       ),

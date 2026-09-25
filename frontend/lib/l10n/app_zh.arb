@@ -317,5 +317,36 @@
     }
   },
   "workspaceScopeLabel": "工作区",
-  "scopedScopeLabel": "局部"
+  "scopedScopeLabel": "局部",
+  "indexTab": "索引",
+  "toolsTab": "工具",
+  "toolsTitle": "工具",
+  "toolKnowledgeDescription": "打开当前工作区的资料。",
+  "toolAccountingDescription": "查看科目、凭证和试算平衡。",
+  "toolDiagnosticsDescription": "检查 Agent 健康状态和角色策略。",
+  "toolAppearanceDescription": "在浅色和深色之间切换。",
+  "toolLanguageDescription": "使用中文或英文。",
+  "toolSignOutDescription": "退出这台设备上的当前工作区。",
+  "inspectorCurrent": "当前",
+  "inspectorCollaboration": "协作",
+  "inspectorKnowledge": "资料",
+  "backToConversation": "返回会话",
+  "signOutConfirmTitle": "退出登录？",
+  "signOutConfirmBody": "将退出这台设备上的当前工作区。",
+  "openInspectorTooltip": "详情",
+  "openToolsTooltip": "工具",
+  "destinationConversation": "会话",
+  "destinationKnowledge": "知识库",
+  "destinationAccounting": "会计",
+  "destinationDiagnostics": "诊断",
+  "unreadCountLabel": "{count} 条未读",
+  "showCollaborationDetails": "展开协作详情",
+  "hideCollaborationDetails": "收起协作详情",
+  "@unreadCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

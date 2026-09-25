@@ -6,11 +6,19 @@ import '../../../../shared/widgets/app_skeletons.dart';
 import '../../../bootstrap/presentation/pages/connect_server_page.dart';
 import '../../../bootstrap/presentation/providers/server_connection_controller.dart';
 import '../../../workspace/presentation/pages/workspace_home_page.dart';
+import '../../../workspace/presentation/shell/shell_destination.dart';
 import '../pages/sign_in_page.dart';
 import '../providers/auth_session_controller.dart';
 
 class SessionGate extends ConsumerWidget {
-  const SessionGate({super.key});
+  const SessionGate({
+    super.key,
+    this.initialDestination = ShellDestination.conversation,
+    this.initialWorkspaceId,
+  });
+
+  final ShellDestination initialDestination;
+  final String? initialWorkspaceId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,8 +43,12 @@ class SessionGate extends ConsumerWidget {
     }
 
     return authSession.when(
-      data: (session) =>
-          session == null ? const SignInPage() : const WorkspaceHomePage(),
+      data: (session) => session == null
+          ? const SignInPage()
+          : WorkspaceHomePage(
+              initialDestination: initialDestination,
+              initialWorkspaceId: initialWorkspaceId,
+            ),
       loading: () => const AppLoadingScaffold(),
       error: (error, _) => Scaffold(
         body: Center(child: Text(l10n.restoreSessionError(error.toString()))),
