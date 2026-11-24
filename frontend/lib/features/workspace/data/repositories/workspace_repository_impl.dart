@@ -8,6 +8,7 @@ import '../dto/knowledge_document_dto.dart';
 import '../dto/workspace_member_dto.dart';
 import '../../domain/entities/knowledge_document.dart';
 import '../../domain/entities/workspace_member.dart';
+import '../../domain/entities/workspace_member_role.dart';
 import '../dto/workspace_conversation_dto.dart';
 import '../../domain/entities/workspace_conversation.dart';
 import '../dto/workspace_summary_dto.dart';
@@ -80,6 +81,19 @@ class WorkspaceRepositoryImpl implements WorkspaceRepository {
     return response
         .map((json) => WorkspaceMemberDto.fromJson(json).toDomain())
         .toList();
+  }
+
+  @override
+  Future<WorkspaceMember> changeMemberRole({
+    required String workspaceId,
+    required String userId,
+    required WorkspaceMemberRole role,
+  }) async {
+    final response = await _restClient.putJson(
+      ApiEndpoints.workspaceMemberRole(workspaceId, userId),
+      body: {'role': role.storedValue},
+    );
+    return WorkspaceMemberDto.fromJson(response).toDomain();
   }
 
   @override

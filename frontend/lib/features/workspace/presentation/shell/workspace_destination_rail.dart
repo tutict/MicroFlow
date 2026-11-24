@@ -32,6 +32,16 @@ class WorkspaceDestinationRail extends StatelessWidget {
         label: l10n.destinationKnowledge,
       ),
       _RailItem(
+        destination: ShellDestination.tasks,
+        icon: Icons.checklist_outlined,
+        label: l10n.destinationMyWork,
+      ),
+      _RailItem(
+        destination: ShellDestination.connectors,
+        icon: Icons.hub_outlined,
+        label: l10n.destinationConnectors,
+      ),
+      _RailItem(
         destination: ShellDestination.accounting,
         icon: Icons.account_balance_outlined,
         label: l10n.destinationAccounting,
@@ -40,6 +50,11 @@ class WorkspaceDestinationRail extends StatelessWidget {
         destination: ShellDestination.diagnostics,
         icon: Icons.health_and_safety_outlined,
         label: l10n.destinationDiagnostics,
+      ),
+      _RailItem(
+        destination: ShellDestination.workspaceManagement,
+        icon: Icons.manage_accounts_outlined,
+        label: l10n.destinationWorkspaceManagement,
       ),
     ];
     return FocusTraversalOrder(

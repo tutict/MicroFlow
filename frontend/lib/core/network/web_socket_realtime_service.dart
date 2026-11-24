@@ -41,7 +41,10 @@ class WebSocketRealtimeService implements RealtimeSocketService {
       onError: _events.addError,
       onDone: () => _events.add({
         'type': 'ERROR',
-        'payload': {'message': 'WebSocket disconnected'},
+        'payload': {
+          'message': 'WebSocket disconnected',
+          'connectionState': 'DISCONNECTED',
+        },
       }),
     );
   }

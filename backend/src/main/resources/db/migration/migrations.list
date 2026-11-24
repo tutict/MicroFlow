@@ -1,0 +1,10 @@
+# Register every V<n>__<name>.sql here. Directory/JAR inventories are checked at startup.
+# Native images must include db/migration/**, including this index and all scripts.
+V1__baseline.sql
+V2__knowledge_and_workspace_management.sql
+V3__collaboration_event_history.sql
+V4__accounting_module.sql
+V5__task_workbench.sql
+V6__workspace_role_capabilities.sql
+V7__task_decision_trail.sql
+V8__agent_runtime_harness.sql

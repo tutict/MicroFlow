@@ -16,6 +16,7 @@ class MessageBubble extends StatelessWidget {
     required this.timestampLabel,
     this.knowledgeDocuments = const [],
     this.onKnowledgeCitationTap,
+    this.onCreateTask,
     this.compact = false,
   });
 
@@ -25,6 +26,10 @@ class MessageBubble extends StatelessWidget {
   final String timestampLabel;
   final List<KnowledgeDocument> knowledgeDocuments;
   final ValueChanged<String>? onKnowledgeCitationTap;
+
+  /// Turns this message into a task. Null hides the action, which is what the
+  /// diagnostics-style previews want.
+  final VoidCallback? onCreateTask;
   final bool compact;
 
   @override
@@ -101,6 +106,19 @@ class MessageBubble extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
+                if (onCreateTask != null)
+                  IconButton(
+                    key: Key('chat-message-task-${message.id}'),
+                    tooltip: l10n.chatCreateTaskTooltip,
+                    onPressed: onCreateTask,
+                    icon: const Icon(Icons.playlist_add_check_rounded, size: 18),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
               ],
             ),
             SizedBox(height: compact ? AppSpacing.xs : AppSpacing.sm),

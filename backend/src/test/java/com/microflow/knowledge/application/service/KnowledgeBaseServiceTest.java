@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.microflow.chat.infrastructure.persistence.JdbcMessageRepository;
 import com.microflow.knowledge.domain.model.KnowledgeChunk;
+import com.microflow.knowledge.domain.model.KnowledgeUpload;
 import com.microflow.knowledge.infrastructure.persistence.JdbcKnowledgeRepository;
 import com.microflow.realtime.broadcaster.RealtimeBroadcaster;
 import com.microflow.workspace.infrastructure.persistence.JdbcWorkspaceRepository;
@@ -15,7 +16,6 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockMultipartFile;
 
 class KnowledgeBaseServiceTest {
 
@@ -111,8 +111,7 @@ class KnowledgeBaseServiceTest {
                 3
         );
 
-        var file = new MockMultipartFile(
-                "file",
+        var file = new KnowledgeUpload(
                 "artifact.txt",
                 "text/plain",
                 new byte[] {1, 2, 0, 4}

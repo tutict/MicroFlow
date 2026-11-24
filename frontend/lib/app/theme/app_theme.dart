@@ -52,6 +52,7 @@ final class AppTheme {
     final base = brightness == Brightness.light
         ? FlexThemeData.light(
             useMaterial3: true,
+            fontFamily: AppTypography.family,
             colorScheme: scheme,
             surfaceMode: FlexSurfaceMode.level,
             blendLevel: 0,
@@ -60,13 +61,16 @@ final class AppTheme {
           )
         : FlexThemeData.dark(
             useMaterial3: true,
+            fontFamily: AppTypography.family,
             colorScheme: scheme,
             surfaceMode: FlexSurfaceMode.level,
             blendLevel: 0,
             subThemesData: _subThemes,
             visualDensity: VisualDensity.standard,
           );
-    final text = _textTheme(base.textTheme);
+    final text = _textTheme(
+      base.textTheme,
+    ).apply(bodyColor: palette.text, displayColor: palette.text);
     final focusBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadii.medium),
       borderSide: BorderSide(color: palette.brand, width: 2),
@@ -79,6 +83,10 @@ final class AppTheme {
       focusColor: palette.brand,
       textTheme: text,
       primaryTextTheme: text,
+      chipTheme: base.chipTheme.copyWith(
+        labelStyle: text.labelMedium,
+        secondaryLabelStyle: text.labelMedium,
+      ),
       iconTheme: IconThemeData(color: palette.text, size: 20),
       appBarTheme: AppBarTheme(
         backgroundColor: palette.background,

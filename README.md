@@ -23,6 +23,31 @@
 - 基于 SQLite 的轻量级本地持久化
 - 一键启动本地 debug 预览环境
 
+### 任务推进（工作台核心）
+
+会话解决「聊得到一起」，任务域解决「事情推得动」。两者构成个人与三三制小团队的完整工作面。
+
+- **任务与项目分组**：任务支持项目归属、负责人、优先级、截止时间和显式状态机
+- **我的工作聚合**：`GET /my-work` 跨项目汇总，按下一步动作分桶（可执行 / 受阻 / 待他人认领 / 近期完成）
+- **决策留痕**：决策不可变，推翻是新增一条并指向被推翻的记录，「当初为什么这么定」始终可回溯
+- **活动轨迹**：创建、改状态、指派、决策等动作留痕
+
+### 任务与运行权限
+
+工作区成员角色决定能力边界，而非仅作标签：
+
+| 角色 | 分工 | 能力 |
+| --- | --- | --- |
+| OWNER | 决策者 | 全部，含角色管理 |
+| MAINTAINER | 维护者 | 建项目、指派、推进任何任务 |
+| OPERATOR | 执行者 | 建任务、推进与自己相关的任务 |
+| VIEWER | 观察者 | 查看任务和运行；任务、项目、决策及连接器编辑/删除被拒绝 |
+
+任务、项目、运行和连接器端点通过 `WorkspaceAccessGuard` 校验工作区成员与相应能力。
+任务写入还要求维护权限或负责人/创建者关系；Agent 审批检查实际目标和批准者，执行前再校验。
+发起人可停止自己已经启动的运行；连接探活检查成员及共享范围。
+工作区始终保留至少一名所有者，最后一名所有者不可被降级。
+
 ## 设计取向
 
 微澜协作强调“轻量、本地、协作、可控”：
@@ -152,7 +177,7 @@ MICROFLOW_WS_BASE_URL=ws://127.0.0.1:8080/ws
 
 ```powershell
 cd backend
-..\mvnw.cmd quarkus:dev
+.\mvnw.cmd quarkus:dev
 ```
 
 默认地址：
@@ -228,4 +253,6 @@ flutter run -d chrome `
 
 - 部署文档：[DEPLOYMENT.md](DEPLOYMENT.md)
 - 前端说明：[frontend/README.md](frontend/README.md)
+- Agent Harness 与工作台设计：[docs/agent-harness-workbench.md](docs/agent-harness-workbench.md)
+- 运行时与工作台优化记录：[docs/runtime-workbench-progress.md](docs/runtime-workbench-progress.md)
 

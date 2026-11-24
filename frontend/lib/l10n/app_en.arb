@@ -167,7 +167,7 @@
   "memberYouLabel": "You",
   "todayLabel": "Today",
   "yesterdayLabel": "Yesterday",
-  "agentRunsTitle": "Agent Runs",
+  "agentRunsTitle": "Agent runs",
   "recentExecutions": "Recent executions",
   "collaborationMode": "Team mode",
   "collaborationModeHint": "Auto-route new channel messages through @team.",
@@ -339,6 +339,30 @@
   "destinationKnowledge": "Knowledge",
   "destinationAccounting": "Accounting",
   "destinationDiagnostics": "Diagnostics",
+  "destinationTasks": "Tasks",
+  "taskNewTaskHint": "What needs to move forward?",
+  "taskCreateAction": "Add",
+  "taskCreatePending": "Adding…",
+  "taskRunPending": "Starting…",
+  "taskNewProjectTitle": "New project",
+  "taskProjectNameLabel": "Project name",
+  "taskCreateProjectAction": "Create",
+  "taskMineOnlyFilter": "Assigned to me",
+  "taskAllProjectsFilter": "All projects",
+  "taskAllStatusesFilter": "All",
+  "taskEmptyState": "No tasks yet. Add the first one below.",
+  "taskUnassigned": "Unassigned",
+  "taskChangeStatusAction": "Change status",
+  "taskStatusOpen": "Open",
+  "taskStatusInProgress": "In progress",
+  "taskStatusBlocked": "Blocked",
+  "taskStatusDone": "Done",
+  "taskStatusCancelled": "Cancelled",
+  "taskSummaryTotal": "Total",
+  "taskSummaryOpen": "Open",
+  "taskSummaryInProgress": "Doing",
+  "taskSummaryBlocked": "Blocked",
+  "taskSummaryDone": "Done",
   "unreadCountLabel": "{count} unread",
   "showCollaborationDetails": "Show collaboration details",
   "hideCollaborationDetails": "Hide collaboration details",
@@ -348,5 +372,172 @@
         "type": "int"
       }
     }
-  }
+  },
+  "roleOwner": "Owner",
+  "roleMaintainer": "Maintainer",
+  "roleOperator": "Operator",
+  "roleViewer": "Viewer",
+  "workspaceRolePickerLabel": "Change member role",
+  "workspaceRoleManagerTitle": "Members and roles",
+  "inspectorContext": "Context",
+  "inspectorExecution": "Execution",
+  "agentRunsEmpty": "No agent runs yet",
+  "agentRunsRefresh": "Refresh",
+  "agentRunCancel": "Cancel run",
+  "agentRunRetry": "Retry",
+  "agentRunApprove": "Approve",
+  "agentRunReject": "Reject",
+  "agentRunRejectReason": "Reason (optional)",
+  "agentRunApprovalRequired": "Approval required",
+  "agentRunImpact": "Impact",
+  "agentRunTarget": "Target",
+  "agentRunRisk": "Risk",
+  "agentRiskReadOnly": "Read only",
+  "agentRiskInternalWrite": "Internal change",
+  "agentRiskExternalWrite": "External change",
+  "agentRiskDestructive": "Destructive",
+  "agentRiskUnknown": "Unknown risk",
+  "agentRunStepCount": "{count} steps",
+  "@agentRunStepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agentRunError": "Error: {message}",
+  "@agentRunError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRunStatusQueued": "Queued",
+  "agentRunStatusContextBuilding": "Gathering context",
+  "agentRunStatusRunning": "Running",
+  "agentRunStatusWaitingApproval": "Waiting approval",
+  "agentRunStatusSucceeded": "Completed",
+  "agentRunStatusFailed": "Failed",
+  "agentRunStatusCancelled": "Cancelled",
+  "agentRunSourcesTitle": "Context sources",
+  "agentRunArtifactsTitle": "Artifacts",
+  "agentRunsWaiting": "Waiting for approval",
+  "destinationConnectors": "Connectors",
+  "toolConnectorsDescription": "Connect mail, calendars and files on demand.",
+  "connectorsTitle": "Connectors",
+  "connectorsSubtitle": "Credentials stay private until you share them.",
+  "connectorAdd": "Add connector",
+  "connectorEdit": "Edit connector",
+  "connectorName": "Name",
+  "connectorKind": "Type",
+  "connectorHost": "Host",
+  "connectorPort": "Port",
+  "connectorBaseUrl": "Base URL",
+  "connectorUsername": "Username",
+  "connectorPassword": "Password or app password",
+  "connectorPasswordUnchanged": "Leave blank to keep the stored password",
+  "connectorRead": "Read",
+  "connectorWrite": "Write (needs approval)",
+  "connectorSharing": "Sharing",
+  "connectorSharingPrivate": "Only me",
+  "connectorSharingWorkspace": "Whole workspace",
+  "connectorSharingSelected": "Selected people",
+  "connectorSharedWith": "Shared with",
+  "connectorTest": "Test connection",
+  "connectorStatusUnverified": "Not tested",
+  "connectorStatusActive": "Verified",
+  "connectorStatusFailed": "Check failed",
+  "connectorDelete": "Delete connector",
+  "connectorDeleteConfirm": "Delete {name}? Runs will lose access immediately.",
+  "@connectorDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorEmpty": "No connectors yet",
+  "connectorEmptyHint": "Add one so an agent can read mail or write files — writes always need your approval.",
+  "connectorOwnerLabel": "Owner",
+  "connectorSharedByOther": "Shared with you",
+  "connectorSaveFailed": "Could not save: {error}",
+  "@connectorSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorTestFailed": "Could not test: {error}",
+  "@connectorTestFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorSecretsSet": "Stored: {fields}",
+  "@connectorSecretsSet": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorNoSecrets": "No credentials stored",
+  "connectorNoMembers": "No other members",
+  "save": "Save",
+  "connectorFieldRequired": "This field is required",
+  "retryLabel": "Retry",
+  "agentRunEventsTitle": "Execution trail",
+  "taskRunAgentAction": "Run agent",
+  "taskRunQueued": "Run queued for this task",
+  "toolAgentRunsDescription": "See what the agents are doing and what needs approval.",
+  "destinationMyWork": "My work",
+  "myWorkSubtitle": "What needs you now, and what is waiting on someone else.",
+  "myWorkScopeMine": "For me",
+  "myWorkScopeAll": "All tasks",
+  "myWorkLaneActionable": "To do",
+  "myWorkLaneBlocked": "Blocked",
+  "myWorkLaneAwaitingOthers": "Waiting on others",
+  "myWorkLaneRecentlyDone": "Recently done",
+  "myWorkEmptyTitle": "Nothing is waiting on you",
+  "myWorkEmptyDescription": "Assignments land here. Browse all tasks to pick something up.",
+  "myWorkLaneEmpty": "Nothing in this lane.",
+  "myWorkErrorTitle": "My work could not load",
+  "myWorkDueOn": "Due {date}",
+  "@myWorkDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "myWorkOverdue": "Overdue",
+  "myWorkRunTooltip": "Open the agent run for this task",
+  "chatCreateTaskTooltip": "Turn into a task",
+  "taskFromMessageTitle": "New task from this message",
+  "taskFromMessageTitleLabel": "Task title",
+  "taskFromMessageCreated": "Added to my work",
+  "myWorkLaneRunning": "Running",
+  "myWorkLaneWaitingApproval": "To review",
+  "agentRunsOfflineStatus": "Live updates disconnected. Checking active runs.",
+  "agentRunDetailTitle": "Run details",
+  "agentRunStepsTitle": "Steps",
+  "agentRunStepsEmpty": "No steps yet",
+  "agentRunModelStep": "Agent @{agentKey}",
+  "@agentRunModelStep": {"placeholders": {"agentKey": {"type": "String"}}},
+  "agentRunStepRejected": "Rejected",
+  "agentRunEventApproved": "Action approved",
+  "agentRunEventRejected": "Action rejected",
+  "agentRunEventModelStarted": "Agent started a turn",
+  "agentRunEventModelCompleted": "Agent completed a turn",
+  "agentRunEventToolStarted": "Action started",
+  "agentRunEventToolCompleted": "Action completed",
+  "agentRunEventArtifactCreated": "Artifact saved",
+  "agentRunEventUpdated": "Run updated",
+  "workspaceManagementTitle": "Workspace management",
+  "destinationWorkspaceManagement": "Manage",
+  "toolWorkspaceManagementDescription": "Review members and manage their roles."
 }

@@ -8,8 +8,12 @@ class WorkspaceToolsList extends StatelessWidget {
     super.key,
     required this.hasWorkspace,
     required this.onKnowledge,
+    this.onMyWork,
+    required this.onConnectors,
+    required this.onAgentRuns,
     required this.onAccounting,
     required this.onDiagnostics,
+    required this.onWorkspaceManagement,
     required this.onUseLight,
     required this.onUseDark,
     required this.onUseChinese,
@@ -21,8 +25,12 @@ class WorkspaceToolsList extends StatelessWidget {
 
   final bool hasWorkspace;
   final VoidCallback? onKnowledge;
+  final VoidCallback? onMyWork;
+  final VoidCallback? onConnectors;
+  final VoidCallback? onAgentRuns;
   final VoidCallback? onAccounting;
   final VoidCallback? onDiagnostics;
+  final VoidCallback? onWorkspaceManagement;
   final VoidCallback onUseLight;
   final VoidCallback onUseDark;
   final VoidCallback onUseChinese;
@@ -42,10 +50,30 @@ class WorkspaceToolsList extends StatelessWidget {
         Text(l10n.toolsTitle, style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         _ToolTile(
+          key: const Key('tool-my-work'),
+          icon: Icons.checklist_outlined,
+          title: l10n.destinationMyWork,
+          description: l10n.myWorkSubtitle,
+          onTap: hasWorkspace ? onMyWork : null,
+        ),
+        _ToolTile(
           icon: Icons.library_books_outlined,
           title: l10n.destinationKnowledge,
           description: l10n.toolKnowledgeDescription,
           onTap: hasWorkspace ? onKnowledge : null,
+        ),
+        _ToolTile(
+          key: const Key('tool-agent-runs'),
+          icon: Icons.play_circle_outline,
+          title: l10n.agentRunsTitle,
+          description: l10n.toolAgentRunsDescription,
+          onTap: hasWorkspace ? onAgentRuns : null,
+        ),
+        _ToolTile(
+          icon: Icons.hub_outlined,
+          title: l10n.destinationConnectors,
+          description: l10n.toolConnectorsDescription,
+          onTap: hasWorkspace ? onConnectors : null,
         ),
         _ToolTile(
           icon: Icons.account_balance_outlined,
@@ -58,6 +86,13 @@ class WorkspaceToolsList extends StatelessWidget {
           title: l10n.destinationDiagnostics,
           description: l10n.toolDiagnosticsDescription,
           onTap: hasWorkspace ? onDiagnostics : null,
+        ),
+        _ToolTile(
+          key: const Key('tool-workspace-management'),
+          icon: Icons.manage_accounts_outlined,
+          title: l10n.workspaceManagementTitle,
+          description: l10n.toolWorkspaceManagementDescription,
+          onTap: hasWorkspace ? onWorkspaceManagement : null,
         ),
         _ToolTile(
           icon: Icons.light_mode_outlined,
@@ -101,6 +136,7 @@ class WorkspaceToolsList extends StatelessWidget {
 
 class _ToolTile extends StatelessWidget {
   const _ToolTile({
+    super.key,
     required this.icon,
     required this.title,
     required this.description,

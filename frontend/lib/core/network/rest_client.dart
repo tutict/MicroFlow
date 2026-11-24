@@ -105,8 +105,22 @@ final class RestClient {
     return _decodeMap(response);
   }
 
-  Future<Map<String, Object?>> postMultipart(
-    String path, {
+  /// Deletes a resource. The server answers 204 with no body, so this returns
+  /// nothing instead of trying to decode an empty payload as JSON.
+  Future<void> delete(String path, {bool authenticated = true}) async {
+    final response = await _send(
+      () async => http.delete(
+        await buildUrl(path),
+        headers: await _headers(authenticated: authenticated),
+      ),
+    );
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
+    }
+    throw AppException(_errorMessage(response, _decodePayload(response)));
+  }
+
+  Future<Map<String, Object?>> postMultipart(    String path, {
     required String fileField,
     required String fileName,
     required Uint8List fileBytes,

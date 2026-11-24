@@ -617,7 +617,7 @@ abstract class AppLocalizations {
   /// No description provided for @agentRunsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Agent Runs'**
+  /// **'Agent runs'**
   String get agentRunsTitle;
 
   /// No description provided for @recentExecutions.
@@ -1016,30 +1016,995 @@ abstract class AppLocalizations {
   /// **'Scoped'**
   String get scopedScopeLabel;
 
+  /// No description provided for @indexTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Index'**
   String get indexTab;
+
+  /// No description provided for @toolsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
   String get toolsTab;
+
+  /// No description provided for @toolsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
   String get toolsTitle;
+
+  /// No description provided for @toolKnowledgeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Open documents for this workspace.'**
   String get toolKnowledgeDescription;
+
+  /// No description provided for @toolAccountingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review accounts, vouchers, and the trial balance.'**
   String get toolAccountingDescription;
+
+  /// No description provided for @toolDiagnosticsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Check agent health and role strategy.'**
   String get toolDiagnosticsDescription;
+
+  /// No description provided for @toolAppearanceDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch between light and dark.'**
   String get toolAppearanceDescription;
+
+  /// No description provided for @toolLanguageDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Chinese or English.'**
   String get toolLanguageDescription;
+
+  /// No description provided for @toolSignOutDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave this workspace on this device.'**
   String get toolSignOutDescription;
+
+  /// No description provided for @inspectorCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Current'**
   String get inspectorCurrent;
+
+  /// No description provided for @inspectorCollaboration.
+  ///
+  /// In en, this message translates to:
+  /// **'Collaboration'**
   String get inspectorCollaboration;
+
+  /// No description provided for @inspectorKnowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
   String get inspectorKnowledge;
+
+  /// No description provided for @backToConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to conversation'**
   String get backToConversation;
+
+  /// No description provided for @signOutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out?'**
   String get signOutConfirmTitle;
+
+  /// No description provided for @signOutConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You will leave this workspace on this device.'**
   String get signOutConfirmBody;
+
+  /// No description provided for @openInspectorTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
   String get openInspectorTooltip;
+
+  /// No description provided for @openToolsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools'**
   String get openToolsTooltip;
+
+  /// No description provided for @destinationConversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
   String get destinationConversation;
+
+  /// No description provided for @destinationKnowledge.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge'**
   String get destinationKnowledge;
+
+  /// No description provided for @destinationAccounting.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounting'**
   String get destinationAccounting;
+
+  /// No description provided for @destinationDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
   String get destinationDiagnostics;
-  String get showCollaborationDetails;
-  String get hideCollaborationDetails;
+
+  /// No description provided for @destinationTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get destinationTasks;
+
+  /// No description provided for @taskNewTaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What needs to move forward?'**
+  String get taskNewTaskHint;
+
+  /// No description provided for @taskCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get taskCreateAction;
+
+  /// No description provided for @taskCreatePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding…'**
+  String get taskCreatePending;
+
+  /// No description provided for @taskRunPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting…'**
+  String get taskRunPending;
+
+  /// No description provided for @taskNewProjectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New project'**
+  String get taskNewProjectTitle;
+
+  /// No description provided for @taskProjectNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Project name'**
+  String get taskProjectNameLabel;
+
+  /// No description provided for @taskCreateProjectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get taskCreateProjectAction;
+
+  /// No description provided for @taskMineOnlyFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned to me'**
+  String get taskMineOnlyFilter;
+
+  /// No description provided for @taskAllProjectsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'All projects'**
+  String get taskAllProjectsFilter;
+
+  /// No description provided for @taskAllStatusesFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get taskAllStatusesFilter;
+
+  /// No description provided for @taskEmptyState.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks yet. Add the first one below.'**
+  String get taskEmptyState;
+
+  /// No description provided for @taskUnassigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassigned'**
+  String get taskUnassigned;
+
+  /// No description provided for @taskChangeStatusAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Change status'**
+  String get taskChangeStatusAction;
+
+  /// No description provided for @taskStatusOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get taskStatusOpen;
+
+  /// No description provided for @taskStatusInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get taskStatusInProgress;
+
+  /// No description provided for @taskStatusBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get taskStatusBlocked;
+
+  /// No description provided for @taskStatusDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get taskStatusDone;
+
+  /// No description provided for @taskStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get taskStatusCancelled;
+
+  /// No description provided for @taskSummaryTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get taskSummaryTotal;
+
+  /// No description provided for @taskSummaryOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get taskSummaryOpen;
+
+  /// No description provided for @taskSummaryInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Doing'**
+  String get taskSummaryInProgress;
+
+  /// No description provided for @taskSummaryBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get taskSummaryBlocked;
+
+  /// No description provided for @taskSummaryDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get taskSummaryDone;
+
+  /// No description provided for @unreadCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
   String unreadCountLabel(int count);
+
+  /// No description provided for @showCollaborationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Show collaboration details'**
+  String get showCollaborationDetails;
+
+  /// No description provided for @hideCollaborationDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide collaboration details'**
+  String get hideCollaborationDetails;
+
+  /// No description provided for @roleOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get roleOwner;
+
+  /// No description provided for @roleMaintainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintainer'**
+  String get roleMaintainer;
+
+  /// No description provided for @roleOperator.
+  ///
+  /// In en, this message translates to:
+  /// **'Operator'**
+  String get roleOperator;
+
+  /// No description provided for @roleViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Viewer'**
+  String get roleViewer;
+
+  /// No description provided for @workspaceRolePickerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Change member role'**
+  String get workspaceRolePickerLabel;
+
+  /// No description provided for @workspaceRoleManagerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Members and roles'**
+  String get workspaceRoleManagerTitle;
+
+  /// No description provided for @inspectorContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Context'**
+  String get inspectorContext;
+
+  /// No description provided for @inspectorExecution.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution'**
+  String get inspectorExecution;
+
+  /// No description provided for @agentRunsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No agent runs yet'**
+  String get agentRunsEmpty;
+
+  /// No description provided for @agentRunsRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get agentRunsRefresh;
+
+  /// No description provided for @agentRunCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel run'**
+  String get agentRunCancel;
+
+  /// No description provided for @agentRunRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get agentRunRetry;
+
+  /// No description provided for @agentRunApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get agentRunApprove;
+
+  /// No description provided for @agentRunReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get agentRunReject;
+
+  /// No description provided for @agentRunRejectReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason (optional)'**
+  String get agentRunRejectReason;
+
+  /// No description provided for @agentRunApprovalRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Approval required'**
+  String get agentRunApprovalRequired;
+
+  /// No description provided for @agentRunImpact.
+  ///
+  /// In en, this message translates to:
+  /// **'Impact'**
+  String get agentRunImpact;
+
+  /// No description provided for @agentRunTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get agentRunTarget;
+
+  /// No description provided for @agentRunRisk.
+  ///
+  /// In en, this message translates to:
+  /// **'Risk'**
+  String get agentRunRisk;
+
+  /// No description provided for @agentRiskReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get agentRiskReadOnly;
+
+  /// No description provided for @agentRiskInternalWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal change'**
+  String get agentRiskInternalWrite;
+
+  /// No description provided for @agentRiskExternalWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'External change'**
+  String get agentRiskExternalWrite;
+
+  /// No description provided for @agentRiskDestructive.
+  ///
+  /// In en, this message translates to:
+  /// **'Destructive'**
+  String get agentRiskDestructive;
+
+  /// No description provided for @agentRiskUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown risk'**
+  String get agentRiskUnknown;
+
+  /// No description provided for @agentRunStepCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} steps'**
+  String agentRunStepCount(int count);
+
+  /// No description provided for @agentRunError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String agentRunError(String message);
+
+  /// No description provided for @agentRunStatusQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Queued'**
+  String get agentRunStatusQueued;
+
+  /// No description provided for @agentRunStatusContextBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Gathering context'**
+  String get agentRunStatusContextBuilding;
+
+  /// No description provided for @agentRunStatusRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get agentRunStatusRunning;
+
+  /// No description provided for @agentRunStatusWaitingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting approval'**
+  String get agentRunStatusWaitingApproval;
+
+  /// No description provided for @agentRunStatusSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get agentRunStatusSucceeded;
+
+  /// No description provided for @agentRunStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get agentRunStatusFailed;
+
+  /// No description provided for @agentRunStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get agentRunStatusCancelled;
+
+  /// No description provided for @agentRunSourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Context sources'**
+  String get agentRunSourcesTitle;
+
+  /// No description provided for @agentRunArtifactsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Artifacts'**
+  String get agentRunArtifactsTitle;
+
+  /// No description provided for @agentRunsWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for approval'**
+  String get agentRunsWaiting;
+
+  /// No description provided for @destinationConnectors.
+  ///
+  /// In en, this message translates to:
+  /// **'Connectors'**
+  String get destinationConnectors;
+
+  /// No description provided for @toolConnectorsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect mail, calendars and files on demand.'**
+  String get toolConnectorsDescription;
+
+  /// No description provided for @connectorsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connectors'**
+  String get connectorsTitle;
+
+  /// No description provided for @connectorsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Credentials stay private until you share them.'**
+  String get connectorsSubtitle;
+
+  /// No description provided for @connectorAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add connector'**
+  String get connectorAdd;
+
+  /// No description provided for @connectorEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit connector'**
+  String get connectorEdit;
+
+  /// No description provided for @connectorName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get connectorName;
+
+  /// No description provided for @connectorKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get connectorKind;
+
+  /// No description provided for @connectorHost.
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get connectorHost;
+
+  /// No description provided for @connectorPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get connectorPort;
+
+  /// No description provided for @connectorBaseUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get connectorBaseUrl;
+
+  /// No description provided for @connectorUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get connectorUsername;
+
+  /// No description provided for @connectorPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password or app password'**
+  String get connectorPassword;
+
+  /// No description provided for @connectorPasswordUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to keep the stored password'**
+  String get connectorPasswordUnchanged;
+
+  /// No description provided for @connectorRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get connectorRead;
+
+  /// No description provided for @connectorWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Write (needs approval)'**
+  String get connectorWrite;
+
+  /// No description provided for @connectorSharing.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharing'**
+  String get connectorSharing;
+
+  /// No description provided for @connectorSharingPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Only me'**
+  String get connectorSharingPrivate;
+
+  /// No description provided for @connectorSharingWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole workspace'**
+  String get connectorSharingWorkspace;
+
+  /// No description provided for @connectorSharingSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected people'**
+  String get connectorSharingSelected;
+
+  /// No description provided for @connectorSharedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with'**
+  String get connectorSharedWith;
+
+  /// No description provided for @connectorTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get connectorTest;
+
+  /// No description provided for @connectorStatusUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not tested'**
+  String get connectorStatusUnverified;
+
+  /// No description provided for @connectorStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get connectorStatusActive;
+
+  /// No description provided for @connectorStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Check failed'**
+  String get connectorStatusFailed;
+
+  /// No description provided for @connectorDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete connector'**
+  String get connectorDelete;
+
+  /// No description provided for @connectorDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}? Runs will lose access immediately.'**
+  String connectorDeleteConfirm(String name);
+
+  /// No description provided for @connectorEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No connectors yet'**
+  String get connectorEmpty;
+
+  /// No description provided for @connectorEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add one so an agent can read mail or write files — writes always need your approval.'**
+  String get connectorEmptyHint;
+
+  /// No description provided for @connectorOwnerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get connectorOwnerLabel;
+
+  /// No description provided for @connectorSharedByOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared with you'**
+  String get connectorSharedByOther;
+
+  /// No description provided for @connectorSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save: {error}'**
+  String connectorSaveFailed(String error);
+
+  /// No description provided for @connectorTestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not test: {error}'**
+  String connectorTestFailed(String error);
+
+  /// No description provided for @connectorSecretsSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored: {fields}'**
+  String connectorSecretsSet(String fields);
+
+  /// No description provided for @connectorNoSecrets.
+  ///
+  /// In en, this message translates to:
+  /// **'No credentials stored'**
+  String get connectorNoSecrets;
+
+  /// No description provided for @connectorNoMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'No other members'**
+  String get connectorNoMembers;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @connectorFieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get connectorFieldRequired;
+
+  /// No description provided for @retryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryLabel;
+
+  /// No description provided for @agentRunEventsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution trail'**
+  String get agentRunEventsTitle;
+
+  /// No description provided for @taskRunAgentAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Run agent'**
+  String get taskRunAgentAction;
+
+  /// No description provided for @taskRunQueued.
+  ///
+  /// In en, this message translates to:
+  /// **'Run queued for this task'**
+  String get taskRunQueued;
+
+  /// No description provided for @toolAgentRunsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'See what the agents are doing and what needs approval.'**
+  String get toolAgentRunsDescription;
+
+  /// No description provided for @destinationMyWork.
+  ///
+  /// In en, this message translates to:
+  /// **'My work'**
+  String get destinationMyWork;
+
+  /// No description provided for @myWorkSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What needs you now, and what is waiting on someone else.'**
+  String get myWorkSubtitle;
+
+  /// No description provided for @myWorkScopeMine.
+  ///
+  /// In en, this message translates to:
+  /// **'For me'**
+  String get myWorkScopeMine;
+
+  /// No description provided for @myWorkScopeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All tasks'**
+  String get myWorkScopeAll;
+
+  /// No description provided for @myWorkLaneActionable.
+  ///
+  /// In en, this message translates to:
+  /// **'To do'**
+  String get myWorkLaneActionable;
+
+  /// No description provided for @myWorkLaneBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked'**
+  String get myWorkLaneBlocked;
+
+  /// No description provided for @myWorkLaneAwaitingOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting on others'**
+  String get myWorkLaneAwaitingOthers;
+
+  /// No description provided for @myWorkLaneRecentlyDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently done'**
+  String get myWorkLaneRecentlyDone;
+
+  /// No description provided for @myWorkEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting on you'**
+  String get myWorkEmptyTitle;
+
+  /// No description provided for @myWorkEmptyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Assignments land here. Browse all tasks to pick something up.'**
+  String get myWorkEmptyDescription;
+
+  /// No description provided for @myWorkLaneEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing in this lane.'**
+  String get myWorkLaneEmpty;
+
+  /// No description provided for @myWorkErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My work could not load'**
+  String get myWorkErrorTitle;
+
+  /// No description provided for @myWorkDueOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String myWorkDueOn(String date);
+
+  /// No description provided for @myWorkOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get myWorkOverdue;
+
+  /// No description provided for @myWorkRunTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the agent run for this task'**
+  String get myWorkRunTooltip;
+
+  /// No description provided for @chatCreateTaskTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn into a task'**
+  String get chatCreateTaskTooltip;
+
+  /// No description provided for @taskFromMessageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New task from this message'**
+  String get taskFromMessageTitle;
+
+  /// No description provided for @taskFromMessageTitleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Task title'**
+  String get taskFromMessageTitleLabel;
+
+  /// No description provided for @taskFromMessageCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to my work'**
+  String get taskFromMessageCreated;
+
+  /// No description provided for @myWorkLaneRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get myWorkLaneRunning;
+
+  /// No description provided for @myWorkLaneWaitingApproval.
+  ///
+  /// In en, this message translates to:
+  /// **'To review'**
+  String get myWorkLaneWaitingApproval;
+
+  /// No description provided for @agentRunsOfflineStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Live updates disconnected. Checking active runs.'**
+  String get agentRunsOfflineStatus;
+
+  /// No description provided for @agentRunDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Run details'**
+  String get agentRunDetailTitle;
+
+  /// No description provided for @agentRunStepsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get agentRunStepsTitle;
+
+  /// No description provided for @agentRunStepsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No steps yet'**
+  String get agentRunStepsEmpty;
+
+  /// No description provided for @agentRunModelStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent @{agentKey}'**
+  String agentRunModelStep(String agentKey);
+
+  /// No description provided for @agentRunStepRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get agentRunStepRejected;
+
+  /// No description provided for @agentRunEventApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Action approved'**
+  String get agentRunEventApproved;
+
+  /// No description provided for @agentRunEventRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Action rejected'**
+  String get agentRunEventRejected;
+
+  /// No description provided for @agentRunEventModelStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent started a turn'**
+  String get agentRunEventModelStarted;
+
+  /// No description provided for @agentRunEventModelCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent completed a turn'**
+  String get agentRunEventModelCompleted;
+
+  /// No description provided for @agentRunEventToolStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Action started'**
+  String get agentRunEventToolStarted;
+
+  /// No description provided for @agentRunEventToolCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Action completed'**
+  String get agentRunEventToolCompleted;
+
+  /// No description provided for @agentRunEventArtifactCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Artifact saved'**
+  String get agentRunEventArtifactCreated;
+
+  /// No description provided for @agentRunEventUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Run updated'**
+  String get agentRunEventUpdated;
+
+  /// No description provided for @workspaceManagementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace management'**
+  String get workspaceManagementTitle;
+
+  /// No description provided for @destinationWorkspaceManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get destinationWorkspaceManagement;
+
+  /// No description provided for @toolWorkspaceManagementDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Review members and manage their roles.'**
+  String get toolWorkspaceManagementDescription;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,9 @@
 quarkus:
   application:
     name: microflow
+  native:
+    resources:
+      includes: db/migration/**
   http:
     port: 8080
     limits:
@@ -8,7 +11,7 @@ quarkus:
     cors:
       enabled: true
       origins: ${MICROFLOW_HTTP_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*,https://localhost:*,https://127.0.0.1:*}
-      methods: GET,POST,PUT,OPTIONS
+      methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
       headers: "*"
   jackson:
     serialization-inclusion: non-null
@@ -21,9 +24,14 @@ microflow:
   agent:
     poll-interval: PT3S
     mock-delay: PT0.6S
+    # Empty plan by default: the mock provider then just answers with text.
+    # Kept non-empty here because SmallRye treats "" as a missing String value.
+    mock-plan: '{"turns":[]}'
     config-path: ${MICROFLOW_AGENT_CONFIG_PATH:./data/agents.json}
     openclaw-agent-keys: ${OPENCLAW_AGENT_KEYS:assistant,reviewer}
     fallback-mock-enabled: true
+    runtime:
+      max-steps: ${MICROFLOW_AGENT_MAX_STEPS:8}
   bootstrap:
     instance-name: ${MICROFLOW_INSTANCE_NAME:microflow}
     pairing:

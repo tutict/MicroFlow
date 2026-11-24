@@ -167,7 +167,7 @@
   "memberYouLabel": "你",
   "todayLabel": "今天",
   "yesterdayLabel": "昨天",
-  "agentRunsTitle": "智能体运行",
+  "agentRunsTitle": "Agent 运行",
   "recentExecutions": "最近执行",
   "collaborationMode": "团队模式",
   "collaborationModeHint": "将新的频道消息自动通过 @team 路由给多 Agent 协作。",
@@ -339,6 +339,30 @@
   "destinationKnowledge": "知识库",
   "destinationAccounting": "会计",
   "destinationDiagnostics": "诊断",
+  "destinationTasks": "任务",
+  "taskNewTaskHint": "要推进的事情是什么？",
+  "taskCreateAction": "添加",
+  "taskCreatePending": "正在添加…",
+  "taskRunPending": "正在启动…",
+  "taskNewProjectTitle": "新建项目",
+  "taskProjectNameLabel": "项目名称",
+  "taskCreateProjectAction": "创建",
+  "taskMineOnlyFilter": "只看指派给我",
+  "taskAllProjectsFilter": "全部项目",
+  "taskAllStatusesFilter": "全部",
+  "taskEmptyState": "还没有任务，在下方添加第一条。",
+  "taskUnassigned": "未指派",
+  "taskChangeStatusAction": "变更状态",
+  "taskStatusOpen": "待处理",
+  "taskStatusInProgress": "进行中",
+  "taskStatusBlocked": "受阻",
+  "taskStatusDone": "已完成",
+  "taskStatusCancelled": "已取消",
+  "taskSummaryTotal": "总计",
+  "taskSummaryOpen": "待处理",
+  "taskSummaryInProgress": "进行中",
+  "taskSummaryBlocked": "受阻",
+  "taskSummaryDone": "已完成",
   "unreadCountLabel": "{count} 条未读",
   "showCollaborationDetails": "展开协作详情",
   "hideCollaborationDetails": "收起协作详情",
@@ -348,5 +372,172 @@
         "type": "int"
       }
     }
-  }
+  },
+  "roleOwner": "所有者",
+  "roleMaintainer": "维护者",
+  "roleOperator": "执行者",
+  "roleViewer": "观察者",
+  "workspaceRolePickerLabel": "变更成员角色",
+  "workspaceRoleManagerTitle": "成员与角色",
+  "inspectorContext": "上下文",
+  "inspectorExecution": "执行",
+  "agentRunsEmpty": "还没有 Agent 运行",
+  "agentRunsRefresh": "刷新",
+  "agentRunCancel": "取消运行",
+  "agentRunRetry": "重试",
+  "agentRunApprove": "批准",
+  "agentRunReject": "拒绝",
+  "agentRunRejectReason": "原因（可选）",
+  "agentRunApprovalRequired": "需要审批",
+  "agentRunImpact": "影响",
+  "agentRunTarget": "目标",
+  "agentRunRisk": "风险",
+  "agentRiskReadOnly": "只读",
+  "agentRiskInternalWrite": "内部修改",
+  "agentRiskExternalWrite": "外部修改",
+  "agentRiskDestructive": "破坏性操作",
+  "agentRiskUnknown": "未知风险",
+  "agentRunStepCount": "{count} 步",
+  "@agentRunStepCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "agentRunError": "错误：{message}",
+  "@agentRunError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "agentRunStatusQueued": "排队中",
+  "agentRunStatusContextBuilding": "整理上下文",
+  "agentRunStatusRunning": "执行中",
+  "agentRunStatusWaitingApproval": "等待审批",
+  "agentRunStatusSucceeded": "已完成",
+  "agentRunStatusFailed": "失败",
+  "agentRunStatusCancelled": "已取消",
+  "agentRunSourcesTitle": "上下文来源",
+  "agentRunArtifactsTitle": "产物",
+  "agentRunsWaiting": "等待审批",
+  "destinationConnectors": "连接器",
+  "toolConnectorsDescription": "按需连接邮件、日历与文件。",
+  "connectorsTitle": "连接器",
+  "connectorsSubtitle": "凭据默认私有，共享需要显式开启。",
+  "connectorAdd": "添加连接器",
+  "connectorEdit": "编辑连接器",
+  "connectorName": "名称",
+  "connectorKind": "类型",
+  "connectorHost": "主机",
+  "connectorPort": "端口",
+  "connectorBaseUrl": "基础地址",
+  "connectorUsername": "用户名",
+  "connectorPassword": "密码或应用专用密码",
+  "connectorPasswordUnchanged": "留空则保留已保存的密码",
+  "connectorRead": "读取",
+  "connectorWrite": "写入（需审批）",
+  "connectorSharing": "共享范围",
+  "connectorSharingPrivate": "仅自己",
+  "connectorSharingWorkspace": "整个工作区",
+  "connectorSharingSelected": "指定成员",
+  "connectorSharedWith": "共享给",
+  "connectorTest": "测试连接",
+  "connectorStatusUnverified": "未测试",
+  "connectorStatusActive": "已验证",
+  "connectorStatusFailed": "检查失败",
+  "connectorDelete": "删除连接器",
+  "connectorDeleteConfirm": "删除 {name}？运行会立即失去访问权限。",
+  "@connectorDeleteConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorEmpty": "还没有连接器",
+  "connectorEmptyHint": "添加后 Agent 可读取邮件或写入文件，写入始终需要你审批。",
+  "connectorOwnerLabel": "所有者",
+  "connectorSharedByOther": "他人共享给你",
+  "connectorSaveFailed": "保存失败：{error}",
+  "@connectorSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorTestFailed": "测试失败：{error}",
+  "@connectorTestFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorSecretsSet": "已保存：{fields}",
+  "@connectorSecretsSet": {
+    "placeholders": {
+      "fields": {
+        "type": "String"
+      }
+    }
+  },
+  "connectorNoSecrets": "未保存凭据",
+  "connectorNoMembers": "没有其他成员",
+  "save": "保存",
+  "connectorFieldRequired": "该项必填",
+  "retryLabel": "重试",
+  "agentRunEventsTitle": "执行记录",
+  "taskRunAgentAction": "交给 Agent",
+  "taskRunQueued": "已为该任务排队一次运行",
+  "toolAgentRunsDescription": "查看 Agent 正在做什么、哪些操作等待审批。",
+  "destinationMyWork": "我的工作",
+  "myWorkSubtitle": "现在需要你处理的，和还在等别人的。",
+  "myWorkScopeMine": "我的",
+  "myWorkScopeAll": "全部任务",
+  "myWorkLaneActionable": "待处理",
+  "myWorkLaneBlocked": "受阻",
+  "myWorkLaneAwaitingOthers": "等待他人",
+  "myWorkLaneRecentlyDone": "最近完成",
+  "myWorkEmptyTitle": "手上没有待办",
+  "myWorkEmptyDescription": "分配给你的任务会出现在这里，也可以去全部任务里挑一件。",
+  "myWorkLaneEmpty": "这一栏是空的。",
+  "myWorkErrorTitle": "我的工作加载失败",
+  "myWorkDueOn": "截止 {date}",
+  "@myWorkDueOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "myWorkOverdue": "已逾期",
+  "myWorkRunTooltip": "打开该任务的运行",
+  "chatCreateTaskTooltip": "转为任务",
+  "taskFromMessageTitle": "用这条消息新建任务",
+  "taskFromMessageTitleLabel": "任务标题",
+  "taskFromMessageCreated": "已加入我的工作",
+  "myWorkLaneRunning": "运行中",
+  "myWorkLaneWaitingApproval": "待审批",
+  "agentRunsOfflineStatus": "实时连接已断开，正在查询活跃运行。",
+  "agentRunDetailTitle": "运行详情",
+  "agentRunStepsTitle": "执行步骤",
+  "agentRunStepsEmpty": "暂无执行步骤",
+  "agentRunModelStep": "Agent @{agentKey}",
+  "@agentRunModelStep": {"placeholders": {"agentKey": {"type": "String"}}},
+  "agentRunStepRejected": "已拒绝",
+  "agentRunEventApproved": "动作已批准",
+  "agentRunEventRejected": "动作已拒绝",
+  "agentRunEventModelStarted": "Agent 开始处理",
+  "agentRunEventModelCompleted": "Agent 完成本轮处理",
+  "agentRunEventToolStarted": "动作开始执行",
+  "agentRunEventToolCompleted": "动作执行完成",
+  "agentRunEventArtifactCreated": "产物已保存",
+  "agentRunEventUpdated": "运行已更新",
+  "workspaceManagementTitle": "工作区管理",
+  "destinationWorkspaceManagement": "管理",
+  "toolWorkspaceManagementDescription": "查看工作区成员并管理角色。"
 }

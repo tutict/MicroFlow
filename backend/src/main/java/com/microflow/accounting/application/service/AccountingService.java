@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.dao.DuplicateKeyException;
+import com.microflow.common.jdbc.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 @Service

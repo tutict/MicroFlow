@@ -9,6 +9,10 @@ import 'package:microflow_frontend/features/agents/domain/entities/agent_diagnos
 import 'package:microflow_frontend/features/agents/domain/entities/agent_descriptor.dart';
 import 'package:microflow_frontend/features/agents/domain/entities/agent_run.dart';
 import 'package:microflow_frontend/features/agents/domain/repositories/agent_repository.dart';
+import 'package:microflow_frontend/features/agent_runtime/domain/entities/agent_run.dart'
+    as runtime;
+import 'package:microflow_frontend/features/agent_runtime/domain/entities/agent_run_event.dart';
+import 'package:microflow_frontend/features/agent_runtime/presentation/providers/agent_runtime_providers.dart';
 import 'package:microflow_frontend/features/auth/domain/entities/auth_session.dart';
 import 'package:microflow_frontend/features/auth/domain/repositories/auth_repository.dart';
 import 'package:microflow_frontend/features/chat/domain/entities/channel_summary.dart';
@@ -16,15 +20,339 @@ import 'package:microflow_frontend/features/chat/domain/entities/chat_message.da
 import 'package:microflow_frontend/features/chat/domain/entities/collaboration_event.dart';
 import 'package:microflow_frontend/features/chat/domain/entities/collaboration_run.dart';
 import 'package:microflow_frontend/features/chat/domain/repositories/chat_repository.dart';
+import 'package:microflow_frontend/features/chat/presentation/state/chat_connection_status.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/workspace_conversation.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/knowledge_document.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/workspace_member.dart';
+import 'package:microflow_frontend/features/workspace/domain/entities/workspace_member_role.dart';
 import 'package:microflow_frontend/features/workspace/domain/entities/workspace_summary.dart';
 import 'package:microflow_frontend/features/workspace/domain/repositories/workspace_repository.dart';
 import 'package:microflow_frontend/features/workspace/presentation/providers/workspace_shell_controller.dart';
 import 'package:microflow_frontend/features/workspace/presentation/state/workspace_selected_conversation.dart';
 
+import 'support/recording_runtime_repository.dart';
+
 void main() {
+  test(
+    'history catch-up applies a newer snapshot before suppressing its socket event',
+    () async {
+      final repository = RecordingRuntimeRepository(
+        runs: [testRun(status: runtime.AgentRunStatus.running)],
+      );
+      repository.events['run_1'] = [_historyEvent(1)];
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(repository, socket);
+      const query = (workspaceId: 'ws_1', taskId: null);
+      container.listen(agentRunsProvider(query), (_, _) {});
+      container.listen(agentRunEventsProvider('run_1'), (_, _) {});
+      await container.read(agentRunsProvider(query).future);
+      await container.read(agentRunEventsProvider('run_1').future);
+      await _connectRuntime(container);
+      final completed = testRun(
+        status: runtime.AgentRunStatus.succeeded,
+        updatedAt: '2026-11-23T10:00:05Z',
+      );
+      final latestPayload =
+          _runtimeEvent(5, 'RUN_SUCCEEDED', completed)['payload']
+              as Map<String, Object?>;
+      repository.events['run_1'] = [
+        _historyEvent(1),
+        _historyEvent(2),
+        _historyEvent(3),
+        _historyEvent(4),
+        AgentRunEvent(
+          id: 'event_5',
+          seq: 5,
+          type: 'RUN_SUCCEEDED',
+          payload: latestPayload,
+        ),
+      ];
+      socket.emit(
+        _runtimeEvent(
+          3,
+          'RUN_WAITING_APPROVAL',
+          testRun(
+            status: runtime.AgentRunStatus.waitingApproval,
+            updatedAt: '2026-11-23T10:00:03Z',
+          ),
+        ),
+      );
+      await _flushRuntime();
+      expect(
+        container.read(agentRunsProvider(query)).value?.single.status,
+        runtime.AgentRunStatus.succeeded,
+      );
+      socket.emit(_runtimeEvent(5, 'RUN_SUCCEEDED', completed));
+      await _flushRuntime();
+      expect(
+        container.read(agentRunsProvider(query)).value?.single.status,
+        runtime.AgentRunStatus.succeeded,
+      );
+    },
+  );
+
+  test(
+    'runtime socket snapshots update one cached run without list requests',
+    () async {
+      final repository = RecordingRuntimeRepository(
+        runs: [
+          testRun(),
+          testRun(id: 'run_2', workspaceId: 'ws_2'),
+        ],
+      );
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(repository, socket);
+      const first = (workspaceId: 'ws_1', taskId: null);
+      const other = (workspaceId: 'ws_2', taskId: null);
+      container.listen(agentRunsProvider(first), (_, _) {});
+      container.listen(agentRunsProvider(other), (_, _) {});
+      await container.read(agentRunsProvider(first).future);
+      await container.read(agentRunsProvider(other).future);
+      await _connectRuntime(container);
+      final requests = repository.listQueries.length;
+      socket.emit(
+        _runtimeEvent(
+          1,
+          'RUN_STARTED',
+          testRun(status: runtime.AgentRunStatus.running),
+        ),
+      );
+      await _flushRuntime();
+      expect(
+        container.read(agentRunsProvider(first)).value?.single.status,
+        runtime.AgentRunStatus.running,
+      );
+      expect(repository.listQueries, hasLength(requests));
+      expect(
+        container.read(agentRunsProvider(other)).value?.single.id,
+        'run_2',
+      );
+    },
+  );
+
+  test(
+    'duplicate and late runtime events do not regress the run or reload resources',
+    () async {
+      final repository = RecordingRuntimeRepository(runs: [testRun()]);
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(repository, socket);
+      const query = (workspaceId: 'ws_1', taskId: null);
+      container.listen(agentRunsProvider(query), (_, _) {});
+      await container.read(agentRunsProvider(query).future);
+      await _connectRuntime(container);
+      socket.emit(
+        _runtimeEvent(
+          2,
+          'RUN_SUCCEEDED',
+          testRun(status: runtime.AgentRunStatus.succeeded),
+        ),
+      );
+      await _flushRuntime();
+      final requests = repository.getQueries.length;
+      socket.emit(
+        _runtimeEvent(
+          1,
+          'RUN_STARTED',
+          testRun(status: runtime.AgentRunStatus.running),
+        ),
+      );
+      socket.emit(
+        _runtimeEvent(
+          2,
+          'RUN_SUCCEEDED',
+          testRun(status: runtime.AgentRunStatus.succeeded),
+        ),
+      );
+      await _flushRuntime();
+      expect(
+        container.read(agentRunsProvider(query)).value?.single.status,
+        runtime.AgentRunStatus.succeeded,
+      );
+      expect(repository.getQueries, hasLength(requests));
+    },
+  );
+
+  test(
+    'a socket gap fetches missing event pages from the current cursor',
+    () async {
+      final repository = RecordingRuntimeRepository(runs: [testRun()]);
+      repository.events['run_1'] = [_historyEvent(1)];
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(repository, socket);
+      container.listen(agentRunEventsProvider('run_1'), (_, _) {});
+      await container.read(agentRunEventsProvider('run_1').future);
+      await _connectRuntime(container);
+      socket.emit(
+        _runtimeEvent(
+          1,
+          'RUN_STARTED',
+          testRun(status: runtime.AgentRunStatus.running),
+        ),
+      );
+      await _flushRuntime();
+      repository.eventQueries.clear();
+      repository.events['run_1'] = [
+        for (var seq = 1; seq <= 405; seq++) _historyEvent(seq),
+      ];
+      socket.emit(
+        _runtimeEvent(
+          405,
+          'RUN_SUCCEEDED',
+          testRun(status: runtime.AgentRunStatus.succeeded),
+        ),
+      );
+      await _flushRuntime();
+      final trail = container.read(agentRunEventsProvider('run_1')).value!;
+      expect(trail.last.seq, 405);
+      expect(trail.map((event) => event.seq).toSet(), hasLength(trail.length));
+      expect(repository.eventQueries.map((query) => query.afterSeq), [
+        1,
+        201,
+        401,
+      ]);
+    },
+  );
+
+  test(
+    'failed gap recovery preserves progress and catches up on the next event',
+    () async {
+      final repository = RecordingRuntimeRepository(runs: [testRun()]);
+      repository.events['run_1'] = [_historyEvent(1)];
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(repository, socket);
+      const query = (workspaceId: 'ws_1', taskId: null);
+      container.listen(agentRunsProvider(query), (_, _) {});
+      container.listen(agentRunEventsProvider('run_1'), (_, _) {});
+      await container.read(agentRunsProvider(query).future);
+      await container.read(agentRunEventsProvider('run_1').future);
+      await _connectRuntime(container);
+      socket.emit(
+        _runtimeEvent(
+          1,
+          'RUN_STARTED',
+          testRun(status: runtime.AgentRunStatus.running),
+        ),
+      );
+      await _flushRuntime();
+      repository.failEventsAfter = 1;
+      socket.emit(
+        _runtimeEvent(
+          3,
+          'RUN_WAITING_APPROVAL',
+          testRun(status: runtime.AgentRunStatus.waitingApproval),
+        ),
+      );
+      await _flushRuntime();
+      expect(
+        container.read(agentRunsProvider(query)).value?.single.status,
+        runtime.AgentRunStatus.waitingApproval,
+      );
+      expect(
+        container.read(
+          agentReadErrorProvider((
+            resource: AgentReadResource.events,
+            id: 'run_1',
+          )),
+        ),
+        isNotNull,
+      );
+      expect(
+        container.read(agentRunEventsProvider('run_1')).value?.last.seq,
+        1,
+      );
+      repository.failEventsAfter = null;
+      repository.events['run_1'] = [
+        for (var seq = 1; seq <= 4; seq++) _historyEvent(seq),
+      ];
+      socket.emit(
+        _runtimeEvent(
+          4,
+          'RUN_SUCCEEDED',
+          testRun(status: runtime.AgentRunStatus.succeeded),
+        ),
+      );
+      await _flushRuntime();
+      expect(
+        container.read(
+          agentReadErrorProvider((
+            resource: AgentReadResource.events,
+            id: 'run_1',
+          )),
+        ),
+        isNull,
+      );
+      expect(
+        container.read(agentRunEventsProvider('run_1')).value?.last.seq,
+        4,
+      );
+    },
+  );
+
+  test(
+    'reconnection refreshes the active workspace and resumes the event cursor',
+    () async {
+      final repository = RecordingRuntimeRepository(
+        runs: [
+          testRun(),
+          testRun(id: 'run_2', workspaceId: 'ws_2'),
+        ],
+      );
+      repository.events['run_1'] = [_historyEvent(1)];
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(repository, socket);
+      const query = (workspaceId: 'ws_1', taskId: null);
+      const other = (workspaceId: 'ws_2', taskId: null);
+      container.listen(agentRunsProvider(query), (_, _) {});
+      container.listen(agentRunsProvider(other), (_, _) {});
+      container.listen(agentRunEventsProvider('run_1'), (_, _) {});
+      await container.read(agentRunsProvider(query).future);
+      await container.read(agentRunsProvider(other).future);
+      await container.read(agentRunEventsProvider('run_1').future);
+      await _connectRuntime(container);
+      repository.listQueries.clear();
+      repository.eventQueries.clear();
+      repository.runs = [
+        testRun(status: runtime.AgentRunStatus.succeeded),
+        testRun(id: 'run_2', workspaceId: 'ws_2'),
+      ];
+      repository.events['run_1'] = [_historyEvent(1), _historyEvent(2)];
+      await container
+          .read(workspaceShellControllerProvider.notifier)
+          .connectRealtime('token');
+      await _flushRuntime();
+      expect(
+        container.read(agentRunsProvider(query)).value?.single.status,
+        runtime.AgentRunStatus.succeeded,
+      );
+      expect(repository.listQueries, [(workspaceId: 'ws_1', taskId: null)]);
+      expect(repository.eventQueries.map((query) => query.afterSeq), [1]);
+    },
+  );
+
+  test(
+    'transport closure updates the connection state instead of leaving it connected',
+    () async {
+      final socket = _FakeRealtimeSocketService();
+      final container = _runtimeContainer(RecordingRuntimeRepository(), socket);
+      await _connectRuntime(container);
+      socket.emit({
+        'type': 'ERROR',
+        'payload': {
+          'connectionState': 'DISCONNECTED',
+          'message': 'WebSocket disconnected',
+        },
+      });
+      await _flushRuntime();
+      expect(
+        container
+            .read(workspaceShellControllerProvider)
+            .value
+            ?.connectionStatus,
+        ChatConnectionStatus.disconnected,
+      );
+    },
+  );
+
   test(
     'uploadKnowledgeDocument forwards the selected conversation channel scope',
     () async {
@@ -566,6 +894,88 @@ void main() {
   });
 }
 
+ProviderContainer _runtimeContainer(
+  RecordingRuntimeRepository runtime,
+  _FakeRealtimeSocketService socket,
+) {
+  final container = ProviderContainer(
+    overrides: [
+      authRepositoryProvider.overrideWithValue(
+        _FakeAuthRepository(
+          currentSessionValue: const AuthSession(
+            userId: 'usr_1',
+            email: 'demo@microflow.local',
+            displayName: 'Demo',
+            accessToken: 'token',
+            refreshToken: 'refresh',
+          ),
+        ),
+      ),
+      workspaceRepositoryProvider.overrideWithValue(
+        _FakeWorkspaceRepository(
+          workspaces: const [
+            WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 1),
+          ],
+        ),
+      ),
+      chatRepositoryProvider.overrideWithValue(_FakeChatRepository()),
+      agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
+      agentRuntimeRepositoryProvider.overrideWithValue(runtime),
+      realtimeSocketServiceProvider.overrideWithValue(socket),
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
+Future<void> _connectRuntime(ProviderContainer container) async {
+  await container.read(workspaceShellControllerProvider.future);
+  await _flushRuntime();
+  await container
+      .read(workspaceShellControllerProvider.notifier)
+      .connectRealtime('token');
+  await _flushRuntime();
+}
+
+Future<void> _flushRuntime() =>
+    Future<void>.delayed(const Duration(milliseconds: 20));
+
+AgentRunEvent _historyEvent(int seq) => AgentRunEvent(
+  id: 'event_$seq',
+  seq: seq,
+  type: 'MODEL_TURN_COMPLETED',
+  payload: const {},
+);
+
+Map<String, Object?> _runtimeEvent(
+  int seq,
+  String type,
+  runtime.AgentRunSummary run,
+) => {
+  'type': 'AGENT_RUN_EVENT',
+  'payload': {
+    'seq': seq,
+    'runId': run.id,
+    'workspaceId': run.workspaceId,
+    'taskId': run.taskId,
+    'type': type,
+    'run': {
+      'id': run.id,
+      'workspaceId': run.workspaceId,
+      'taskId': run.taskId,
+      'agentKey': run.agentKey,
+      'kind': run.kind,
+      'goal': run.goal,
+      'createdAt': run.createdAt,
+      'updatedAt': run.updatedAt,
+      'pendingApprovalId': run.pendingApprovalId,
+      'status': run.status == runtime.AgentRunStatus.waitingApproval
+          ? 'WAITING_APPROVAL'
+          : run.status.name.toUpperCase(),
+    },
+  },
+};
+
 class _FakeAuthRepository implements AuthRepository {
   _FakeAuthRepository({required this.currentSessionValue});
 
@@ -651,6 +1061,19 @@ class _FakeWorkspaceRepository implements WorkspaceRepository {
   Future<List<KnowledgeDocument>> listKnowledgeDocuments(
     String workspaceId,
   ) async => knowledgeDocumentsByWorkspace[workspaceId] ?? const [];
+
+  @override
+  Future<WorkspaceMember> changeMemberRole({
+    required String workspaceId,
+    required String userId,
+    required WorkspaceMemberRole role,
+  }) async => WorkspaceMember(
+    userId: userId,
+    email: 'member@microflow.local',
+    displayName: 'Member',
+    role: role.storedValue,
+    joinedAt: '2026-04-13T00:00:00Z',
+  );
 
   @override
   Future<List<WorkspaceSummary>> listWorkspaces() async => workspaces;

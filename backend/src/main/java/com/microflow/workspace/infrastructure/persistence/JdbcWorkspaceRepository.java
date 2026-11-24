@@ -5,6 +5,7 @@ import com.microflow.workspace.domain.model.ChannelSummary;
 import com.microflow.workspace.domain.model.ConversationKind;
 import com.microflow.workspace.domain.model.ConversationSummary;
 import com.microflow.workspace.domain.model.WorkspaceMemberSummary;
+import com.microflow.workspace.domain.model.WorkspaceRole;
 import com.microflow.workspace.domain.model.WorkspaceSummary;
 import com.microflow.chat.infrastructure.encryption.CipherService;
 import com.microflow.common.crypto.EncryptedPayload;
@@ -15,8 +16,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import com.microflow.common.jdbc.JdbcTemplate;
+import com.microflow.common.jdbc.RowMapper;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -136,7 +137,7 @@ public class JdbcWorkspaceRepository {
                 FROM workspace_members wm
                 JOIN users u ON u.id = wm.user_id
                 WHERE wm.workspace_id = ?
-                ORDER BY CASE WHEN wm.role = 'OWNER' THEN 0 ELSE 1 END, u.display_name ASC
+                ORDER BY CASE WHEN UPPER(TRIM(wm.role)) = 'OWNER' THEN 0 ELSE 1 END, u.display_name ASC
                 """, MEMBER_MAPPER, workspaceId);
     }
 
@@ -163,11 +164,83 @@ public class JdbcWorkspaceRepository {
         return count != null && count > 0;
     }
 
+    /**
+     * Resolves a member role, defaulting to {@link WorkspaceRole#OPERATOR} so a
+     * legacy row can never accidentally fall back to the most privileged role.
+     */
+    public WorkspaceRole findRole(String workspaceId, String userId) {
+        var role = findRoleOrNull(workspaceId, userId);
+        return role == null ? WorkspaceRole.OPERATOR : role;
+    }
+
+    public WorkspaceRole findRoleOrNull(String workspaceId, String userId) {
+        return jdbcTemplate.query("""
+                SELECT role
+                FROM workspace_members
+                WHERE workspace_id = ? AND user_id = ?
+                """, (rs, rowNum) -> WorkspaceRole.fromStored(rs.getString("role")), workspaceId, userId)
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Applies every role change only while the actor remains an owner, the target
+     * still has its expected role, and the resulting workspace retains an owner.
+     *
+     * <p>All predicates are evaluated by the same SQLite UPDATE, including for a
+     * target whose earlier role was not OWNER. A stale non-owner snapshot cannot
+     * bypass the last-owner check after a concurrent promotion. Zero affected rows
+     * means the request lost authorization or its expected state changed.
+     *
+     * @return true when the authorized change was applied
+     */
+    public boolean updateMemberRoleAtomically(
+            String workspaceId,
+            String actorUserId,
+            String userId,
+            WorkspaceRole expectedRole,
+            WorkspaceRole role
+    ) {
+        return jdbcTemplate.update("""
+                UPDATE workspace_members
+                SET role = ?
+                WHERE workspace_id = ?
+                  AND user_id = ?
+                  AND CASE
+                        WHEN UPPER(TRIM(role)) IN ('OWNER', 'MAINTAINER', 'OPERATOR', 'VIEWER')
+                        THEN UPPER(TRIM(role))
+                        ELSE 'OPERATOR'
+                      END = ?
+                  AND EXISTS (
+                      SELECT 1 FROM workspace_members actor
+                      WHERE actor.workspace_id = workspace_members.workspace_id
+                        AND actor.user_id = ?
+                        AND UPPER(TRIM(actor.role)) = 'OWNER'
+                  )
+                  AND (? = 'OWNER' OR EXISTS (
+                      SELECT 1 FROM workspace_members other
+                      WHERE other.workspace_id = workspace_members.workspace_id
+                        AND other.user_id <> workspace_members.user_id
+                        AND UPPER(TRIM(other.role)) = 'OWNER'
+                  ))
+                """, role.storedValue(), workspaceId, userId, expectedRole.storedValue(),
+                actorUserId, role.storedValue()) > 0;
+    }
+
+    /** Preflight validation only; the role UPDATE repeats the invariant atomically. */
+    public boolean hasAnotherOwner(String workspaceId, String userId) {
+        return jdbcTemplate.queryForObject("""
+                SELECT COUNT(*) FROM workspace_members
+                WHERE workspace_id = ? AND user_id <> ? AND UPPER(TRIM(role)) = 'OWNER'
+                """, Integer.class, workspaceId, userId) > 0;
+    }
+
     public boolean isWorkspaceOwner(String workspaceId, String userId) {
         Integer count = jdbcTemplate.queryForObject("""
                 SELECT COUNT(1)
                 FROM workspace_members
-                WHERE workspace_id = ? AND user_id = ? AND role = 'OWNER'
+                WHERE workspace_id = ? AND user_id = ? AND UPPER(TRIM(role)) = 'OWNER'
                 """, Integer.class, workspaceId, userId);
         return count != null && count > 0;
     }

@@ -6,7 +6,7 @@ import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.sqlite.SQLiteDataSource;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.microflow.common.jdbc.JdbcTemplate;
 
 @ApplicationScoped
 public class JdbcConfiguration {

@@ -2,6 +2,7 @@ enum RealtimeSocketEventType {
   messageCreated,
   agentRunCreated,
   agentRunUpdated,
+  agentRunEvent,
   collaborationStarted,
   collaborationStep,
   collaborationCompleted,
@@ -24,6 +25,7 @@ class RealtimeSocketEvent {
         'MESSAGE_CREATED' => RealtimeSocketEventType.messageCreated,
         'AGENT_RUN_CREATED' => RealtimeSocketEventType.agentRunCreated,
         'AGENT_RUN_UPDATED' => RealtimeSocketEventType.agentRunUpdated,
+        'AGENT_RUN_EVENT' => RealtimeSocketEventType.agentRunEvent,
         'COLLABORATION_STARTED' => RealtimeSocketEventType.collaborationStarted,
         'COLLABORATION_STEP' => RealtimeSocketEventType.collaborationStep,
         'COLLABORATION_COMPLETED' =>

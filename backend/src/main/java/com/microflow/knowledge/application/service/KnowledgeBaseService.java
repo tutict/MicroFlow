@@ -3,6 +3,8 @@ package com.microflow.knowledge.application.service;
 import com.microflow.chat.infrastructure.persistence.JdbcMessageRepository;
 import com.microflow.knowledge.domain.model.KnowledgeChunk;
 import com.microflow.knowledge.domain.model.KnowledgeDocumentSummary;
+import com.microflow.knowledge.domain.model.KnowledgeSnippet;
+import com.microflow.knowledge.domain.model.KnowledgeUpload;
 import com.microflow.knowledge.infrastructure.persistence.JdbcKnowledgeRepository;
 import com.microflow.realtime.broadcaster.RealtimeBroadcaster;
 import com.microflow.realtime.protocol.RealtimeEvent;
@@ -23,7 +25,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class KnowledgeBaseService {
@@ -78,22 +79,22 @@ public class KnowledgeBaseService {
             String workspaceId,
             String userId,
             String channelId,
-            MultipartFile file
+            KnowledgeUpload file
     ) {
         ensureWorkspaceMember(workspaceId, userId);
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("A non-empty file is required");
         }
-        if (file.getSize() > maxUploadSizeBytes) {
+        if (file.sizeBytes() > maxUploadSizeBytes) {
             throw new IllegalArgumentException(
                     "Knowledge upload must be %s bytes or smaller".formatted(maxUploadSizeBytes)
             );
         }
-        var fileName = sanitizeFileName(file.getOriginalFilename());
-        var contentType = normalizeContentType(file.getContentType());
+        var fileName = sanitizeFileName(file.fileName());
+        var contentType = normalizeContentType(file.contentType());
         validateUploadType(fileName, contentType);
         try {
-            var bytes = file.getBytes();
+            var bytes = file.content();
             rejectBinaryPayload(bytes);
             var extractedText = extractText(bytes).trim();
             if (extractedText.isBlank()) {
@@ -113,7 +114,7 @@ public class KnowledgeBaseService {
                     targetChannelId,
                     fileName,
                     contentType,
-                    file.getSize(),
+                    file.sizeBytes(),
                     storagePath.toString(),
                     summarize(extractedText),
                     chunks.size(),
@@ -132,12 +133,69 @@ public class KnowledgeBaseService {
     }
 
     public String buildContextBlock(String workspaceId, String channelId, String query) {
+        return retrieveContext(workspaceId, channelId, query).block();
+    }
+
+    /** The prompt and its citations share one ranked retrieval, even if knowledge changes mid-run. */
+    public ContextRetrieval retrieveContext(String workspaceId, String channelId, String query) {
+        var snippets = rankChunks(workspaceId, channelId, query, retrievalMaxSnippets).stream()
+                .map(ranked -> new KnowledgeSnippet(ranked.chunk().documentId(), ranked.chunk().fileName(),
+                        ranked.chunk().channelId(), truncate(ranked.chunk().content(), 260), ranked.score()))
+                .toList();
+        if (snippets.isEmpty()) {
+            return new ContextRetrieval("", List.of());
+        }
+        var context = new StringBuilder("Relevant workspace sources:\n");
+        for (var snippet : snippets) {
+            context.append("[kb:")
+                    .append(snippet.documentId())
+                    .append("] ")
+                    .append(snippet.fileName());
+            if (snippet.channelId() != null && !snippet.channelId().isBlank()) {
+                context.append(" (channel ").append(snippet.channelId()).append(")");
+            }
+            context.append(": ")
+                    .append(snippet.content())
+                    .append('\n');
+        }
+        context.append("When you rely on these sources, cite them inline as [kb:documentId].");
+        return new ContextRetrieval(context.toString().trim(), snippets);
+    }
+
+    public record ContextRetrieval(String block, List<KnowledgeSnippet> snippets) {
+    }
+
+    /**
+     * Ranked retrieval for the {@code knowledge.search} agent tool.
+     *
+     * <p>Shares the same scoring path as {@link #buildContextBlock} so the
+     * snippets an agent quotes in a tool result and the ones injected into the
+     * prompt cannot disagree about relevance.
+     */
+    public List<KnowledgeSnippet> searchSnippets(
+            String workspaceId,
+            String channelId,
+            String query,
+            int limit
+    ) {
+        var effectiveLimit = Math.max(1, Math.min(limit, 10));
+        return rankChunks(workspaceId, channelId, query, effectiveLimit).stream()
+                .map(ranked -> new KnowledgeSnippet(
+                        ranked.chunk().documentId(),
+                        ranked.chunk().fileName(),
+                        ranked.chunk().channelId(),
+                        truncate(ranked.chunk().content(), 480),
+                        ranked.score()))
+                .toList();
+    }
+
+    private List<RankedChunk> rankChunks(String workspaceId, String channelId, String query, int limit) {
         var allChunks = knowledgeRepository.listChunks(workspaceId, 80);
         if (allChunks.isEmpty()) {
-            return "";
+            return List.of();
         }
         var queryTokens = tokenize(query);
-        var rankedChunks = allChunks.stream()
+        return allChunks.stream()
                 .map(chunk -> new RankedChunk(chunk, scoreChunk(chunk, channelId, queryTokens)))
                 .filter(chunk -> !queryTokens.isEmpty() ? chunk.score() > 0 : true)
                 .sorted(Comparator
@@ -145,26 +203,8 @@ public class KnowledgeBaseService {
                         .reversed()
                         .thenComparing((RankedChunk ranked) -> ranked.chunk().documentCreatedAt(), Comparator.reverseOrder())
                         .thenComparing(ranked -> ranked.chunk().chunkIndex()))
-                .limit(retrievalMaxSnippets)
+                .limit(Math.max(1, limit))
                 .toList();
-        if (rankedChunks.isEmpty()) {
-            return "";
-        }
-        var context = new StringBuilder("Relevant workspace sources:\n");
-        for (var rankedChunk : rankedChunks) {
-            context.append("[kb:")
-                    .append(rankedChunk.chunk().documentId())
-                    .append("] ")
-                    .append(rankedChunk.chunk().fileName());
-            if (rankedChunk.chunk().channelId() != null && !rankedChunk.chunk().channelId().isBlank()) {
-                context.append(" (channel ").append(rankedChunk.chunk().channelId()).append(")");
-            }
-            context.append(": ")
-                    .append(truncate(rankedChunk.chunk().content(), 260))
-                    .append('\n');
-        }
-        context.append("When you rely on these sources, cite them inline as [kb:documentId].");
-        return context.toString().trim();
     }
 
     List<String> chunkText(String text) {

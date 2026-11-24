@@ -1,6 +1,7 @@
 package com.microflow.workspace.api.rest;
 
 import com.microflow.workspace.api.dto.ChannelSummaryResponse;
+import com.microflow.workspace.api.dto.ChangeMemberRoleRequest;
 import com.microflow.workspace.api.dto.ConversationSummaryResponse;
 import com.microflow.workspace.api.dto.AddWorkspaceMemberRequest;
 import com.microflow.workspace.api.dto.CreateWorkspaceRequest;
@@ -15,6 +16,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -98,5 +100,18 @@ public class WorkspaceController {
         return workspaceQueryService.listConversations(userId, workspaceId).stream()
                 .map(workspaceApiMapper::toResponse)
                 .toList();
+    }
+
+    @PutMapping("/workspaces/{workspaceId}/members/{userId}/role")
+    public WorkspaceMemberSummaryResponse changeMemberRole(
+            @PathVariable String workspaceId,
+            @PathVariable String userId,
+            @Valid @RequestBody ChangeMemberRoleRequest roleRequest,
+            HttpServletRequest request
+    ) {
+        var actorUserId = (String) request.getAttribute("currentUserId");
+        return workspaceApiMapper.toResponse(
+                workspaceManagementService.changeMemberRole(
+                        actorUserId, workspaceId, userId, roleRequest.role()));
     }
 }

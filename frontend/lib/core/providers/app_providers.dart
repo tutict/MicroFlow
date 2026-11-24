@@ -15,6 +15,8 @@ import '../../features/bootstrap/data/repositories/server_connection_repository_
 import '../../features/bootstrap/domain/repositories/server_connection_repository.dart';
 import '../../features/chat/data/repositories/chat_repository_impl.dart';
 import '../../features/chat/domain/repositories/chat_repository.dart';
+import '../../features/tasks/data/repositories/task_repository_impl.dart';
+import '../../features/tasks/domain/repositories/task_repository.dart';
 import '../../features/workspace/data/repositories/workspace_repository_impl.dart';
 import '../../features/workspace/domain/repositories/workspace_repository.dart';
 
@@ -68,4 +70,8 @@ final agentRepositoryProvider = Provider<AgentRepository>((ref) {
 
 final accountingRepositoryProvider = Provider<AccountingRepository>((ref) {
   return AccountingRepositoryImpl(ref.watch(restClientProvider));
+});
+
+final taskRepositoryProvider = Provider<TaskRepository>((ref) {
+  return TaskRepositoryImpl(ref.watch(restClientProvider));
 });

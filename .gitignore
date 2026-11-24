@@ -13,6 +13,14 @@ desktop.ini
 frontend/.codex-tmp/
 .dart-appdata/
 
+# One-off analysis and codegen dumps produced at the repository root.
+# Named individually rather than a blanket *.txt so real documents stay tracked.
+/analyze-out.txt
+/gen-l10n.txt
+
+# NOTE: .workbuddy/ is intentionally NOT ignored. It holds the project's durable
+# memory notes, which are meant to travel with the repository.
+
 # Environment and local secrets
 .env
 .env.*

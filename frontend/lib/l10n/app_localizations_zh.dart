@@ -293,7 +293,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get yesterdayLabel => '昨天';
 
   @override
-  String get agentRunsTitle => '智能体运行';
+  String get agentRunsTitle => 'Agent 运行';
 
   @override
   String get recentExecutions => '最近执行';
@@ -521,52 +521,514 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get indexTab => '索引';
+
   @override
   String get toolsTab => '工具';
+
   @override
   String get toolsTitle => '工具';
+
   @override
   String get toolKnowledgeDescription => '打开当前工作区的资料。';
+
   @override
   String get toolAccountingDescription => '查看科目、凭证和试算平衡。';
+
   @override
   String get toolDiagnosticsDescription => '检查 Agent 健康状态和角色策略。';
+
   @override
   String get toolAppearanceDescription => '在浅色和深色之间切换。';
+
   @override
   String get toolLanguageDescription => '使用中文或英文。';
+
   @override
   String get toolSignOutDescription => '退出这台设备上的当前工作区。';
+
   @override
   String get inspectorCurrent => '当前';
+
   @override
   String get inspectorCollaboration => '协作';
+
   @override
   String get inspectorKnowledge => '资料';
+
   @override
   String get backToConversation => '返回会话';
+
   @override
   String get signOutConfirmTitle => '退出登录？';
+
   @override
   String get signOutConfirmBody => '将退出这台设备上的当前工作区。';
+
   @override
   String get openInspectorTooltip => '详情';
+
   @override
   String get openToolsTooltip => '工具';
+
   @override
   String get destinationConversation => '会话';
+
   @override
   String get destinationKnowledge => '知识库';
+
   @override
   String get destinationAccounting => '会计';
+
   @override
   String get destinationDiagnostics => '诊断';
+
   @override
-  String get showCollaborationDetails => '展开协作详情';
+  String get destinationTasks => '任务';
+
   @override
-  String get hideCollaborationDetails => '收起协作详情';
+  String get taskNewTaskHint => '要推进的事情是什么？';
+
+  @override
+  String get taskCreateAction => '添加';
+
+  @override
+  String get taskCreatePending => '正在添加…';
+
+  @override
+  String get taskRunPending => '正在启动…';
+
+  @override
+  String get taskNewProjectTitle => '新建项目';
+
+  @override
+  String get taskProjectNameLabel => '项目名称';
+
+  @override
+  String get taskCreateProjectAction => '创建';
+
+  @override
+  String get taskMineOnlyFilter => '只看指派给我';
+
+  @override
+  String get taskAllProjectsFilter => '全部项目';
+
+  @override
+  String get taskAllStatusesFilter => '全部';
+
+  @override
+  String get taskEmptyState => '还没有任务，在下方添加第一条。';
+
+  @override
+  String get taskUnassigned => '未指派';
+
+  @override
+  String get taskChangeStatusAction => '变更状态';
+
+  @override
+  String get taskStatusOpen => '待处理';
+
+  @override
+  String get taskStatusInProgress => '进行中';
+
+  @override
+  String get taskStatusBlocked => '受阻';
+
+  @override
+  String get taskStatusDone => '已完成';
+
+  @override
+  String get taskStatusCancelled => '已取消';
+
+  @override
+  String get taskSummaryTotal => '总计';
+
+  @override
+  String get taskSummaryOpen => '待处理';
+
+  @override
+  String get taskSummaryInProgress => '进行中';
+
+  @override
+  String get taskSummaryBlocked => '受阻';
+
+  @override
+  String get taskSummaryDone => '已完成';
+
   @override
   String unreadCountLabel(int count) {
     return '$count 条未读';
   }
+
+  @override
+  String get showCollaborationDetails => '展开协作详情';
+
+  @override
+  String get hideCollaborationDetails => '收起协作详情';
+
+  @override
+  String get roleOwner => '所有者';
+
+  @override
+  String get roleMaintainer => '维护者';
+
+  @override
+  String get roleOperator => '执行者';
+
+  @override
+  String get roleViewer => '观察者';
+
+  @override
+  String get workspaceRolePickerLabel => '变更成员角色';
+
+  @override
+  String get workspaceRoleManagerTitle => '成员与角色';
+
+  @override
+  String get inspectorContext => '上下文';
+
+  @override
+  String get inspectorExecution => '执行';
+
+  @override
+  String get agentRunsEmpty => '还没有 Agent 运行';
+
+  @override
+  String get agentRunsRefresh => '刷新';
+
+  @override
+  String get agentRunCancel => '取消运行';
+
+  @override
+  String get agentRunRetry => '重试';
+
+  @override
+  String get agentRunApprove => '批准';
+
+  @override
+  String get agentRunReject => '拒绝';
+
+  @override
+  String get agentRunRejectReason => '原因（可选）';
+
+  @override
+  String get agentRunApprovalRequired => '需要审批';
+
+  @override
+  String get agentRunImpact => '影响';
+
+  @override
+  String get agentRunTarget => '目标';
+
+  @override
+  String get agentRunRisk => '风险';
+
+  @override
+  String get agentRiskReadOnly => '只读';
+
+  @override
+  String get agentRiskInternalWrite => '内部修改';
+
+  @override
+  String get agentRiskExternalWrite => '外部修改';
+
+  @override
+  String get agentRiskDestructive => '破坏性操作';
+
+  @override
+  String get agentRiskUnknown => '未知风险';
+
+  @override
+  String agentRunStepCount(int count) {
+    return '$count 步';
+  }
+
+  @override
+  String agentRunError(String message) {
+    return '错误：$message';
+  }
+
+  @override
+  String get agentRunStatusQueued => '排队中';
+
+  @override
+  String get agentRunStatusContextBuilding => '整理上下文';
+
+  @override
+  String get agentRunStatusRunning => '执行中';
+
+  @override
+  String get agentRunStatusWaitingApproval => '等待审批';
+
+  @override
+  String get agentRunStatusSucceeded => '已完成';
+
+  @override
+  String get agentRunStatusFailed => '失败';
+
+  @override
+  String get agentRunStatusCancelled => '已取消';
+
+  @override
+  String get agentRunSourcesTitle => '上下文来源';
+
+  @override
+  String get agentRunArtifactsTitle => '产物';
+
+  @override
+  String get agentRunsWaiting => '等待审批';
+
+  @override
+  String get destinationConnectors => '连接器';
+
+  @override
+  String get toolConnectorsDescription => '按需连接邮件、日历与文件。';
+
+  @override
+  String get connectorsTitle => '连接器';
+
+  @override
+  String get connectorsSubtitle => '凭据默认私有，共享需要显式开启。';
+
+  @override
+  String get connectorAdd => '添加连接器';
+
+  @override
+  String get connectorEdit => '编辑连接器';
+
+  @override
+  String get connectorName => '名称';
+
+  @override
+  String get connectorKind => '类型';
+
+  @override
+  String get connectorHost => '主机';
+
+  @override
+  String get connectorPort => '端口';
+
+  @override
+  String get connectorBaseUrl => '基础地址';
+
+  @override
+  String get connectorUsername => '用户名';
+
+  @override
+  String get connectorPassword => '密码或应用专用密码';
+
+  @override
+  String get connectorPasswordUnchanged => '留空则保留已保存的密码';
+
+  @override
+  String get connectorRead => '读取';
+
+  @override
+  String get connectorWrite => '写入（需审批）';
+
+  @override
+  String get connectorSharing => '共享范围';
+
+  @override
+  String get connectorSharingPrivate => '仅自己';
+
+  @override
+  String get connectorSharingWorkspace => '整个工作区';
+
+  @override
+  String get connectorSharingSelected => '指定成员';
+
+  @override
+  String get connectorSharedWith => '共享给';
+
+  @override
+  String get connectorTest => '测试连接';
+
+  @override
+  String get connectorStatusUnverified => '未测试';
+
+  @override
+  String get connectorStatusActive => '已验证';
+
+  @override
+  String get connectorStatusFailed => '检查失败';
+
+  @override
+  String get connectorDelete => '删除连接器';
+
+  @override
+  String connectorDeleteConfirm(String name) {
+    return '删除 $name？运行会立即失去访问权限。';
+  }
+
+  @override
+  String get connectorEmpty => '还没有连接器';
+
+  @override
+  String get connectorEmptyHint => '添加后 Agent 可读取邮件或写入文件，写入始终需要你审批。';
+
+  @override
+  String get connectorOwnerLabel => '所有者';
+
+  @override
+  String get connectorSharedByOther => '他人共享给你';
+
+  @override
+  String connectorSaveFailed(String error) {
+    return '保存失败：$error';
+  }
+
+  @override
+  String connectorTestFailed(String error) {
+    return '测试失败：$error';
+  }
+
+  @override
+  String connectorSecretsSet(String fields) {
+    return '已保存：$fields';
+  }
+
+  @override
+  String get connectorNoSecrets => '未保存凭据';
+
+  @override
+  String get connectorNoMembers => '没有其他成员';
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get connectorFieldRequired => '该项必填';
+
+  @override
+  String get retryLabel => '重试';
+
+  @override
+  String get agentRunEventsTitle => '执行记录';
+
+  @override
+  String get taskRunAgentAction => '交给 Agent';
+
+  @override
+  String get taskRunQueued => '已为该任务排队一次运行';
+
+  @override
+  String get toolAgentRunsDescription => '查看 Agent 正在做什么、哪些操作等待审批。';
+
+  @override
+  String get destinationMyWork => '我的工作';
+
+  @override
+  String get myWorkSubtitle => '现在需要你处理的，和还在等别人的。';
+
+  @override
+  String get myWorkScopeMine => '我的';
+
+  @override
+  String get myWorkScopeAll => '全部任务';
+
+  @override
+  String get myWorkLaneActionable => '待处理';
+
+  @override
+  String get myWorkLaneBlocked => '受阻';
+
+  @override
+  String get myWorkLaneAwaitingOthers => '等待他人';
+
+  @override
+  String get myWorkLaneRecentlyDone => '最近完成';
+
+  @override
+  String get myWorkEmptyTitle => '手上没有待办';
+
+  @override
+  String get myWorkEmptyDescription => '分配给你的任务会出现在这里，也可以去全部任务里挑一件。';
+
+  @override
+  String get myWorkLaneEmpty => '这一栏是空的。';
+
+  @override
+  String get myWorkErrorTitle => '我的工作加载失败';
+
+  @override
+  String myWorkDueOn(String date) {
+    return '截止 $date';
+  }
+
+  @override
+  String get myWorkOverdue => '已逾期';
+
+  @override
+  String get myWorkRunTooltip => '打开该任务的运行';
+
+  @override
+  String get chatCreateTaskTooltip => '转为任务';
+
+  @override
+  String get taskFromMessageTitle => '用这条消息新建任务';
+
+  @override
+  String get taskFromMessageTitleLabel => '任务标题';
+
+  @override
+  String get taskFromMessageCreated => '已加入我的工作';
+
+  @override
+  String get myWorkLaneRunning => '运行中';
+
+  @override
+  String get myWorkLaneWaitingApproval => '待审批';
+
+  @override
+  String get agentRunsOfflineStatus => '实时连接已断开，正在查询活跃运行。';
+
+  @override
+  String get agentRunDetailTitle => '运行详情';
+
+  @override
+  String get agentRunStepsTitle => '执行步骤';
+
+  @override
+  String get agentRunStepsEmpty => '暂无执行步骤';
+
+  @override
+  String agentRunModelStep(String agentKey) {
+    return 'Agent @$agentKey';
+  }
+
+  @override
+  String get agentRunStepRejected => '已拒绝';
+
+  @override
+  String get agentRunEventApproved => '动作已批准';
+
+  @override
+  String get agentRunEventRejected => '动作已拒绝';
+
+  @override
+  String get agentRunEventModelStarted => 'Agent 开始处理';
+
+  @override
+  String get agentRunEventModelCompleted => 'Agent 完成本轮处理';
+
+  @override
+  String get agentRunEventToolStarted => '动作开始执行';
+
+  @override
+  String get agentRunEventToolCompleted => '动作执行完成';
+
+  @override
+  String get agentRunEventArtifactCreated => '产物已保存';
+
+  @override
+  String get agentRunEventUpdated => '运行已更新';
+
+  @override
+  String get workspaceManagementTitle => '工作区管理';
+
+  @override
+  String get destinationWorkspaceManagement => '管理';
+
+  @override
+  String get toolWorkspaceManagementDescription => '查看工作区成员并管理角色。';
 }

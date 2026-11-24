@@ -297,7 +297,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yesterdayLabel => 'Yesterday';
 
   @override
-  String get agentRunsTitle => 'Agent Runs';
+  String get agentRunsTitle => 'Agent runs';
 
   @override
   String get recentExecutions => 'Recent executions';
@@ -530,55 +530,526 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get indexTab => 'Index';
+
   @override
   String get toolsTab => 'Tools';
+
   @override
   String get toolsTitle => 'Tools';
+
   @override
   String get toolKnowledgeDescription => 'Open documents for this workspace.';
+
   @override
   String get toolAccountingDescription =>
       'Review accounts, vouchers, and the trial balance.';
+
   @override
   String get toolDiagnosticsDescription =>
       'Check agent health and role strategy.';
+
   @override
   String get toolAppearanceDescription => 'Switch between light and dark.';
+
   @override
   String get toolLanguageDescription => 'Use Chinese or English.';
+
   @override
   String get toolSignOutDescription => 'Leave this workspace on this device.';
+
   @override
   String get inspectorCurrent => 'Current';
+
   @override
   String get inspectorCollaboration => 'Collaboration';
+
   @override
   String get inspectorKnowledge => 'Documents';
+
   @override
   String get backToConversation => 'Back to conversation';
+
   @override
   String get signOutConfirmTitle => 'Sign out?';
+
   @override
   String get signOutConfirmBody =>
       'You will leave this workspace on this device.';
+
   @override
   String get openInspectorTooltip => 'Details';
+
   @override
   String get openToolsTooltip => 'Tools';
+
   @override
   String get destinationConversation => 'Chat';
+
   @override
   String get destinationKnowledge => 'Knowledge';
+
   @override
   String get destinationAccounting => 'Accounting';
+
   @override
   String get destinationDiagnostics => 'Diagnostics';
+
   @override
-  String get showCollaborationDetails => 'Show collaboration details';
+  String get destinationTasks => 'Tasks';
+
   @override
-  String get hideCollaborationDetails => 'Hide collaboration details';
+  String get taskNewTaskHint => 'What needs to move forward?';
+
+  @override
+  String get taskCreateAction => 'Add';
+
+  @override
+  String get taskCreatePending => 'Adding…';
+
+  @override
+  String get taskRunPending => 'Starting…';
+
+  @override
+  String get taskNewProjectTitle => 'New project';
+
+  @override
+  String get taskProjectNameLabel => 'Project name';
+
+  @override
+  String get taskCreateProjectAction => 'Create';
+
+  @override
+  String get taskMineOnlyFilter => 'Assigned to me';
+
+  @override
+  String get taskAllProjectsFilter => 'All projects';
+
+  @override
+  String get taskAllStatusesFilter => 'All';
+
+  @override
+  String get taskEmptyState => 'No tasks yet. Add the first one below.';
+
+  @override
+  String get taskUnassigned => 'Unassigned';
+
+  @override
+  String get taskChangeStatusAction => 'Change status';
+
+  @override
+  String get taskStatusOpen => 'Open';
+
+  @override
+  String get taskStatusInProgress => 'In progress';
+
+  @override
+  String get taskStatusBlocked => 'Blocked';
+
+  @override
+  String get taskStatusDone => 'Done';
+
+  @override
+  String get taskStatusCancelled => 'Cancelled';
+
+  @override
+  String get taskSummaryTotal => 'Total';
+
+  @override
+  String get taskSummaryOpen => 'Open';
+
+  @override
+  String get taskSummaryInProgress => 'Doing';
+
+  @override
+  String get taskSummaryBlocked => 'Blocked';
+
+  @override
+  String get taskSummaryDone => 'Done';
+
   @override
   String unreadCountLabel(int count) {
     return '$count unread';
   }
+
+  @override
+  String get showCollaborationDetails => 'Show collaboration details';
+
+  @override
+  String get hideCollaborationDetails => 'Hide collaboration details';
+
+  @override
+  String get roleOwner => 'Owner';
+
+  @override
+  String get roleMaintainer => 'Maintainer';
+
+  @override
+  String get roleOperator => 'Operator';
+
+  @override
+  String get roleViewer => 'Viewer';
+
+  @override
+  String get workspaceRolePickerLabel => 'Change member role';
+
+  @override
+  String get workspaceRoleManagerTitle => 'Members and roles';
+
+  @override
+  String get inspectorContext => 'Context';
+
+  @override
+  String get inspectorExecution => 'Execution';
+
+  @override
+  String get agentRunsEmpty => 'No agent runs yet';
+
+  @override
+  String get agentRunsRefresh => 'Refresh';
+
+  @override
+  String get agentRunCancel => 'Cancel run';
+
+  @override
+  String get agentRunRetry => 'Retry';
+
+  @override
+  String get agentRunApprove => 'Approve';
+
+  @override
+  String get agentRunReject => 'Reject';
+
+  @override
+  String get agentRunRejectReason => 'Reason (optional)';
+
+  @override
+  String get agentRunApprovalRequired => 'Approval required';
+
+  @override
+  String get agentRunImpact => 'Impact';
+
+  @override
+  String get agentRunTarget => 'Target';
+
+  @override
+  String get agentRunRisk => 'Risk';
+
+  @override
+  String get agentRiskReadOnly => 'Read only';
+
+  @override
+  String get agentRiskInternalWrite => 'Internal change';
+
+  @override
+  String get agentRiskExternalWrite => 'External change';
+
+  @override
+  String get agentRiskDestructive => 'Destructive';
+
+  @override
+  String get agentRiskUnknown => 'Unknown risk';
+
+  @override
+  String agentRunStepCount(int count) {
+    return '$count steps';
+  }
+
+  @override
+  String agentRunError(String message) {
+    return 'Error: $message';
+  }
+
+  @override
+  String get agentRunStatusQueued => 'Queued';
+
+  @override
+  String get agentRunStatusContextBuilding => 'Gathering context';
+
+  @override
+  String get agentRunStatusRunning => 'Running';
+
+  @override
+  String get agentRunStatusWaitingApproval => 'Waiting approval';
+
+  @override
+  String get agentRunStatusSucceeded => 'Completed';
+
+  @override
+  String get agentRunStatusFailed => 'Failed';
+
+  @override
+  String get agentRunStatusCancelled => 'Cancelled';
+
+  @override
+  String get agentRunSourcesTitle => 'Context sources';
+
+  @override
+  String get agentRunArtifactsTitle => 'Artifacts';
+
+  @override
+  String get agentRunsWaiting => 'Waiting for approval';
+
+  @override
+  String get destinationConnectors => 'Connectors';
+
+  @override
+  String get toolConnectorsDescription =>
+      'Connect mail, calendars and files on demand.';
+
+  @override
+  String get connectorsTitle => 'Connectors';
+
+  @override
+  String get connectorsSubtitle =>
+      'Credentials stay private until you share them.';
+
+  @override
+  String get connectorAdd => 'Add connector';
+
+  @override
+  String get connectorEdit => 'Edit connector';
+
+  @override
+  String get connectorName => 'Name';
+
+  @override
+  String get connectorKind => 'Type';
+
+  @override
+  String get connectorHost => 'Host';
+
+  @override
+  String get connectorPort => 'Port';
+
+  @override
+  String get connectorBaseUrl => 'Base URL';
+
+  @override
+  String get connectorUsername => 'Username';
+
+  @override
+  String get connectorPassword => 'Password or app password';
+
+  @override
+  String get connectorPasswordUnchanged =>
+      'Leave blank to keep the stored password';
+
+  @override
+  String get connectorRead => 'Read';
+
+  @override
+  String get connectorWrite => 'Write (needs approval)';
+
+  @override
+  String get connectorSharing => 'Sharing';
+
+  @override
+  String get connectorSharingPrivate => 'Only me';
+
+  @override
+  String get connectorSharingWorkspace => 'Whole workspace';
+
+  @override
+  String get connectorSharingSelected => 'Selected people';
+
+  @override
+  String get connectorSharedWith => 'Shared with';
+
+  @override
+  String get connectorTest => 'Test connection';
+
+  @override
+  String get connectorStatusUnverified => 'Not tested';
+
+  @override
+  String get connectorStatusActive => 'Verified';
+
+  @override
+  String get connectorStatusFailed => 'Check failed';
+
+  @override
+  String get connectorDelete => 'Delete connector';
+
+  @override
+  String connectorDeleteConfirm(String name) {
+    return 'Delete $name? Runs will lose access immediately.';
+  }
+
+  @override
+  String get connectorEmpty => 'No connectors yet';
+
+  @override
+  String get connectorEmptyHint =>
+      'Add one so an agent can read mail or write files — writes always need your approval.';
+
+  @override
+  String get connectorOwnerLabel => 'Owner';
+
+  @override
+  String get connectorSharedByOther => 'Shared with you';
+
+  @override
+  String connectorSaveFailed(String error) {
+    return 'Could not save: $error';
+  }
+
+  @override
+  String connectorTestFailed(String error) {
+    return 'Could not test: $error';
+  }
+
+  @override
+  String connectorSecretsSet(String fields) {
+    return 'Stored: $fields';
+  }
+
+  @override
+  String get connectorNoSecrets => 'No credentials stored';
+
+  @override
+  String get connectorNoMembers => 'No other members';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get connectorFieldRequired => 'This field is required';
+
+  @override
+  String get retryLabel => 'Retry';
+
+  @override
+  String get agentRunEventsTitle => 'Execution trail';
+
+  @override
+  String get taskRunAgentAction => 'Run agent';
+
+  @override
+  String get taskRunQueued => 'Run queued for this task';
+
+  @override
+  String get toolAgentRunsDescription =>
+      'See what the agents are doing and what needs approval.';
+
+  @override
+  String get destinationMyWork => 'My work';
+
+  @override
+  String get myWorkSubtitle =>
+      'What needs you now, and what is waiting on someone else.';
+
+  @override
+  String get myWorkScopeMine => 'For me';
+
+  @override
+  String get myWorkScopeAll => 'All tasks';
+
+  @override
+  String get myWorkLaneActionable => 'To do';
+
+  @override
+  String get myWorkLaneBlocked => 'Blocked';
+
+  @override
+  String get myWorkLaneAwaitingOthers => 'Waiting on others';
+
+  @override
+  String get myWorkLaneRecentlyDone => 'Recently done';
+
+  @override
+  String get myWorkEmptyTitle => 'Nothing is waiting on you';
+
+  @override
+  String get myWorkEmptyDescription =>
+      'Assignments land here. Browse all tasks to pick something up.';
+
+  @override
+  String get myWorkLaneEmpty => 'Nothing in this lane.';
+
+  @override
+  String get myWorkErrorTitle => 'My work could not load';
+
+  @override
+  String myWorkDueOn(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String get myWorkOverdue => 'Overdue';
+
+  @override
+  String get myWorkRunTooltip => 'Open the agent run for this task';
+
+  @override
+  String get chatCreateTaskTooltip => 'Turn into a task';
+
+  @override
+  String get taskFromMessageTitle => 'New task from this message';
+
+  @override
+  String get taskFromMessageTitleLabel => 'Task title';
+
+  @override
+  String get taskFromMessageCreated => 'Added to my work';
+
+  @override
+  String get myWorkLaneRunning => 'Running';
+
+  @override
+  String get myWorkLaneWaitingApproval => 'To review';
+
+  @override
+  String get agentRunsOfflineStatus =>
+      'Live updates disconnected. Checking active runs.';
+
+  @override
+  String get agentRunDetailTitle => 'Run details';
+
+  @override
+  String get agentRunStepsTitle => 'Steps';
+
+  @override
+  String get agentRunStepsEmpty => 'No steps yet';
+
+  @override
+  String agentRunModelStep(String agentKey) {
+    return 'Agent @$agentKey';
+  }
+
+  @override
+  String get agentRunStepRejected => 'Rejected';
+
+  @override
+  String get agentRunEventApproved => 'Action approved';
+
+  @override
+  String get agentRunEventRejected => 'Action rejected';
+
+  @override
+  String get agentRunEventModelStarted => 'Agent started a turn';
+
+  @override
+  String get agentRunEventModelCompleted => 'Agent completed a turn';
+
+  @override
+  String get agentRunEventToolStarted => 'Action started';
+
+  @override
+  String get agentRunEventToolCompleted => 'Action completed';
+
+  @override
+  String get agentRunEventArtifactCreated => 'Artifact saved';
+
+  @override
+  String get agentRunEventUpdated => 'Run updated';
+
+  @override
+  String get workspaceManagementTitle => 'Workspace management';
+
+  @override
+  String get destinationWorkspaceManagement => 'Manage';
+
+  @override
+  String get toolWorkspaceManagementDescription =>
+      'Review members and manage their roles.';
 }

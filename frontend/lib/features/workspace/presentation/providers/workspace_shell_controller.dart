@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/realtime_socket_event.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../domain/entities/workspace_summary.dart';
+import '../../domain/entities/workspace_member.dart';
 import '../../domain/entities/workspace_conversation.dart';
 import '../../../auth/domain/entities/auth_session.dart';
 import '../../../auth/presentation/providers/auth_session_controller.dart';
+import '../../../agent_runtime/presentation/providers/agent_runtime_providers.dart';
 import '../../../agents/domain/entities/agent_run.dart';
 import '../../../chat/domain/entities/channel_summary.dart';
 import '../../../chat/domain/entities/chat_message.dart';
@@ -27,6 +29,11 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   static const _emptyWorkspaceId = '';
   StreamSubscription<dynamic>? _socketSubscription;
   final Map<String, WorkspaceShellState> _workspaceCache = {};
+
+  bool _hasConnectedOnce = false;
+  Future<void>? _connectionAttempt;
+  String? _connectingToken;
+  int _connectionGeneration = 0;
 
   @override
   Future<WorkspaceShellState> build() async {
@@ -290,6 +297,22 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
       );
     } catch (error) {
       _setWorkspaceState(current.copyWith(knowledgeError: error.toString()));
+    }
+  }
+
+  void updateWorkspaceMember(String workspaceId, WorkspaceMember updated) {
+    WorkspaceShellState replace(WorkspaceShellState value) => value.copyWith(
+      workspaceMembers: [
+        for (final member in value.workspaceMembers)
+          member.userId == updated.userId ? updated : member,
+      ],
+    );
+    final current = state.value;
+    if (current != null && current.workspaceId == workspaceId) {
+      _setWorkspaceState(replace(current));
+    } else {
+      final cached = _workspaceCache[workspaceId];
+      if (cached != null) _workspaceCache[workspaceId] = replace(cached);
     }
   }
 
@@ -617,7 +640,27 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     }
   }
 
-  Future<void> connectRealtime(String token) async {
+  Future<void> connectRealtime(String token) {
+    final pending = _connectionAttempt;
+    if (pending != null) {
+      return token == _connectingToken
+          ? pending
+          : pending.then((_) => connectRealtime(token));
+    }
+    _connectingToken = token;
+    late final Future<void> attempt;
+    attempt = _connectRealtime(token).whenComplete(() {
+      if (identical(_connectionAttempt, attempt)) {
+        _connectionAttempt = null;
+        _connectingToken = null;
+      }
+    });
+    _connectionAttempt = attempt;
+    return attempt;
+  }
+
+  Future<void> _connectRealtime(String token) async {
+    final generation = ++_connectionGeneration;
     final current = state.value;
     if (current == null) {
       return;
@@ -629,29 +672,43 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     final socketService = ref.read(realtimeSocketServiceProvider);
 
     try {
+      ref.read(agentRuntimeConnectedProvider.notifier).setConnected(false);
+      await _socketSubscription?.cancel();
       await socketService.connect(token: token);
-      _socketSubscription?.cancel();
-      _socketSubscription = socketService.rawEvents.listen(_handleSocketEvent);
-      _setWorkspaceState(
-        current.copyWith(connectionStatus: ChatConnectionStatus.connected),
+      if (!ref.mounted || generation != _connectionGeneration) {
+        await socketService.disconnect();
+        return;
+      }
+      _socketSubscription = socketService.rawEvents.listen(
+        _handleSocketEvent,
+        onError: (Object error, StackTrace stack) =>
+            _setRealtimeDisconnected(ChatConnectionStatus.error),
+        onDone: () =>
+            _setRealtimeDisconnected(ChatConnectionStatus.disconnected),
       );
-      for (final conversation in current.conversations) {
+      final latest = state.value ?? current;
+      _setWorkspaceState(
+        latest.copyWith(connectionStatus: ChatConnectionStatus.connected),
+      );
+      ref.read(agentRuntimeConnectedProvider.notifier).setConnected(true);
+      if (_hasConnectedOnce && latest.workspaceId.isNotEmpty) {
+        await ref.read(agentRuntimeSyncProvider).reconnect(latest.workspaceId);
+      }
+      _hasConnectedOnce = true;
+      for (final conversation in latest.conversations) {
         if (_isConversationChannelBacked(conversation)) {
           await _subscribeChannel(conversation.id);
         }
       }
     } catch (_) {
-      final latest = state.value;
-      if (latest != null) {
-        _setWorkspaceState(
-          latest.copyWith(connectionStatus: ChatConnectionStatus.error),
-        );
-      }
+      _setRealtimeDisconnected(ChatConnectionStatus.error);
     }
   }
 
   Future<void> disconnectRealtime() async {
+    _connectionGeneration++;
     final current = state.value;
+    ref.read(agentRuntimeConnectedProvider.notifier).setConnected(false);
     await _socketSubscription?.cancel();
     _socketSubscription = null;
     await ref.read(realtimeSocketServiceProvider).disconnect();
@@ -907,6 +964,32 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     return 'critique';
   }
 
+  void _handleAgentRunEvent(Map<String, Object?>? payload) {
+    final current = state.value;
+    if (payload == null || current == null) return;
+    final workspaceId = payload['workspaceId'];
+    if (workspaceId != current.workspaceId &&
+        !current.workspaces.any((workspace) => workspace.id == workspaceId)) {
+      return;
+    }
+    unawaited(
+      ref.read(agentRuntimeSyncProvider).receive(payload).catchError((
+        Object error,
+      ) {
+        // Keep the cached run available when a compatibility lookup fails.
+      }),
+    );
+  }
+
+  void _setRealtimeDisconnected(ChatConnectionStatus status) {
+    if (!ref.mounted) return;
+    ref.read(agentRuntimeConnectedProvider.notifier).setConnected(false);
+    final latest = state.value;
+    if (latest != null) {
+      _setWorkspaceState(latest.copyWith(connectionStatus: status));
+    }
+  }
+
   void _handleSocketEvent(dynamic rawEvent) {
     final current = state.value;
     if (current == null || rawEvent is! Map<String, Object?>) {
@@ -1043,8 +1126,16 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
         );
         _setWorkspaceState(nextState);
         return;
+      case RealtimeSocketEventType.agentRunEvent:
+        _handleAgentRunEvent(event.payload);
+        return;
       case RealtimeSocketEventType.subscribed:
+        return;
       case RealtimeSocketEventType.error:
+        if (event.payload?['connectionState'] == 'DISCONNECTED') {
+          _setRealtimeDisconnected(ChatConnectionStatus.disconnected);
+        }
+        return;
       case RealtimeSocketEventType.unknown:
         return;
     }

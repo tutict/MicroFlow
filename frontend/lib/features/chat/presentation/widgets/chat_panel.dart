@@ -47,6 +47,7 @@ class ChatPanel extends StatelessWidget {
     required this.currentUserLabel,
     this.knowledgeDocuments = const [],
     this.onKnowledgeCitationTap,
+    this.onCreateTask,
     required this.participants,
     required this.activeParticipantCount,
     required this.suggestedMentions,
@@ -77,6 +78,7 @@ class ChatPanel extends StatelessWidget {
   final String currentUserLabel;
   final List<KnowledgeDocument> knowledgeDocuments;
   final ValueChanged<String>? onKnowledgeCitationTap;
+  final ValueChanged<ChatMessage>? onCreateTask;
   final List<ChatParticipantPreview> participants;
   final int activeParticipantCount;
   final List<String> suggestedMentions;
@@ -153,6 +155,7 @@ class ChatPanel extends StatelessWidget {
                 currentUserLabel: currentUserLabel,
                 knowledgeDocuments: knowledgeDocuments,
                 onKnowledgeCitationTap: onKnowledgeCitationTap,
+                onCreateTask: onCreateTask,
                 compact: compact,
                 emptyIcon: emptyStateIcon,
                 emptyTitle: emptyStateTitle,

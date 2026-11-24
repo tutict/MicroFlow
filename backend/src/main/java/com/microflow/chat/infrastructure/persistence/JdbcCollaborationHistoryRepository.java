@@ -8,8 +8,8 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import com.microflow.common.jdbc.JdbcTemplate;
+import com.microflow.common.jdbc.RowMapper;
 import org.springframework.stereotype.Repository;
 
 @Repository

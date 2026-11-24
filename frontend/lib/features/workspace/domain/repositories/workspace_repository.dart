@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../../../chat/domain/entities/channel_summary.dart';
 import '../entities/knowledge_document.dart';
 import '../entities/workspace_member.dart';
+import '../entities/workspace_member_role.dart';
 import '../entities/workspace_conversation.dart';
 import '../entities/workspace_summary.dart';
 
@@ -20,6 +21,12 @@ abstract interface class WorkspaceRepository {
   Future<List<WorkspaceMember>> addMemberByEmail({
     required String workspaceId,
     required String email,
+  });
+
+  Future<WorkspaceMember> changeMemberRole({
+    required String workspaceId,
+    required String userId,
+    required WorkspaceMemberRole role,
   });
 
   Future<List<KnowledgeDocument>> listKnowledgeDocuments(String workspaceId);

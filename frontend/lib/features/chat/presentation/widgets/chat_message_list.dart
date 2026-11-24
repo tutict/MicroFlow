@@ -16,6 +16,7 @@ class ChatMessageList extends StatefulWidget {
     required this.currentUserLabel,
     this.knowledgeDocuments = const [],
     this.onKnowledgeCitationTap,
+    this.onCreateTask,
     this.compact = false,
     this.emptyIcon = Icons.forum_rounded,
     this.emptyTitle,
@@ -27,6 +28,7 @@ class ChatMessageList extends StatefulWidget {
   final String currentUserLabel;
   final List<KnowledgeDocument> knowledgeDocuments;
   final ValueChanged<String>? onKnowledgeCitationTap;
+  final ValueChanged<ChatMessage>? onCreateTask;
   final bool compact;
   final IconData emptyIcon;
   final String? emptyTitle;
@@ -115,6 +117,9 @@ class _ChatMessageListState extends State<ChatMessageList> {
                   timestampLabel: _formatTimestamp(entry.message.createdAt),
                   knowledgeDocuments: widget.knowledgeDocuments,
                   onKnowledgeCitationTap: widget.onKnowledgeCitationTap,
+                  onCreateTask: widget.onCreateTask == null
+                      ? null
+                      : () => widget.onCreateTask!(entry.message),
                   compact: widget.compact,
                 ),
               ),

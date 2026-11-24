@@ -6,9 +6,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import com.microflow.common.jdbc.EmptyResultDataAccessException;
+import com.microflow.common.jdbc.JdbcTemplate;
+import com.microflow.common.jdbc.RowMapper;
 import org.springframework.stereotype.Repository;
 
 @Repository

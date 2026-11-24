@@ -11,7 +11,14 @@ import '../../../../shared/layout/window_class.dart';
 import '../../../../shared/theme/app_theme_extensions.dart';
 import '../../../../shared/theme/app_tokens.dart';
 import '../../../accounting/presentation/pages/accounting_page.dart';
+import '../../../agent_runtime/presentation/providers/agent_runtime_providers.dart';
+import '../../../agent_runtime/presentation/widgets/agent_execution_panel.dart';
+import '../../../connectors/presentation/pages/connector_settings_page.dart';
+import '../../../connectors/presentation/widgets/connector_form_sheet.dart';
 import '../../../agents/presentation/pages/agent_diagnostics_page.dart';
+import '../../../tasks/presentation/pages/my_work_page.dart';
+import '../../../tasks/presentation/providers/task_queue_providers.dart';
+import '../../../../core/providers/app_providers.dart';
 import '../shell/shell_destination.dart';
 import '../shell/workspace_destination_rail.dart';
 import '../shell/workspace_inspector.dart';
@@ -24,6 +31,7 @@ import '../../../auth/presentation/providers/auth_session_controller.dart';
 import '../../../chat/domain/entities/chat_message.dart';
 import '../../domain/entities/knowledge_document.dart';
 import '../../domain/entities/workspace_member.dart';
+import '../../domain/entities/workspace_member_role.dart';
 import '../../domain/entities/workspace_conversation.dart';
 import '../../../chat/presentation/state/chat_connection_status.dart';
 import '../../../chat/presentation/widgets/chat_panel.dart';
@@ -31,6 +39,7 @@ import '../providers/workspace_shell_controller.dart';
 import '../state/workspace_shell_state.dart';
 import '../state/workspace_selected_conversation.dart';
 import '../widgets/workspace_panel.dart';
+import 'workspace_management_page.dart';
 
 class WorkspaceHomePage extends ConsumerStatefulWidget {
   const WorkspaceHomePage({
@@ -122,6 +131,102 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
     });
   }
 
+  /// Phone-accessible entry to the execution view: on a phone the inspector is
+  /// collapsed, so the same panel is reachable as a bottom sheet.
+  Future<void> _showAgentRunsSheet(String workspaceId) {
+    final l10n = AppLocalizations.of(context)!;
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => FractionallySizedBox(
+        heightFactor: 0.75,
+        child: AgentExecutionPanel(
+          key: const Key('agent-runs-sheet'),
+          workspaceId: workspaceId,
+          title: l10n.agentRunsTitle,
+        ),
+      ),
+    );
+  }
+
+  /// Turns a chat message into a task that keeps its origin, so the audit trail
+  /// can answer "why does this task exist" long after the chat scrolls away.
+  Future<void> _createTaskFromMessage(
+    String workspaceId,
+    String channelId,
+    ChatMessage message,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final title = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) =>
+          _TaskFromMessageDialog(initialTitle: _taskTitlePreview(message.text)),
+    );
+    final trimmed = title?.trim() ?? '';
+    if (!mounted || trimmed.isEmpty) {
+      return;
+    }
+    try {
+      await ref
+          .read(taskRepositoryProvider)
+          .createTask(
+            workspaceId: workspaceId,
+            title: trimmed,
+            originChannelId: channelId.isEmpty ? null : channelId,
+            originMessageId: message.id,
+          );
+      ref.read(taskQueueActionsProvider).refresh(workspaceId);
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.taskFromMessageCreated)));
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
+    }
+  }
+
+  String _taskTitlePreview(String text) {
+    final normalized = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (normalized.length <= 80) {
+      return normalized;
+    }
+    return '${normalized.substring(0, 80)}…';
+  }
+
+  Future<void> _runAgentForTask(String workspaceId, String taskId) async {
+    final l10n = AppLocalizations.of(context)!;
+    final actions = ref.read(agentRunActionsProvider);
+    bool isCurrent() =>
+        mounted &&
+        ref.read(workspaceShellControllerProvider).value?.workspaceId ==
+            workspaceId &&
+        identical(ref.read(agentRunActionsProvider), actions);
+    try {
+      await actions.startOnTask(workspaceId: workspaceId, taskId: taskId);
+      if (!mounted || !isCurrent()) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.taskRunQueued)));
+    } catch (error) {
+      if (mounted && isCurrent()) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+      rethrow;
+    }
+  }
+
   WorkspaceToolsList _toolsFor(
     WorkspaceShellState shell, {
     VoidCallback? close,
@@ -133,9 +238,16 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
 
     return WorkspaceToolsList(
       hasWorkspace: shell.workspaceId.isNotEmpty,
+      onMyWork: () => go(ShellDestination.tasks),
       onKnowledge: () => go(ShellDestination.knowledge),
+      onAgentRuns: () {
+        close?.call();
+        _showAgentRunsSheet(shell.workspaceId);
+      },
+      onConnectors: () => go(ShellDestination.connectors),
       onAccounting: () => go(ShellDestination.accounting),
       onDiagnostics: () => go(ShellDestination.diagnostics),
+      onWorkspaceManagement: () => go(ShellDestination.workspaceManagement),
       onUseLight: () {
         close?.call();
         ref
@@ -446,11 +558,32 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
         : workspaceName;
     final bodyPadding = EdgeInsets.all(isPhone ? AppSpacing.xs : AppSpacing.sm);
     final semantic = AppSemanticColors.of(context);
+    final shellValue = shellAsync.value;
+    // Phone and tablet collapse the inspector, so a run blocked on a human
+    // decision would otherwise be invisible until the user opened the tools
+    // sheet. The count comes from the same query the inspector uses, so the
+    // badge costs nothing extra on desktop.
+    final pendingApprovalCount =
+        shellValue == null || shellValue.workspaceId.isEmpty
+        ? 0
+        : ref
+                  .watch(
+                    agentRunsProvider((
+                      workspaceId: shellValue.workspaceId,
+                      taskId: null,
+                    )),
+                  )
+                  .asData
+                  ?.value
+                  .where((run) => run.needsApproval)
+                  .length ??
+              0;
     final canManageMembers =
         shellAsync.value?.workspaceMembers.any(
           (member) =>
               member.userId == shellAsync.value?.currentUserId &&
-              member.role == 'OWNER',
+              WorkspaceMemberRole.fromStored(member.role) ==
+                  WorkspaceMemberRole.owner,
         ) ??
         false;
 
@@ -547,6 +680,17 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
               tooltip: l10n.newWorkspaceTitle,
               onPressed: _promptCreateWorkspace,
               icon: const Icon(Icons.add_business_rounded),
+            ),
+          if ((isPhone || isTablet) && shellValue != null)
+            IconButton(
+              key: const Key('agent-approval-inbox'),
+              tooltip: l10n.agentRunsWaiting,
+              onPressed: () => _showAgentRunsSheet(shellValue.workspaceId),
+              icon: Badge(
+                isLabelVisible: pendingApprovalCount > 0,
+                label: Text('$pendingApprovalCount'),
+                child: const Icon(Icons.pending_actions_outlined),
+              ),
             ),
           if (!isPhone)
             IconButton(
@@ -700,6 +844,13 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                   currentUserId: shell.currentUserId,
                   currentUserLabel: shell.currentUserLabel,
                   knowledgeDocuments: shell.knowledgeDocuments,
+                  onCreateTask: shell.workspaceId.isEmpty
+                      ? null
+                      : (message) => _createTaskFromMessage(
+                          shell.workspaceId,
+                          shell.selectedConversation.id,
+                          message,
+                        ),
                   onKnowledgeCitationTap: (documentId) {
                     setState(() {
                       _knowledgeDocumentId = documentId;
@@ -837,6 +988,40 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                           _uploadKnowledge(targetChannelId: targetChannelId),
                     ),
                   ),
+                  ShellDestination.tasks => _EmbeddedDestination(
+                    title: l10n.destinationMyWork,
+                    onBack: () =>
+                        _selectDestination(ShellDestination.conversation),
+                    child: MyWorkPage(
+                      key: const Key('my-work'),
+                      workspaceId: shell.workspaceId,
+                      members: shell.workspaceMembers,
+                      currentUserId: shell.currentUserId,
+                      onRunAgent: shell.workspaceId.isEmpty
+                          ? null
+                          : (task) =>
+                                _runAgentForTask(shell.workspaceId, task.id),
+                    ),
+                  ),
+                  ShellDestination.connectors => _EmbeddedDestination(
+                    title: l10n.destinationConnectors,
+                    onBack: () =>
+                        _selectDestination(ShellDestination.conversation),
+                    child: ConnectorSettingsPage(
+                      key: const Key('connector-settings'),
+                      workspaceId: shell.workspaceId,
+                      members: [
+                        for (final member in shell.workspaceMembers)
+                          if (member.userId != shell.currentUserId)
+                            ConnectorMemberOption(
+                              userId: member.userId,
+                              label: member.displayName.isEmpty
+                                  ? member.email
+                                  : member.displayName,
+                            ),
+                      ],
+                    ),
+                  ),
                   ShellDestination.accounting => _EmbeddedDestination(
                     title: l10n.destinationAccounting,
                     onBack: () =>
@@ -853,6 +1038,21 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                     child: AgentDiagnosticsPage(
                       workspaceId: shell.workspaceId,
                       embedded: true,
+                    ),
+                  ),
+                  ShellDestination.workspaceManagement => _EmbeddedDestination(
+                    title: l10n.workspaceManagementTitle,
+                    onBack: () =>
+                        _selectDestination(ShellDestination.conversation),
+                    child: WorkspaceManagementPage(
+                      workspaceId: shell.workspaceId,
+                      workspaceName: shell.workspaceName,
+                      currentUserId: shell.currentUserId,
+                      members: shell.workspaceMembers,
+                      repository: ref.watch(workspaceRepositoryProvider),
+                      onMemberChanged: (member) => ref
+                          .read(workspaceShellControllerProvider.notifier)
+                          .updateWorkspaceMember(shell.workspaceId, member),
                     ),
                   ),
                   ShellDestination.conversation => conversationCanvas,
@@ -890,6 +1090,11 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                       l10n.idle,
                   onOpenKnowledge: () =>
                       _selectDestination(ShellDestination.knowledge),
+                  execution: AgentExecutionPanel(
+                    key: const Key('inspector-execution'),
+                    workspaceId: shell.workspaceId,
+                    title: l10n.agentRunsTitle,
+                  ),
                 );
                 final showRail =
                     windowClass == AppWindowClass.expanded ||
@@ -1089,14 +1294,17 @@ List<WorkspaceMemberSummary> _buildWorkspaceMembers({
         (member) => WorkspaceMemberSummary(
           id: member.userId,
           displayName: member.displayName,
-          subtitle: member.role == 'OWNER'
+          subtitle:
+              WorkspaceMemberRole.fromStored(member.role) ==
+                  WorkspaceMemberRole.owner
               ? l10n.ownerRole
               : member.email.isEmpty
               ? l10n.online
               : member.email,
           accent: member.userId == currentUserId
               ? colors.channel
-              : member.role == 'OWNER'
+              : WorkspaceMemberRole.fromStored(member.role) ==
+                    WorkspaceMemberRole.owner
               ? colors.agentThread
               : colors.directMessage,
           isCurrentUser: member.userId == currentUserId,
@@ -2231,4 +2439,59 @@ String _knowledgeScopeLabel(
     }
   }
   return l10n.scopedScopeLabel;
+}
+
+/// Title prompt for "turn this message into a task".
+///
+/// The controller lives here rather than in the calling method: disposing it
+/// right after `showDialog` returns kills the field while the route is still
+/// animating out, which throws "TextEditingController used after being
+/// disposed" on the next frame.
+class _TaskFromMessageDialog extends StatefulWidget {
+  const _TaskFromMessageDialog({required this.initialTitle});
+
+  final String initialTitle;
+
+  @override
+  State<_TaskFromMessageDialog> createState() => _TaskFromMessageDialogState();
+}
+
+class _TaskFromMessageDialogState extends State<_TaskFromMessageDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialTitle,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_controller.text);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(l10n.taskFromMessageTitle),
+      content: TextField(
+        key: const Key('task-from-message-title'),
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(labelText: l10n.taskFromMessageTitleLabel),
+        onSubmitted: (_) => _submit(),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          key: const Key('task-from-message-create'),
+          onPressed: _submit,
+          child: Text(l10n.create),
+        ),
+      ],
+    );
+  }
 }

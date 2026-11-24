@@ -28,6 +28,21 @@ public class ApiExceptionHandler implements ExceptionMapper<Exception> {
 
     @Override
     public Response toResponse(Exception exception) {
+        if (exception instanceof ConcurrentModificationException) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(ApiExceptionPayload.body("conflict", exception.getMessage()))
+                    .build();
+        }
+        if (exception instanceof AccessDeniedException) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(ApiExceptionPayload.body("forbidden", exception.getMessage()))
+                    .build();
+        }
+        if (exception instanceof ResourceNotFoundException) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(ApiExceptionPayload.body("not_found", exception.getMessage()))
+                    .build();
+        }
         if (exception instanceof IllegalArgumentException) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ApiExceptionPayload.body("bad_request", exception.getMessage()))
