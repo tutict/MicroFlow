@@ -1052,4 +1052,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get toolWorkspaceManagementDescription =>
       'Review members and manage their roles.';
+
+  @override
+  String get searchConversationsHint => 'Search conversations';
+
+  @override
+  String get noMatchingConversations => 'No matching conversations';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get mentionAgent => 'Mention an agent';
+
+  @override
+  String composerShortcuts(String modifier) {
+    return '$modifier+Enter to send · Enter for a new line';
+  }
+
+  @override
+  String get workspaceToolsHeading => 'Workspace tools';
+
+  @override
+  String get preferencesHeading => 'Preferences';
+
+  @override
+  String get languageChinese => '中文';
+
+  @override
+  String get chooseTaskGroup => 'Choose task group';
+
+  @override
+  String conversationLoadError(String error) {
+    return 'Couldn\'t open the conversation. Try again: $error';
+  }
+
+  @override
+  String get switchingWorkspaceLabel => 'Switching workspace';
 }

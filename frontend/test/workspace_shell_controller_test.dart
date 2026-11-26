@@ -34,6 +34,233 @@ import 'support/recording_runtime_repository.dart';
 
 void main() {
   test(
+    'returning through cached workspaces clears a cancelled switch indicator',
+    () async {
+      final workspaces = _DeferredWorkspaceRepository();
+      final container = _messageContainer(
+        _FakeChatRepository(),
+        workspaceRepository: workspaces,
+      );
+      addTearDown(container.dispose);
+      await container.read(workspaceShellControllerProvider.future);
+      final controller = container.read(
+        workspaceShellControllerProvider.notifier,
+      );
+      await controller.selectWorkspace('ws_2');
+      await controller.selectWorkspace('ws_1');
+      final pending = controller.selectWorkspace('ws_3');
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        container
+            .read(workspaceShellControllerProvider)
+            .requireValue
+            .isSwitchingWorkspace,
+        isTrue,
+      );
+      await controller.selectWorkspace('ws_2');
+      await controller.selectWorkspace('ws_1');
+      workspaces.pending.complete(const []);
+      await pending;
+      final current = container
+          .read(workspaceShellControllerProvider)
+          .requireValue;
+      expect(current.workspaceId, 'ws_1');
+      expect(current.isSwitchingWorkspace, isFalse);
+    },
+  );
+
+  test(
+    'a conversation load cannot restore a completed send busy flag',
+    () async {
+      final chat = _DeferredSelectionRepository();
+      final container = _messageContainer(chat);
+      addTearDown(container.dispose);
+      await container.read(workspaceShellControllerProvider.future);
+      final controller = container.read(
+        workspaceShellControllerProvider.notifier,
+      );
+      final sending = controller.sendMessage('Sent while opening');
+      chat.deferChannel = 'chn_2';
+      final selecting = controller.selectConversation(
+        conversationId: 'chn_2',
+        title: 'other',
+        kind: WorkspaceSelectedConversationKind.channel,
+        isAvailable: true,
+      );
+      chat.response.complete(
+        const ChatMessage(
+          id: 'sent',
+          author: 'usr_1',
+          text: 'Sent while opening',
+          createdAt: '2026-11-26T00:00:00Z',
+          isAgent: false,
+        ),
+      );
+      await sending;
+      chat.history.complete(const []);
+      await selecting;
+      final current = container
+          .read(workspaceShellControllerProvider)
+          .requireValue;
+      expect(current.selectedConversationId, 'chn_2');
+      expect(current.isSendingMessage, isFalse);
+    },
+  );
+
+  test(
+    'an old conversation load cannot restore a previous workspace',
+    () async {
+      final chat = _DeferredSelectionRepository();
+      final container = _messageContainer(chat);
+      addTearDown(container.dispose);
+      await container.read(workspaceShellControllerProvider.future);
+      final controller = container.read(
+        workspaceShellControllerProvider.notifier,
+      );
+      chat.deferChannel = 'chn_2';
+      final selecting = controller.selectConversation(
+        conversationId: 'chn_2',
+        title: 'other',
+        kind: WorkspaceSelectedConversationKind.channel,
+        isAvailable: true,
+      );
+      await controller.selectWorkspace('ws_2');
+      chat.history.complete(const []);
+      await selecting;
+      expect(
+        container
+            .read(workspaceShellControllerProvider)
+            .requireValue
+            .workspaceId,
+        'ws_2',
+      );
+    },
+  );
+
+  test(
+    'returning to the current conversation cancels an older selection intent',
+    () async {
+      final chat = _DeferredSelectionRepository();
+      final container = _messageContainer(chat);
+      addTearDown(container.dispose);
+      await container.read(workspaceShellControllerProvider.future);
+      final controller = container.read(
+        workspaceShellControllerProvider.notifier,
+      );
+      chat.deferChannel = 'chn_2';
+      final selecting = controller.selectConversation(
+        conversationId: 'chn_2',
+        title: 'other',
+        kind: WorkspaceSelectedConversationKind.channel,
+        isAvailable: true,
+      );
+      await controller.selectConversation(
+        conversationId: 'chn_1',
+        title: 'general',
+        kind: WorkspaceSelectedConversationKind.channel,
+        isAvailable: true,
+      );
+      chat.history.complete(const []);
+      await selecting;
+      expect(
+        container
+            .read(workspaceShellControllerProvider)
+            .requireValue
+            .selectedConversationId,
+        'chn_1',
+      );
+    },
+  );
+
+  test('a failed message send reaches the composer as an error', () async {
+    final chat = _PendingMessageRepository();
+    final container = _messageContainer(chat);
+    addTearDown(container.dispose);
+    await container.read(workspaceShellControllerProvider.future);
+    final controller = container.read(
+      workspaceShellControllerProvider.notifier,
+    );
+    final sending = controller.sendMessage('Keep this draft');
+    final result = expectLater(sending, throwsA(isA<StateError>()));
+    chat.response.completeError(StateError('connection lost'));
+    await result;
+    final state = container.read(workspaceShellControllerProvider).requireValue;
+    expect(state.isSendingMessage, isFalse);
+    expect(state.messageError, contains('connection lost'));
+  });
+
+  test(
+    'a late message response stays out of a different conversation',
+    () async {
+      final chat = _PendingMessageRepository();
+      final container = _messageContainer(chat);
+      addTearDown(container.dispose);
+      await container.read(workspaceShellControllerProvider.future);
+      final controller = container.read(
+        workspaceShellControllerProvider.notifier,
+      );
+      final sending = controller.sendMessage('Channel one message');
+      await controller.selectConversation(
+        conversationId: 'chn_2',
+        title: 'other',
+        kind: WorkspaceSelectedConversationKind.channel,
+        isAvailable: true,
+      );
+      chat.response.complete(
+        const ChatMessage(
+          id: 'late',
+          author: 'usr_1',
+          text: 'Channel one message',
+          createdAt: '2026-11-25T10:00:00Z',
+          isAgent: false,
+        ),
+      );
+      await sending;
+      final state = container
+          .read(workspaceShellControllerProvider)
+          .requireValue;
+      expect(state.selectedConversationId, 'chn_2');
+      expect(state.messages, isEmpty);
+      expect(state.isSendingMessage, isFalse);
+      expect(
+        state.conversations
+            .firstWhere((conversation) => conversation.id == 'chn_1')
+            .subtitle,
+        contains('Channel one message'),
+      );
+    },
+  );
+
+  test('a late send failure belongs to its original workspace', () async {
+    final chat = _PendingMessageRepository();
+    final container = _messageContainer(chat);
+    addTearDown(container.dispose);
+    await container.read(workspaceShellControllerProvider.future);
+    final controller = container.read(
+      workspaceShellControllerProvider.notifier,
+    );
+    final sending = controller.sendMessage('Workspace one message');
+    final result = expectLater(sending, throwsA(isA<StateError>()));
+    await controller.selectWorkspace('ws_2');
+    chat.response.completeError(StateError('original send failed'));
+    await result;
+    expect(
+      container
+          .read(workspaceShellControllerProvider)
+          .requireValue
+          .messageError,
+      isNull,
+    );
+    await controller.selectWorkspace('ws_1');
+    final restored = container
+        .read(workspaceShellControllerProvider)
+        .requireValue;
+    expect(restored.isSendingMessage, isFalse);
+    expect(restored.messageError, contains('original send failed'));
+  });
+
+  test(
     'history catch-up applies a newer snapshot before suppressing its socket event',
     () async {
       final repository = RecordingRuntimeRepository(
@@ -1100,6 +1327,107 @@ class _FakeWorkspaceRepository implements WorkspaceRepository {
       createdAt: '2026-04-13T00:00:00Z',
     );
   }
+}
+
+ProviderContainer _messageContainer(
+  ChatRepository chat, {
+  WorkspaceRepository? workspaceRepository,
+}) => ProviderContainer(
+  overrides: [
+    authRepositoryProvider.overrideWithValue(
+      _FakeAuthRepository(
+        currentSessionValue: const AuthSession(
+          userId: 'usr_1',
+          email: 'demo@microflow.local',
+          displayName: 'Demo User',
+          accessToken: 'token',
+          refreshToken: 'refresh',
+        ),
+      ),
+    ),
+    workspaceRepositoryProvider.overrideWithValue(
+      workspaceRepository ??
+          _FakeWorkspaceRepository(
+            workspaces: const [
+              WorkspaceSummary(id: 'ws_1', name: 'First', memberCount: 1),
+              WorkspaceSummary(id: 'ws_2', name: 'Second', memberCount: 1),
+            ],
+            channels: const [
+              ChannelSummary(id: 'chn_1', name: 'general', unreadCount: 0),
+              ChannelSummary(id: 'chn_2', name: 'other', unreadCount: 0),
+            ],
+            conversations: const [
+              WorkspaceConversation(
+                id: 'chn_1',
+                title: 'general',
+                subtitle: '',
+                kind: 'CHANNEL',
+                unreadCount: 0,
+                available: true,
+                lastActivityAt: null,
+              ),
+              WorkspaceConversation(
+                id: 'chn_2',
+                title: 'other',
+                subtitle: '',
+                kind: 'CHANNEL',
+                unreadCount: 0,
+                available: true,
+                lastActivityAt: null,
+              ),
+            ],
+          ),
+    ),
+    chatRepositoryProvider.overrideWithValue(chat),
+    agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
+    realtimeSocketServiceProvider.overrideWithValue(
+      _FakeRealtimeSocketService(),
+    ),
+  ],
+);
+
+class _DeferredWorkspaceRepository extends _FakeWorkspaceRepository {
+  _DeferredWorkspaceRepository()
+    : super(
+        workspaces: const [
+          WorkspaceSummary(id: 'ws_1', name: 'First', memberCount: 1),
+          WorkspaceSummary(id: 'ws_2', name: 'Second', memberCount: 1),
+          WorkspaceSummary(id: 'ws_3', name: 'Third', memberCount: 1),
+        ],
+      );
+  final pending = Completer<List<KnowledgeDocument>>();
+
+  @override
+  Future<List<KnowledgeDocument>> listKnowledgeDocuments(String workspaceId) =>
+      workspaceId == 'ws_3'
+      ? pending.future
+      : super.listKnowledgeDocuments(workspaceId);
+}
+
+class _DeferredSelectionRepository extends _PendingMessageRepository {
+  String? deferChannel;
+  final history = Completer<List<ChatMessage>>();
+
+  @override
+  Future<List<ChatMessage>> listMessages(String channelId) {
+    if (deferChannel == channelId) {
+      deferChannel = null;
+      return history.future;
+    }
+    return super.listMessages(channelId);
+  }
+}
+
+class _PendingMessageRepository extends _FakeChatRepository {
+  final response = Completer<ChatMessage>();
+
+  @override
+  Future<ChatMessage> sendMessage({
+    required String workspaceId,
+    required String channelId,
+    required String senderUserId,
+    required String content,
+  }) => response.future;
 }
 
 class _FakeChatRepository implements ChatRepository {

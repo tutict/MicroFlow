@@ -61,6 +61,9 @@ class ChatPanel extends StatelessWidget {
     required this.messageError,
     required this.onSend,
     this.compact = false,
+    this.initialDraft = '',
+    this.onDraftChanged,
+    this.onOpenConversations,
   });
 
   final String channelName;
@@ -92,6 +95,9 @@ class ChatPanel extends StatelessWidget {
   final String? messageError;
   final Future<void> Function(String value) onSend;
   final bool compact;
+  final String initialDraft;
+  final ValueChanged<String>? onDraftChanged;
+  final VoidCallback? onOpenConversations;
 
   @override
   Widget build(BuildContext context) {
@@ -114,12 +120,19 @@ class ChatPanel extends StatelessWidget {
               title: channelName,
               subtitle: conversationLabel,
               compact: compact,
-              leading: Icon(
-                canSendMessage
-                    ? Icons.forum_outlined
-                    : Icons.lock_outline_rounded,
-                size: 20,
-              ),
+              leading: onOpenConversations != null
+                  ? IconButton(
+                      key: const Key('chat-open-conversations'),
+                      tooltip: l10n.conversations,
+                      onPressed: onOpenConversations,
+                      icon: const Icon(Icons.arrow_back_rounded),
+                    )
+                  : Icon(
+                      canSendMessage
+                          ? Icons.forum_outlined
+                          : Icons.lock_outline_rounded,
+                      size: 20,
+                    ),
               actions: [
                 if (!compact)
                   Tooltip(
@@ -130,6 +143,10 @@ class ChatPanel extends StatelessWidget {
                   label: statusLabel,
                   color: statusColor,
                   compact: true,
+                  showLabel:
+                      !compact ||
+                      (MediaQuery.sizeOf(context).width >= 360 &&
+                          MediaQuery.textScalerOf(context).scale(1) <= 1.3),
                 ),
               ],
             ),
@@ -166,6 +183,8 @@ class ChatPanel extends StatelessWidget {
             Padding(
               padding: EdgeInsets.all(compact ? AppSpacing.xs : AppSpacing.sm),
               child: InputBox(
+                initialDraft: initialDraft,
+                onDraftChanged: onDraftChanged,
                 onSend: canSendMessage ? onSend : null,
                 enabled: canSendMessage,
                 isSending: isSendingMessage,

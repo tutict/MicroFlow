@@ -2005,6 +2005,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Review members and manage their roles.'**
   String get toolWorkspaceManagementDescription;
+
+  /// No description provided for @searchConversationsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search conversations'**
+  String get searchConversationsHint;
+
+  /// No description provided for @noMatchingConversations.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching conversations'**
+  String get noMatchingConversations;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// No description provided for @mentionAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'Mention an agent'**
+  String get mentionAgent;
+
+  /// No description provided for @composerShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'{modifier}+Enter to send · Enter for a new line'**
+  String composerShortcuts(String modifier);
+
+  /// No description provided for @workspaceToolsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace tools'**
+  String get workspaceToolsHeading;
+
+  /// No description provided for @preferencesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferencesHeading;
+
+  /// No description provided for @languageChinese.
+  ///
+  /// In en, this message translates to:
+  /// **'中文'**
+  String get languageChinese;
+
+  /// No description provided for @chooseTaskGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose task group'**
+  String get chooseTaskGroup;
+
+  /// No description provided for @conversationLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the conversation. Try again: {error}'**
+  String conversationLoadError(String error);
+
+  /// No description provided for @switchingWorkspaceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Switching workspace'**
+  String get switchingWorkspaceLabel;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
@@ -46,6 +48,326 @@ import 'package:microflow_frontend/features/workspace/presentation/widgets/works
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 void main() {
+  for (final succeeds in [true, false]) {
+    testWidgets(
+      'a remounted composer reconciles a pending ${succeeds ? 'successful' : 'failed'} send',
+      (tester) async {
+        final shell = _PendingSendShell(_experienceState());
+        await _pumpWorkspaceHomePage(
+          tester,
+          state: _experienceState(),
+          size: const Size(1280, 850),
+          taskRepository: _CompactTaskRepository(),
+          controllerFactory: () => shell,
+        );
+        await tester.pumpAndSettle();
+        final composer = find.byKey(const Key('message-composer'));
+        await tester.enterText(composer, 'Pending draft');
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('composer-send')));
+        await tester.pump();
+        expect(shell.sent, ['Pending draft']);
+        await tester.tap(find.byKey(const Key('shell-nav-tasks')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('shell-nav-conversation')));
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          tester.widget<TextField>(composer).controller!.text,
+          'Pending draft',
+        );
+        if (succeeds) {
+          shell.pending.complete();
+        } else {
+          shell.pending.completeError(StateError('connection lost'));
+        }
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<TextField>(composer).controller!.text,
+          succeeds ? '' : 'Pending draft',
+        );
+        expect(shell.sent, hasLength(1));
+        if (!succeeds) {
+          expect(find.textContaining('connection lost'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'a slow conversation open does not replace a newer task destination',
+    (tester) async {
+      final shell = _DeferredConversationShell(_experienceState());
+      await _pumpWorkspaceHomePage(
+        tester,
+        state: _experienceState(),
+        size: const Size(1280, 850),
+        taskRepository: _CompactTaskRepository(),
+        controllerFactory: () => shell,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(WorkspacePanel),
+          matching: find.text('Alex Chen'),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('shell-nav-tasks')));
+      await tester.pumpAndSettle();
+      shell.pending.complete();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('my-work-page')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'a slow conversation open does not replace a newer knowledge citation',
+    (tester) async {
+      final initialState = _experienceState().copyWith(
+        messages: const [
+          ChatMessage(
+            id: 'citation_message',
+            author: 'assistant',
+            text: 'See [kb:doc_missing]',
+            createdAt: '2026-11-26T06:00:00Z',
+            isAgent: true,
+          ),
+        ],
+      );
+      final shell = _DeferredConversationShell(initialState);
+      await _pumpWorkspaceHomePage(
+        tester,
+        state: initialState,
+        size: const Size(1280, 850),
+        controllerFactory: () => shell,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(WorkspacePanel),
+          matching: find.text('Alex Chen'),
+        ),
+      );
+      await tester.pump();
+      await tester.tap(find.text('[kb:doc_missing]'));
+      await tester.pumpAndSettle();
+      expect(find.text('Search documents'), findsOneWidget);
+
+      shell.pending.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Search documents'), findsOneWidget);
+      expect(find.byKey(const Key('message-composer')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'phone opens My Work directly with accurate navigation selection',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await _pumpWorkspaceHomePage(
+          tester,
+          state: _experienceState(),
+          size: const Size(390, 844),
+          taskRepository: _CompactTaskRepository(),
+        );
+        await tester.pumpAndSettle();
+
+        final workTab = find.byKey(const Key('mobile-nav-work'));
+        expect(workTab, findsOneWidget);
+        expect(
+          tester.getSemantics(workTab).flagsCollection.isFocused,
+          isNot(Tristate.none),
+        );
+        await tester.tap(workTab);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('my-work-page')), findsOneWidget);
+        expect(find.byType(WorkspacePanel), findsNothing);
+        expect(find.text('My work'), findsNWidgets(2));
+        expect(
+          tester.getSemantics(workTab).flagsCollection.isSelected,
+          Tristate.isTrue,
+        );
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
+  testWidgets('desktop task destination has labels and one focused canvas', (
+    tester,
+  ) async {
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: _experienceState(),
+      size: const Size(1280, 850),
+      taskRepository: _CompactTaskRepository(),
+    );
+    await tester.pumpAndSettle();
+    final rail = find.byType(WorkspaceDestinationRail);
+    expect(
+      find.descendant(of: rail, matching: find.text('My work')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.descendant(
+        of: rail,
+        matching: find.byIcon(Icons.checklist_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WorkspacePanel), findsNothing);
+    expect(
+      tester.getSize(find.byKey(const Key('my-work-page'))).width,
+      greaterThan(900),
+    );
+    expect(find.text('My work'), findsNWidgets(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('conversation search filters loaded titles and can be cleared', (
+    tester,
+  ) async {
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: _experienceState(),
+      size: const Size(1280, 850),
+    );
+    await tester.pumpAndSettle();
+    final search = find.byKey(const Key('conversation-search'));
+    expect(search, findsOneWidget);
+    await tester.enterText(search, '  ALEX  ');
+    await tester.pump();
+
+    final panel = find.byType(WorkspacePanel);
+    expect(
+      find.descendant(of: panel, matching: find.text('Alex Chen')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: panel, matching: find.text('general')),
+      findsNothing,
+    );
+    await tester.enterText(search, 'unmatched');
+    await tester.pump();
+    expect(find.byKey(const Key('conversation-search-empty')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('conversation-search-clear')));
+    await tester.pump();
+    expect(
+      find.descendant(of: panel, matching: find.text('general')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'search shortcut returns from tasks and focuses conversation search',
+    (tester) async {
+      await _pumpWorkspaceHomePage(
+        tester,
+        state: _experienceState(),
+        size: const Size(1280, 850),
+        taskRepository: _CompactTaskRepository(),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.checklist_outlined));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+
+      final search = find.byKey(const Key('conversation-search'));
+      expect(search, findsOneWidget);
+      expect(tester.widget<TextField>(search).focusNode!.hasFocus, isTrue);
+    },
+  );
+
+  testWidgets('chat draft survives a visit to My Work', (tester) async {
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: _experienceState(),
+      size: const Size(1280, 850),
+      taskRepository: _CompactTaskRepository(),
+    );
+    await tester.pumpAndSettle();
+    final composer = find.descendant(
+      of: find.byType(InputBox),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(composer, 'Unfinished team update');
+    await tester.tap(find.byIcon(Icons.checklist_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(WorkspaceDestinationRail),
+        matching: find.byIcon(Icons.forum_outlined),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'Unfinished team update',
+    );
+  });
+
+  testWidgets('each conversation keeps its own draft', (tester) async {
+    await _pumpWorkspaceHomePage(
+      tester,
+      state: _experienceState(),
+      size: const Size(1280, 850),
+    );
+    await tester.pumpAndSettle();
+    final composer = find.descendant(
+      of: find.byType(InputBox),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(composer, 'Channel-only draft');
+    final panel = find.byType(WorkspacePanel);
+    await tester.tap(
+      find.descendant(of: panel, matching: find.text('Alex Chen')),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(composer).controller!.text, isEmpty);
+    await tester.enterText(composer, 'Private draft');
+    await tester.tap(
+      find.descendant(of: panel, matching: find.text('general')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(composer).controller!.text,
+      'Channel-only draft',
+    );
+  });
+
+  testWidgets(
+    'the same channel id in another workspace does not expose a draft',
+    (tester) async {
+      await _pumpWorkspaceHomePage(
+        tester,
+        state: _experienceState(),
+        size: const Size(1280, 850),
+      );
+      await tester.pumpAndSettle();
+      final composer = find.descendant(
+        of: find.byType(InputBox),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(composer, 'Workspace one draft');
+      await tester.tap(find.byTooltip('Switch workspace'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Second workspace'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(composer).controller!.text, isEmpty);
+    },
+  );
+
   testWidgets(
     'home shares a pending task start across My Work All tasks and row remount',
     (tester) async {
@@ -492,7 +814,7 @@ void main() {
         size: const Size(390, 844),
       );
 
-      await tester.tap(find.text('Index'));
+      await tester.tap(find.byKey(const Key('mobile-nav-conversations')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Alex Chen'));
@@ -1040,7 +1362,7 @@ void main() {
       );
 
       expect(find.byType(InputBox), findsOneWidget);
-      await tester.tap(find.text('Index'));
+      await tester.tap(find.byKey(const Key('mobile-nav-conversations')));
       await tester.pumpAndSettle();
       expect(find.byType(WorkspacePanel), findsOneWidget);
 
@@ -1098,7 +1420,7 @@ void main() {
     );
     expect(find.byType(WorkspacePanel), findsOneWidget);
     expect(find.byType(InputBox), findsOneWidget);
-    expect(find.byType(WorkspaceDestinationRail), findsNothing);
+    expect(find.byType(WorkspaceDestinationRail), findsOneWidget);
 
     await _pumpWorkspaceHomePage(
       tester,
@@ -1348,6 +1670,7 @@ Future<void> _pumpWorkspaceHomePage(
   bool silentRepositories = false,
   AgentRuntimeRepository? agentRuntimeRepository,
   TaskRepository? taskRepository,
+  WorkspaceShellController Function()? controllerFactory,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -1360,7 +1683,7 @@ Future<void> _pumpWorkspaceHomePage(
     ProviderScope(
       overrides: [
         workspaceShellControllerProvider.overrideWith(
-          () => _FakeWorkspaceShellController(state),
+          controllerFactory ?? () => _FakeWorkspaceShellController(state),
         ),
         if (silentRepositories)
           accountingRepositoryProvider.overrideWithValue(
@@ -1395,6 +1718,41 @@ Future<void> _pumpWorkspaceHomePage(
   await tester.pump();
 }
 
+WorkspaceShellState _experienceState() => _buildState(
+  workspaceId: 'ws_1',
+  workspaceName: 'MicroFlow',
+  selectedConversation: const WorkspaceSelectedConversation(
+    id: 'chn_1',
+    title: 'general',
+    kind: WorkspaceSelectedConversationKind.channel,
+    isAvailable: true,
+  ),
+  conversations: const [
+    WorkspaceConversation(
+      id: 'chn_1',
+      title: 'general',
+      subtitle: 'Team updates',
+      kind: 'CHANNEL',
+      unreadCount: 0,
+      available: true,
+      lastActivityAt: null,
+    ),
+    WorkspaceConversation(
+      id: 'dm_1',
+      title: 'Alex Chen',
+      subtitle: 'Product design',
+      kind: 'DIRECT_MESSAGE',
+      unreadCount: 1,
+      available: true,
+      lastActivityAt: null,
+    ),
+  ],
+  workspaces: const [
+    WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 2),
+    WorkspaceSummary(id: 'ws_2', name: 'Second workspace', memberCount: 1),
+  ],
+);
+
 WorkspaceShellState _buildState({
   required String workspaceId,
   required String workspaceName,
@@ -1426,6 +1784,52 @@ WorkspaceShellState _buildState({
     collaborationStatusByConversation: collaborationStatusByConversation,
     collaborationRunsByConversation: collaborationRunsByConversation,
   );
+}
+
+class _PendingSendShell extends _FakeWorkspaceShellController {
+  _PendingSendShell(super.state);
+  final pending = Completer<void>();
+  final sent = <String>[];
+
+  @override
+  Future<void> sendMessage(String value) async {
+    sent.add(value);
+    _state = _state.copyWith(isSendingMessage: true);
+    state = AsyncData(_state);
+    try {
+      await pending.future;
+      _state = _state.copyWith(
+        isSendingMessage: false,
+        clearMessageError: true,
+      );
+    } catch (error) {
+      _state = _state.copyWith(isSendingMessage: false, messageError: '$error');
+      rethrow;
+    } finally {
+      state = AsyncData(_state);
+    }
+  }
+}
+
+class _DeferredConversationShell extends _FakeWorkspaceShellController {
+  _DeferredConversationShell(super.state);
+  final pending = Completer<void>();
+
+  @override
+  Future<void> selectConversation({
+    required String conversationId,
+    required String title,
+    required WorkspaceSelectedConversationKind kind,
+    required bool isAvailable,
+  }) async {
+    await pending.future;
+    await super.selectConversation(
+      conversationId: conversationId,
+      title: title,
+      kind: kind,
+      isAvailable: isAvailable,
+    );
+  }
 }
 
 class _FakeWorkspaceShellController extends WorkspaceShellController {

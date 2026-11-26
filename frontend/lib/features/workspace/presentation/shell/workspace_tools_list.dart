@@ -94,34 +94,55 @@ class WorkspaceToolsList extends StatelessWidget {
           description: l10n.toolWorkspaceManagementDescription,
           onTap: hasWorkspace ? onWorkspaceManagement : null,
         ),
-        _ToolTile(
-          icon: Icons.light_mode_outlined,
+        const Divider(height: AppSpacing.lg),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+          child: Text(
+            l10n.preferencesHeading,
+            style: theme.textTheme.titleSmall,
+          ),
+        ),
+        _PreferenceRow(
+          icon: Icons.contrast_rounded,
           title: l10n.theme,
-          description: l10n.toolAppearanceDescription,
-          selected: themeMode == ThemeMode.light,
-          onTap: onUseLight,
+          options: [
+            ChoiceChip(
+              key: const Key('tool-theme-light'),
+              label: Text(l10n.lightMode),
+              selected: themeMode == ThemeMode.light,
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              onSelected: (_) => onUseLight(),
+            ),
+            ChoiceChip(
+              key: const Key('tool-theme-dark'),
+              label: Text(l10n.darkMode),
+              selected: themeMode == ThemeMode.dark,
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              onSelected: (_) => onUseDark(),
+            ),
+          ],
         ),
-        _ToolTile(
-          icon: Icons.dark_mode_outlined,
-          title: l10n.darkMode,
-          description: l10n.toolAppearanceDescription,
-          selected: themeMode == ThemeMode.dark,
-          onTap: onUseDark,
-        ),
-        _ToolTile(
+        _PreferenceRow(
           icon: Icons.translate_rounded,
           title: l10n.language,
-          description: l10n.toolLanguageDescription,
-          selected: languageCode == 'zh',
-          onTap: onUseChinese,
+          options: [
+            ChoiceChip(
+              key: const Key('tool-language-zh'),
+              label: Text(l10n.languageChinese),
+              selected: languageCode == 'zh',
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              onSelected: (_) => onUseChinese(),
+            ),
+            ChoiceChip(
+              key: const Key('tool-language-en'),
+              label: Text(l10n.english),
+              selected: languageCode == 'en',
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              onSelected: (_) => onUseEnglish(),
+            ),
+          ],
         ),
-        _ToolTile(
-          icon: Icons.language_rounded,
-          title: l10n.english,
-          description: l10n.toolLanguageDescription,
-          selected: languageCode == 'en',
-          onTap: onUseEnglish,
-        ),
+        const Divider(height: AppSpacing.lg),
         _ToolTile(
           icon: Icons.logout_rounded,
           title: l10n.signOutTooltip,
@@ -141,7 +162,6 @@ class _ToolTile extends StatelessWidget {
     required this.title,
     required this.description,
     required this.onTap,
-    this.selected = false,
     this.destructive = false,
   });
 
@@ -149,80 +169,79 @@ class _ToolTile extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback? onTap;
-  final bool selected;
   final bool destructive;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = destructive
+    final accent = onTap == null
+        ? theme.disabledColor
+        : destructive
         ? theme.colorScheme.error
-        : selected
-        ? theme.colorScheme.primary
         : theme.colorScheme.onSurface;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-      child: Semantics(
-        selected: selected,
-        button: true,
-        child: Material(
-          color: theme.colorScheme.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.medium),
-            side: BorderSide(
-              color: destructive
-                  ? theme.colorScheme.error
-                  : selected
-                  ? theme.colorScheme.primary
-                  : theme.dividerColor,
-              width: selected || destructive ? 2 : 1,
-            ),
-          ),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(AppRadii.medium),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 44),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Row(
-                  children: [
-                    Icon(icon, size: 20, color: accent),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: accent,
-                              fontWeight: selected
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                            ),
-                          ),
-                          Text(
-                            description,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (selected)
-                      Icon(
-                        Icons.check_rounded,
-                        size: 20,
-                        color: theme.colorScheme.primary,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      minVerticalPadding: AppSpacing.sm,
+      enabled: onTap != null,
+      leading: Icon(icon, size: 20, color: accent),
+      title: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(color: accent),
+      ),
+      subtitle: Text(
+        description,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: onTap == null
+              ? theme.disabledColor
+              : theme.colorScheme.onSurfaceVariant,
         ),
+      ),
+      trailing: destructive
+          ? null
+          : const Icon(Icons.chevron_right_rounded, size: 18),
+      onTap: onTap,
+    );
+  }
+}
+
+class _PreferenceRow extends StatelessWidget {
+  const _PreferenceRow({
+    required this.icon,
+    required this.title,
+    required this.options,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<Widget> options;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: AppSpacing.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: Text(title, style: theme.textTheme.bodyMedium)),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.lg),
+            child: Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xxs,
+              children: options,
+            ),
+          ),
+        ],
       ),
     );
   }

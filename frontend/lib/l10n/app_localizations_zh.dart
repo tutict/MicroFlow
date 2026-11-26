@@ -1031,4 +1031,41 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get toolWorkspaceManagementDescription => '查看工作区成员并管理角色。';
+
+  @override
+  String get searchConversationsHint => '搜索会话';
+
+  @override
+  String get noMatchingConversations => '没有匹配的会话';
+
+  @override
+  String get clearSearch => '清除搜索';
+
+  @override
+  String get mentionAgent => '提及 Agent';
+
+  @override
+  String composerShortcuts(String modifier) {
+    return '$modifier+Enter 发送 · Enter 换行';
+  }
+
+  @override
+  String get workspaceToolsHeading => '工作区工具';
+
+  @override
+  String get preferencesHeading => '偏好设置';
+
+  @override
+  String get languageChinese => '中文';
+
+  @override
+  String get chooseTaskGroup => '选择任务分组';
+
+  @override
+  String conversationLoadError(String error) {
+    return '无法打开会话，请重试：$error';
+  }
+
+  @override
+  String get switchingWorkspaceLabel => '正在切换工作区';
 }

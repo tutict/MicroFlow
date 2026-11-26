@@ -31,6 +31,7 @@ class WorkspaceShellState {
     this.workspaceMembers = const [],
     this.knowledgeDocuments = const [],
     this.isUploadingKnowledgeDocument = false,
+    this.isSwitchingWorkspace = false,
     this.messageError,
     this.knowledgeError,
   });
@@ -55,6 +56,7 @@ class WorkspaceShellState {
   final List<WorkspaceMember> workspaceMembers;
   final List<KnowledgeDocument> knowledgeDocuments;
   final bool isUploadingKnowledgeDocument;
+  final bool isSwitchingWorkspace;
   final String? messageError;
   final String? knowledgeError;
 
@@ -92,6 +94,7 @@ class WorkspaceShellState {
     List<WorkspaceMember>? workspaceMembers,
     List<KnowledgeDocument>? knowledgeDocuments,
     bool? isUploadingKnowledgeDocument,
+    bool? isSwitchingWorkspace,
     String? messageError,
     String? knowledgeError,
     bool clearMessageError = false,
@@ -124,6 +127,7 @@ class WorkspaceShellState {
       knowledgeDocuments: knowledgeDocuments ?? this.knowledgeDocuments,
       isUploadingKnowledgeDocument:
           isUploadingKnowledgeDocument ?? this.isUploadingKnowledgeDocument,
+      isSwitchingWorkspace: isSwitchingWorkspace ?? this.isSwitchingWorkspace,
       messageError: clearMessageError
           ? null
           : messageError ?? this.messageError,

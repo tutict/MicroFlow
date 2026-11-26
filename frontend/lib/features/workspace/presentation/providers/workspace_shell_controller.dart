@@ -34,6 +34,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
   Future<void>? _connectionAttempt;
   String? _connectingToken;
   int _connectionGeneration = 0;
+  int _selectionGeneration = 0;
 
   @override
   Future<WorkspaceShellState> build() async {
@@ -119,6 +120,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
       connectionStatus: ChatConnectionStatus.idle,
       currentUserId: session.userId,
       currentUserLabel: session.displayName,
+      isSwitchingWorkspace: false,
       isSendingMessage: false,
       collaborationModeByConversation: const {},
       collaborationStatusByConversation: const {},
@@ -190,6 +192,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     required AuthSession session,
   }) {
     return cached.copyWith(
+      isSwitchingWorkspace: false,
       workspaces: current.workspaces,
       connectionStatus: current.connectionStatus,
       currentUserId: session.userId,
@@ -197,11 +200,22 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     );
   }
 
+  bool _isSelectionCurrent(int generation, WorkspaceShellState origin) {
+    if (!ref.mounted || generation != _selectionGeneration) return false;
+    final latest = state.value;
+    return latest != null &&
+        latest.workspaceId == origin.workspaceId &&
+        latest.currentUserId == origin.currentUserId;
+  }
+
   Future<void> selectWorkspace(String workspaceId) async {
     final current = state.value;
-    if (current == null ||
-        workspaceId.isEmpty ||
-        workspaceId == current.workspaceId) {
+    if (current == null || workspaceId.isEmpty) return;
+    if (workspaceId == current.workspaceId) {
+      _selectionGeneration++;
+      if (current.isSwitchingWorkspace) {
+        _setWorkspaceState(current.copyWith(isSwitchingWorkspace: false));
+      }
       return;
     }
     WorkspaceSummary? target;
@@ -211,22 +225,24 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
         break;
       }
     }
-    if (target == null) {
-      return;
-    }
+    if (target == null) return;
+    final generation = ++_selectionGeneration;
     final session = await ref.read(authSessionControllerProvider.future);
-    if (session == null) {
+    if (session == null ||
+        !_isSelectionCurrent(generation, current) ||
+        session.userId != current.currentUserId) {
       return;
     }
+    final latest = state.requireValue;
     final cached = _workspaceCache[workspaceId];
     if (cached != null) {
       final hydrated = _hydrateCachedState(
         cached: cached,
-        current: current,
+        current: latest,
         session: session,
       );
       _setWorkspaceState(hydrated);
-      if (current.connectionStatus == ChatConnectionStatus.connected) {
+      if (hydrated.connectionStatus == ChatConnectionStatus.connected) {
         for (final conversation in hydrated.conversations) {
           if (_isConversationChannelBacked(conversation)) {
             await _subscribeChannel(conversation.id);
@@ -235,21 +251,34 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
       }
       return;
     }
-    state = const AsyncLoading();
-    final nextState = await _buildWorkspaceState(
-      session: session,
-      workspaces: current.workspaces,
-      workspace: target,
-    );
-    _setWorkspaceState(
-      nextState.copyWith(connectionStatus: current.connectionStatus),
-    );
-    if (current.connectionStatus == ChatConnectionStatus.connected) {
-      for (final conversation in nextState.conversations) {
-        if (_isConversationChannelBacked(conversation)) {
-          await _subscribeChannel(conversation.id);
+    _setWorkspaceState(latest.copyWith(isSwitchingWorkspace: true));
+    try {
+      final nextState = await _buildWorkspaceState(
+        session: session,
+        workspaces: latest.workspaces,
+        workspace: target,
+      );
+      if (!_isSelectionCurrent(generation, current)) return;
+      final connectionStatus = state.requireValue.connectionStatus;
+      _cacheWorkspaceState(
+        state.requireValue.copyWith(isSwitchingWorkspace: false),
+      );
+      _setWorkspaceState(
+        nextState.copyWith(connectionStatus: connectionStatus),
+      );
+      if (connectionStatus == ChatConnectionStatus.connected) {
+        for (final conversation in nextState.conversations) {
+          if (_isConversationChannelBacked(conversation)) {
+            await _subscribeChannel(conversation.id);
+          }
         }
       }
+    } catch (_) {
+      if (!_isSelectionCurrent(generation, current)) return;
+      _setWorkspaceState(
+        state.requireValue.copyWith(isSwitchingWorkspace: false),
+      );
+      rethrow;
     }
   }
 
@@ -488,27 +517,40 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     required bool isAvailable,
   }) async {
     final current = state.value;
-    if (current == null ||
-        (current.selectedConversationId == conversationId &&
-            current.selectedConversation.kind == kind)) {
+    if (current == null || conversationId.isEmpty) return;
+    final generation = ++_selectionGeneration;
+    if (current.isSwitchingWorkspace) {
+      _setWorkspaceState(current.copyWith(isSwitchingWorkspace: false));
+    }
+    if (current.selectedConversationId == conversationId &&
+        current.selectedConversation.kind == kind) {
       return;
     }
 
-    if ((kind == WorkspaceSelectedConversationKind.channel && isAvailable) ||
-        (kind == WorkspaceSelectedConversationKind.directMessage &&
-            isAvailable) ||
-        (kind == WorkspaceSelectedConversationKind.agentThread &&
-            isAvailable)) {
+    if (isAvailable) {
       final chatRepository = ref.read(chatRepositoryProvider);
-      final messages = await chatRepository.listMessages(conversationId);
-      final collaborationRuns = await chatRepository.listCollaborationRuns(
-        conversationId,
-      );
+      List<ChatMessage> messages;
+      List<CollaborationRun> collaborationRuns;
+      try {
+        messages = await chatRepository.listMessages(conversationId);
+        collaborationRuns = await chatRepository.listCollaborationRuns(
+          conversationId,
+        );
+        if (!_isSelectionCurrent(generation, current)) return;
+        if (current.isSendingMessage && !state.requireValue.isSendingMessage) {
+          messages = await chatRepository.listMessages(conversationId);
+        }
+      } catch (_) {
+        if (!_isSelectionCurrent(generation, current)) return;
+        rethrow;
+      }
+      if (!_isSelectionCurrent(generation, current)) return;
+      final latest = state.requireValue;
       final latestMessage = messages.isEmpty ? null : messages.last;
       _setWorkspaceState(
-        current.copyWith(
+        latest.copyWith(
           conversations: _updateConversationActivity(
-            conversations: current.conversations,
+            conversations: latest.conversations,
             conversationId: conversationId,
             preview: latestMessage == null
                 ? ''
@@ -525,7 +567,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
           ),
           messages: messages,
           collaborationRunsByConversation: {
-            ...current.collaborationRunsByConversation,
+            ...latest.collaborationRunsByConversation,
             conversationId: collaborationRuns,
           },
           clearMessageError: true,
@@ -536,7 +578,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
     }
 
     _setWorkspaceState(
-      current.copyWith(
+      state.requireValue.copyWith(
         selectedConversation: WorkspaceSelectedConversation(
           id: conversationId,
           title: title,
@@ -544,7 +586,6 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
           isAvailable: isAvailable,
         ),
         messages: const [],
-        isSendingMessage: false,
         clearMessageError: true,
       ),
     );
@@ -568,13 +609,16 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
 
     final selectedChannelId = current.selectedChannelIdOrNull;
     if (selectedChannelId == null) {
+      final error = StateError(
+        'Selected conversation is not backed by a channel yet.',
+      );
       _setWorkspaceState(
         current.copyWith(
           isSendingMessage: false,
-          messageError: 'Selected conversation is not backed by a channel yet.',
+          messageError: error.toString(),
         ),
       );
-      return;
+      throw error;
     }
 
     final outboundContent = _prepareOutboundContent(current, content);
@@ -591,12 +635,7 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
               channelId: selectedChannelId,
               content: outboundContent,
             );
-        final latest = state.value;
-        if (latest != null) {
-          _setWorkspaceState(
-            latest.copyWith(isSendingMessage: false, clearMessageError: true),
-          );
-        }
+        _settleMessageSend(current);
         return;
       }
 
@@ -609,34 +648,53 @@ class WorkspaceShellController extends AsyncNotifier<WorkspaceShellState> {
             content: outboundContent,
           );
 
-      final latest = state.value;
-      if (latest != null) {
-        _setWorkspaceState(
-          latest.copyWith(
-            messages: [...latest.messages, createdMessage],
-            conversations: _updateConversationActivity(
-              conversations: latest.conversations,
-              conversationId: selectedChannelId,
-              preview: _summarizePreview(createdMessage.text),
-              createdAt: createdMessage.createdAt,
+      _settleMessageSend(current, message: createdMessage);
+    } catch (error) {
+      _settleMessageSend(current, error: error.toString());
+      rethrow;
+    }
+  }
+
+  void _settleMessageSend(
+    WorkspaceShellState origin, {
+    ChatMessage? message,
+    String? error,
+  }) {
+    if (!ref.mounted) return;
+    final visible = state.value;
+    final workspace = visible?.workspaceId == origin.workspaceId
+        ? visible
+        : _workspaceCache[origin.workspaceId];
+    if (workspace == null || workspace.currentUserId != origin.currentUserId) {
+      return;
+    }
+    final sameConversation =
+        workspace.selectedConversationId == origin.selectedConversationId;
+    final next = workspace.copyWith(
+      messages:
+          message != null &&
+              sameConversation &&
+              !workspace.messages.any((existing) => existing.id == message.id)
+          ? [...workspace.messages, message]
+          : workspace.messages,
+      conversations: message == null
+          ? workspace.conversations
+          : _updateConversationActivity(
+              conversations: workspace.conversations,
+              conversationId: origin.selectedConversationId,
+              preview: _summarizePreview(message.text),
+              createdAt: message.createdAt,
               incrementUnread: false,
               clearUnread: true,
             ),
-            isSendingMessage: false,
-            clearMessageError: true,
-          ),
-        );
-      }
-    } catch (error) {
-      final latest = state.value;
-      if (latest != null) {
-        _setWorkspaceState(
-          latest.copyWith(
-            isSendingMessage: false,
-            messageError: error.toString(),
-          ),
-        );
-      }
+      isSendingMessage: false,
+      messageError: sameConversation ? error : null,
+      clearMessageError: sameConversation && error == null,
+    );
+    if (visible?.workspaceId == origin.workspaceId) {
+      _setWorkspaceState(next);
+    } else {
+      _cacheWorkspaceState(next);
     }
   }
 

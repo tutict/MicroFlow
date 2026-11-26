@@ -111,37 +111,48 @@ class AppStatusDot extends StatelessWidget {
     required this.label,
     required this.color,
     this.compact = false,
+    this.showLabel = true,
   });
 
   final String label;
   final Color color;
   final bool compact;
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Semantics(
-      label: label,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+    final dot = Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+    final content = showLabel
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              dot,
+              const SizedBox(width: AppSpacing.xs),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          )
+        : SizedBox.square(dimension: 44, child: Center(child: dot));
+    return Tooltip(
+      message: label,
+      excludeFromSemantics: true,
+      child: Semantics(
+        label: label,
+        liveRegion: true,
+        child: ExcludeSemantics(child: content),
       ),
     );
   }

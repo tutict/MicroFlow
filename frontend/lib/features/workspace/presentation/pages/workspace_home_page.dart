@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
@@ -21,6 +22,7 @@ import '../../../tasks/presentation/providers/task_queue_providers.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../shell/shell_destination.dart';
 import '../shell/workspace_destination_rail.dart';
+import '../shell/workspace_bottom_navigation.dart';
 import '../shell/workspace_inspector.dart';
 import '../shell/workspace_shell_body.dart';
 import '../shell/workspace_tools_list.dart';
@@ -60,6 +62,18 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
   late ShellDestination _destination;
   int _compactPane = 0;
   String? _knowledgeDocumentId;
+  final FocusNode _conversationSearchFocus = FocusNode(
+    debugLabel: 'conversation-search',
+  );
+  final Map<String, String> _conversationQueries = {};
+  final Map<(String, String, String), String> _conversationDrafts = {};
+  int _conversationOpenGeneration = 0;
+
+  @override
+  void dispose() {
+    _conversationSearchFocus.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -125,9 +139,76 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
   }
 
   void _selectDestination(ShellDestination destination) {
+    _conversationOpenGeneration++;
     setState(() {
       _destination = destination;
       _compactPane = 0;
+    });
+  }
+
+  Future<void> _selectWorkspace(String workspaceId) async {
+    if (!mounted) return;
+    final origin = ref.read(workspaceShellControllerProvider).value;
+    if (origin == null) return;
+    _conversationOpenGeneration++;
+    try {
+      await ref
+          .read(workspaceShellControllerProvider.notifier)
+          .selectWorkspace(workspaceId);
+    } catch (error) {
+      if (!mounted ||
+          ref.read(workspaceShellControllerProvider).value?.currentUserId !=
+              origin.currentUserId) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.workspaceLoadError('$error'),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _focusConversations() {
+    final shell = ref.read(workspaceShellControllerProvider).value;
+    if (shell == null || shell.workspaceId.isEmpty) return;
+    _conversationOpenGeneration++;
+    setState(() {
+      _destination = ShellDestination.conversation;
+      _compactPane = 1;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _conversationSearchFocus.requestFocus();
+    });
+  }
+
+  int get _mobileNavIndex => _compactPane == 2
+      ? 3
+      : switch (_destination) {
+          ShellDestination.conversation => 0,
+          ShellDestination.tasks => 1,
+          ShellDestination.knowledge => 2,
+          _ => 3,
+        };
+
+  void _selectMobileDestination(int index) {
+    _conversationOpenGeneration++;
+    setState(() {
+      switch (index) {
+        case 0:
+          _destination = ShellDestination.conversation;
+          _compactPane = 1;
+        case 1:
+          _destination = ShellDestination.tasks;
+          _compactPane = 0;
+        case 2:
+          _destination = ShellDestination.knowledge;
+          _compactPane = 0;
+        case 3:
+          _compactPane = 2;
+      }
     });
   }
 
@@ -587,599 +668,695 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
         ) ??
         false;
 
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 56,
-        titleSpacing: AppSpacing.md,
-        title: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(AppRadii.small),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'MF',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  height: 1.35,
-                ).copyWith(color: theme.colorScheme.onPrimary),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!isCompactPhone)
-                    Text(
-                      l10n.appTitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium,
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+            _focusConversations,
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+            _focusConversations,
+      },
+      child: Focus(
+        autofocus: true,
+        skipTraversal: true,
+        child: Scaffold(
+          appBar: AppBar(
+            bottom: shellValue?.isSwitchingWorkspace == true
+                ? PreferredSize(
+                    preferredSize: const Size.fromHeight(2),
+                    child: LinearProgressIndicator(
+                      key: const Key('workspace-switch-progress'),
+                      minHeight: 2,
+                      semanticsLabel: l10n.switchingWorkspaceLabel,
                     ),
-                  Text(
-                    workspaceLabel,
-                    maxLines: isCompactPhone ? 2 : 1,
-                    overflow: TextOverflow.ellipsis,
-                    style:
-                        (isCompactPhone
-                                ? theme.textTheme.titleMedium
-                                : theme.textTheme.bodySmall)
-                            ?.copyWith(
-                              color: isCompactPhone
-                                  ? null
-                                  : theme.colorScheme.onSurfaceVariant,
-                            ),
+                  )
+                : null,
+            toolbarHeight: 56,
+            titleSpacing: AppSpacing.md,
+            title: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(AppRadii.small),
                   ),
-                ],
-              ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'MF',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
+                    ).copyWith(color: theme.colorScheme.onPrimary),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!isCompactPhone)
+                        Text(
+                          l10n.appTitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium,
+                        ),
+                      Text(
+                        workspaceLabel,
+                        maxLines: isCompactPhone ? 2 : 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            (isCompactPhone
+                                    ? theme.textTheme.titleMedium
+                                    : theme.textTheme.bodySmall)
+                                ?.copyWith(
+                                  color: isCompactPhone
+                                      ? null
+                                      : theme.colorScheme.onSurfaceVariant,
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          if (width >= 400 && (shellAsync.value?.workspaces.length ?? 0) > 1)
-            PopupMenuButton<String>(
-              tooltip: l10n.switchWorkspaceTooltip,
-              onSelected: (workspaceId) {
-                ref
-                    .read(workspaceShellControllerProvider.notifier)
-                    .selectWorkspace(workspaceId);
-              },
-              itemBuilder: (context) {
-                final shell = shellAsync.value!;
-                return shell.workspaces
-                    .map(
-                      (workspace) => PopupMenuItem<String>(
-                        value: workspace.id,
-                        child: Row(
-                          children: [
-                            Icon(
-                              workspace.id == shell.workspaceId
-                                  ? Icons.check_circle_rounded
-                                  : Icons.workspaces_outline,
-                              size: 18,
+            actions: [
+              if (!isPhone)
+                IconButton(
+                  key: const Key('workspace-quick-search'),
+                  tooltip:
+                      '${l10n.searchConversationsHint} (${theme.platform == TargetPlatform.macOS ? '⌘' : 'Ctrl'}+K)',
+                  onPressed:
+                      shellValue == null || shellValue.workspaceId.isEmpty
+                      ? null
+                      : _focusConversations,
+                  icon: const Icon(Icons.search_rounded),
+                ),
+              if (width >= 400 &&
+                  (shellAsync.value?.workspaces.length ?? 0) > 1)
+                PopupMenuButton<String>(
+                  tooltip: l10n.switchWorkspaceTooltip,
+                  onSelected: _selectWorkspace,
+                  itemBuilder: (context) {
+                    final shell = shellAsync.value!;
+                    return shell.workspaces
+                        .map(
+                          (workspace) => PopupMenuItem<String>(
+                            value: workspace.id,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  workspace.id == shell.workspaceId
+                                      ? Icons.check_circle_rounded
+                                      : Icons.workspaces_outline,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(child: Text(workspace.name)),
+                              ],
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(child: Text(workspace.name)),
+                          ),
+                        )
+                        .toList(growable: false);
+                  },
+                  icon: const Icon(Icons.workspaces_outline),
+                ),
+              if (width >= 400)
+                IconButton(
+                  tooltip: l10n.newWorkspaceTitle,
+                  onPressed: _promptCreateWorkspace,
+                  icon: const Icon(Icons.add_business_rounded),
+                ),
+              if ((isPhone || isTablet) && shellValue != null)
+                IconButton(
+                  key: const Key('agent-approval-inbox'),
+                  tooltip: l10n.agentRunsWaiting,
+                  onPressed: () => _showAgentRunsSheet(shellValue.workspaceId),
+                  icon: Badge(
+                    isLabelVisible: pendingApprovalCount > 0,
+                    label: Text('$pendingApprovalCount'),
+                    child: const Icon(Icons.pending_actions_outlined),
+                  ),
+                ),
+              if (!isPhone)
+                IconButton(
+                  tooltip: l10n.openToolsTooltip,
+                  onPressed: shellAsync.value == null
+                      ? null
+                      : () => _openTools(shellAsync.value!),
+                  icon: const Icon(Icons.handyman_outlined),
+                ),
+              if (isTablet || windowClass == AppWindowClass.expanded)
+                IconButton(
+                  tooltip: l10n.openInspectorTooltip,
+                  onPressed: () => _drawerKey.currentState?.openEndDrawer(),
+                  icon: const Icon(Icons.view_sidebar_outlined),
+                ),
+              PopupMenuButton<_OverflowSelection>(
+                tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
+                onSelected: (selection) {
+                  final workspaceId = selection.workspaceId;
+                  if (workspaceId != null) {
+                    _selectWorkspace(workspaceId);
+                    return;
+                  }
+                  final action = selection.action;
+                  if (action == null) {
+                    return;
+                  }
+                  _handlePhoneMenuSelection(
+                    action,
+                    shellAsync.value,
+                    canManageMembers,
+                  );
+                },
+                itemBuilder: (context) {
+                  final shell = shellAsync.value;
+                  final hasWorkspace = shell?.workspaceId.isNotEmpty ?? false;
+                  final switchWorkspaces =
+                      width < 400 && (shell?.workspaces.length ?? 0) > 1;
+                  return [
+                    if (switchWorkspaces)
+                      for (final workspace in shell!.workspaces)
+                        PopupMenuItem(
+                          value: _OverflowSelection.workspace(workspace.id),
+                          child: Row(
+                            children: [
+                              Icon(
+                                workspace.id == shell.workspaceId
+                                    ? Icons.check_circle_rounded
+                                    : Icons.workspaces_outline,
+                                size: 18,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Expanded(child: Text(workspace.name)),
+                            ],
+                          ),
+                        ),
+                    if (width < 400)
+                      PopupMenuItem(
+                        value: const _OverflowSelection.action(
+                          _PhoneMenuAction.newWorkspace,
+                        ),
+                        child: Text(l10n.newWorkspaceTitle),
+                      ),
+                    if (hasWorkspace && canManageMembers)
+                      PopupMenuItem(
+                        value: const _OverflowSelection.action(
+                          _PhoneMenuAction.addMember,
+                        ),
+                        child: Text(l10n.addMemberTooltip),
+                      ),
+                    PopupMenuItem(
+                      value: const _OverflowSelection.action(
+                        _PhoneMenuAction.signOut,
+                      ),
+                      child: Text(l10n.signOutTooltip),
+                    ),
+                  ];
+                },
+                icon: const Icon(Icons.more_horiz_rounded),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+          ),
+          body: ColoredBox(
+            color: theme.scaffoldBackgroundColor,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: bodyPadding,
+                child: shellAsync.when(
+                  data: (shell) {
+                    final conversations = _mapConversationSummaries(
+                      shell.conversations,
+                      colors: semantic,
+                    );
+                    final members = _buildWorkspaceMembers(
+                      l10n: l10n,
+                      currentUserId: shell.currentUserId,
+                      currentUserLabel: shell.currentUserLabel,
+                      members: shell.workspaceMembers,
+                      colors: semantic,
+                    );
+                    final recentInteractions = _buildRecentInteractions(
+                      l10n: l10n,
+                      currentUserId: shell.currentUserId,
+                      currentUserLabel: shell.currentUserLabel,
+                      messages: shell.messages,
+                      colors: semantic,
+                    );
+                    final enabledAgents = shell.agents
+                        .where((agent) => agent.enabled)
+                        .length;
+                    final isWorkspaceBootstrap =
+                        shell.workspaceId.isEmpty && conversations.isEmpty;
+                    final needsConversationSetup =
+                        !isWorkspaceBootstrap && conversations.isEmpty;
+                    final draftKey = (
+                      shell.currentUserId,
+                      shell.workspaceId,
+                      shell.selectedConversation.id,
+                    );
+                    final chatPanel = ChatPanel(
+                      key: ValueKey(('chat', draftKey)),
+                      initialDraft: _conversationDrafts[draftKey] ?? '',
+                      onDraftChanged: (value) {
+                        if (value.isEmpty) {
+                          _conversationDrafts.remove(draftKey);
+                        } else {
+                          _conversationDrafts[draftKey] = value;
+                        }
+                      },
+                      onOpenConversations: isPhone
+                          ? () => setState(() => _compactPane = 1)
+                          : null,
+                      channelName: shell.selectedConversation.title,
+                      conversationLabel: _conversationLabel(
+                        l10n,
+                        shell.selectedConversation,
+                      ),
+                      conversationDescription: _conversationDescription(
+                        l10n,
+                        shell.selectedConversation,
+                      ),
+                      statusLabel: _connectionLabel(
+                        l10n,
+                        shell.connectionStatus,
+                      ),
+                      statusColor: _connectionColor(
+                        semantic,
+                        shell.connectionStatus,
+                      ),
+                      canSendMessage: _canSendMessage(
+                        shell.selectedConversation,
+                      ),
+                      composerHintText: _composerHintText(
+                        l10n,
+                        shell.selectedConversation,
+                      ),
+                      emptyStateTitle: _emptyConversationTitle(
+                        l10n,
+                        shell.selectedConversation,
+                      ),
+                      emptyStateDescription: _emptyConversationDescription(
+                        l10n,
+                        shell.selectedConversation,
+                      ),
+                      emptyStateIcon: _emptyConversationIcon(
+                        shell.selectedConversation,
+                      ),
+                      messages: shell.messages,
+                      currentUserId: shell.currentUserId,
+                      currentUserLabel: shell.currentUserLabel,
+                      knowledgeDocuments: shell.knowledgeDocuments,
+                      onCreateTask: shell.workspaceId.isEmpty
+                          ? null
+                          : (message) => _createTaskFromMessage(
+                              shell.workspaceId,
+                              shell.selectedConversation.id,
+                              message,
+                            ),
+                      onKnowledgeCitationTap: (documentId) {
+                        _knowledgeDocumentId = documentId;
+                        _selectDestination(ShellDestination.knowledge);
+                      },
+                      participants: _buildConversationParticipants(
+                        l10n: l10n,
+                        currentUserId: shell.currentUserId,
+                        currentUserLabel: shell.currentUserLabel,
+                        selectedConversation: shell.selectedConversation,
+                        messages: shell.messages,
+                        colors: semantic,
+                      ),
+                      activeParticipantCount: _conversationParticipantCount(
+                        l10n: l10n,
+                        currentUserId: shell.currentUserId,
+                        currentUserLabel: shell.currentUserLabel,
+                        selectedConversation: shell.selectedConversation,
+                        messages: shell.messages,
+                        colors: semantic,
+                      ),
+                      suggestedMentions: _buildSuggestedMentions(
+                        shell.agents,
+                        shell.selectedConversation,
+                      ),
+                      collaborationModeAvailable: _supportsCollaboration(
+                        shell.selectedConversation,
+                        shell.agents,
+                      ),
+                      collaborationModeEnabled:
+                          shell.isCollaborationEnabledForSelectedConversation,
+                      collaborationStatusText: _collaborationStatusText(
+                        l10n,
+                        shell.selectedCollaborationStatus,
+                      ),
+                      collaborationSnapshot: shell.selectedCollaborationStatus,
+                      collaborationRuns: shell.selectedCollaborationRuns,
+                      onCollaborationModeChanged: (enabled) {
+                        ref
+                            .read(workspaceShellControllerProvider.notifier)
+                            .setCollaborationModeForSelectedConversation(
+                              enabled,
+                            );
+                      },
+                      compact: isPhone,
+                      isSendingMessage: shell.isSendingMessage,
+                      messageError: shell.messageError,
+                      onSend: (value) async {
+                        await ref
+                            .read(workspaceShellControllerProvider.notifier)
+                            .sendMessage(value);
+                        if (mounted &&
+                            _conversationDrafts[draftKey]?.trim() == value) {
+                          _conversationDrafts.remove(draftKey);
+                        }
+                      },
+                    );
+
+                    void openConversation(
+                      WorkspaceConversationSummary conversation,
+                    ) {
+                      if (!mounted) return;
+                      final visible = ref
+                          .read(workspaceShellControllerProvider)
+                          .value;
+                      if (visible?.workspaceId != shell.workspaceId ||
+                          visible?.currentUserId != shell.currentUserId) {
+                        return;
+                      }
+                      final generation = ++_conversationOpenGeneration;
+                      _openConversation(
+                        ref: ref,
+                        conversation: conversation,
+                        onConversationOpened: () {
+                          if (!mounted ||
+                              generation != _conversationOpenGeneration) {
+                            return;
+                          }
+                          final current = ref
+                              .read(workspaceShellControllerProvider)
+                              .value;
+                          if (current?.workspaceId != shell.workspaceId ||
+                              current?.currentUserId != shell.currentUserId ||
+                              current?.selectedConversationId !=
+                                  conversation.id) {
+                            return;
+                          }
+                          setState(() {
+                            _compactPane = 0;
+                            _destination = ShellDestination.conversation;
+                          });
+                        },
+                        onError: (error) {
+                          if (!mounted ||
+                              generation != _conversationOpenGeneration) {
+                            return;
+                          }
+                          final current = ref
+                              .read(workspaceShellControllerProvider)
+                              .value;
+                          if (current?.workspaceId != shell.workspaceId ||
+                              current?.currentUserId != shell.currentUserId) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                l10n.conversationLoadError('$error'),
+                              ),
+                              action: SnackBarAction(
+                                label: l10n.retryLabel,
+                                onPressed: () => openConversation(conversation),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+
+                    final indexPanel = _ScrollablePanel(
+                      key: PageStorageKey(
+                        'conversation-index-${shell.workspaceId}',
+                      ),
+                      child: WorkspacePanel(
+                        key: ValueKey(('conversation-list', shell.workspaceId)),
+                        searchFocusNode: _conversationSearchFocus,
+                        initialSearchQuery:
+                            _conversationQueries[shell.workspaceId] ?? '',
+                        onSearchChanged: (value) =>
+                            _conversationQueries[shell.workspaceId] = value,
+                        workspaceName: shell.workspaceName,
+                        description: l10n.workspaceDescription,
+                        channels: _filterConversationSummaries(
+                          shell.conversations,
+                          WorkspaceConversationKind.channel,
+                          colors: semantic,
+                        ),
+                        conversations: conversations,
+                        members: members,
+                        recentInteractions: recentInteractions,
+                        selectedConversationId: shell.selectedConversationId,
+                        compact: isPhone,
+                        titleMaxLines: relaxedTitles ? 2 : 1,
+                        onOpenConversation: openConversation,
+                      ),
+                    );
+                    final setupPanel = _WorkspaceSetupPanel(
+                      compact: isPhone,
+                      title: isWorkspaceBootstrap
+                          ? shell.workspaceName
+                          : l10n.noMessagesTitle,
+                      eyebrow: isWorkspaceBootstrap
+                          ? l10n.workspaceHub
+                          : shell.workspaceName,
+                      description: isWorkspaceBootstrap
+                          ? l10n.workspaceDescription
+                          : l10n.noMessagesDescription,
+                      primaryStatValue: '${conversations.length}',
+                      primaryStatLabel: l10n.conversations,
+                      secondaryStatValue: '$enabledAgents',
+                      secondaryStatLabel: l10n.availableAgents,
+                      primaryActionLabel: !isWorkspaceBootstrap && isPhone
+                          ? l10n.indexTab
+                          : null,
+                      onPrimaryAction: !isWorkspaceBootstrap && isPhone
+                          ? () => setState(() => _compactPane = 1)
+                          : null,
+                      primaryActionIcon: Icons.list_alt_rounded,
+                      secondaryActionLabel: isWorkspaceBootstrap
+                          ? l10n.signOutTooltip
+                          : null,
+                      onSecondaryAction: isWorkspaceBootstrap ? _signOut : null,
+                      secondaryActionIcon: Icons.logout_rounded,
+                    );
+                    final conversationCanvas =
+                        needsConversationSetup || isWorkspaceBootstrap
+                        ? setupPanel
+                        : chatPanel;
+                    final embeddedCanvas = switch (_destination) {
+                      ShellDestination.knowledge => _EmbeddedDestination(
+                        title: l10n.destinationKnowledge,
+                        onBack: () =>
+                            _selectDestination(ShellDestination.conversation),
+                        child: _KnowledgeSheet(
+                          shell: shell,
+                          embedded: true,
+                          initialDocumentId: _knowledgeDocumentId,
+                          onRefresh: () {
+                            return ref
+                                .read(workspaceShellControllerProvider.notifier)
+                                .refreshKnowledgeDocuments();
+                          },
+                          onUpload: (targetChannelId) => _uploadKnowledge(
+                            targetChannelId: targetChannelId,
+                          ),
+                        ),
+                      ),
+                      ShellDestination.tasks => ColoredBox(
+                        color: theme.colorScheme.surface,
+                        child: MyWorkPage(
+                          key: const Key('my-work'),
+                          workspaceId: shell.workspaceId,
+                          members: shell.workspaceMembers,
+                          currentUserId: shell.currentUserId,
+                          onRunAgent: shell.workspaceId.isEmpty
+                              ? null
+                              : (task) => _runAgentForTask(
+                                  shell.workspaceId,
+                                  task.id,
+                                ),
+                        ),
+                      ),
+                      ShellDestination.connectors => _EmbeddedDestination(
+                        title: l10n.destinationConnectors,
+                        onBack: () =>
+                            _selectDestination(ShellDestination.conversation),
+                        child: ConnectorSettingsPage(
+                          key: const Key('connector-settings'),
+                          workspaceId: shell.workspaceId,
+                          members: [
+                            for (final member in shell.workspaceMembers)
+                              if (member.userId != shell.currentUserId)
+                                ConnectorMemberOption(
+                                  userId: member.userId,
+                                  label: member.displayName.isEmpty
+                                      ? member.email
+                                      : member.displayName,
+                                ),
                           ],
                         ),
                       ),
-                    )
-                    .toList(growable: false);
-              },
-              icon: const Icon(Icons.workspaces_outline),
-            ),
-          if (width >= 400)
-            IconButton(
-              tooltip: l10n.newWorkspaceTitle,
-              onPressed: _promptCreateWorkspace,
-              icon: const Icon(Icons.add_business_rounded),
-            ),
-          if ((isPhone || isTablet) && shellValue != null)
-            IconButton(
-              key: const Key('agent-approval-inbox'),
-              tooltip: l10n.agentRunsWaiting,
-              onPressed: () => _showAgentRunsSheet(shellValue.workspaceId),
-              icon: Badge(
-                isLabelVisible: pendingApprovalCount > 0,
-                label: Text('$pendingApprovalCount'),
-                child: const Icon(Icons.pending_actions_outlined),
-              ),
-            ),
-          if (!isPhone)
-            IconButton(
-              tooltip: l10n.openToolsTooltip,
-              onPressed: shellAsync.value == null
-                  ? null
-                  : () => _openTools(shellAsync.value!),
-              icon: const Icon(Icons.handyman_outlined),
-            ),
-          if (isTablet || windowClass == AppWindowClass.expanded)
-            IconButton(
-              tooltip: l10n.openInspectorTooltip,
-              onPressed: () => _drawerKey.currentState?.openEndDrawer(),
-              icon: const Icon(Icons.view_sidebar_outlined),
-            ),
-          PopupMenuButton<_OverflowSelection>(
-            tooltip: MaterialLocalizations.of(context).moreButtonTooltip,
-            onSelected: (selection) {
-              final workspaceId = selection.workspaceId;
-              if (workspaceId != null) {
-                ref
-                    .read(workspaceShellControllerProvider.notifier)
-                    .selectWorkspace(workspaceId);
-                return;
-              }
-              final action = selection.action;
-              if (action == null) {
-                return;
-              }
-              _handlePhoneMenuSelection(
-                action,
-                shellAsync.value,
-                canManageMembers,
-              );
-            },
-            itemBuilder: (context) {
-              final shell = shellAsync.value;
-              final hasWorkspace = shell?.workspaceId.isNotEmpty ?? false;
-              final switchWorkspaces =
-                  width < 400 && (shell?.workspaces.length ?? 0) > 1;
-              return [
-                if (switchWorkspaces)
-                  for (final workspace in shell!.workspaces)
-                    PopupMenuItem(
-                      value: _OverflowSelection.workspace(workspace.id),
-                      child: Row(
-                        children: [
-                          Icon(
-                            workspace.id == shell.workspaceId
-                                ? Icons.check_circle_rounded
-                                : Icons.workspaces_outline,
-                            size: 18,
-                          ),
-                          const SizedBox(width: AppSpacing.xs),
-                          Expanded(child: Text(workspace.name)),
-                        ],
+                      ShellDestination.accounting => _EmbeddedDestination(
+                        title: l10n.destinationAccounting,
+                        onBack: () =>
+                            _selectDestination(ShellDestination.conversation),
+                        child: AccountingPage(
+                          workspaceId: shell.workspaceId,
+                          embedded: true,
+                        ),
                       ),
-                    ),
-                if (width < 400)
-                  PopupMenuItem(
-                    value: const _OverflowSelection.action(
-                      _PhoneMenuAction.newWorkspace,
-                    ),
-                    child: Text(l10n.newWorkspaceTitle),
-                  ),
-                if (hasWorkspace && canManageMembers)
-                  PopupMenuItem(
-                    value: const _OverflowSelection.action(
-                      _PhoneMenuAction.addMember,
-                    ),
-                    child: Text(l10n.addMemberTooltip),
-                  ),
-                PopupMenuItem(
-                  value: const _OverflowSelection.action(
-                    _PhoneMenuAction.signOut,
-                  ),
-                  child: Text(l10n.signOutTooltip),
-                ),
-              ];
-            },
-            icon: const Icon(Icons.more_horiz_rounded),
-          ),
-          const SizedBox(width: AppSpacing.xs),
-        ],
-      ),
-      body: ColoredBox(
-        color: theme.scaffoldBackgroundColor,
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: bodyPadding,
-            child: shellAsync.when(
-              data: (shell) {
-                final conversations = _mapConversationSummaries(
-                  shell.conversations,
-                  colors: semantic,
-                );
-                final members = _buildWorkspaceMembers(
-                  l10n: l10n,
-                  currentUserId: shell.currentUserId,
-                  currentUserLabel: shell.currentUserLabel,
-                  members: shell.workspaceMembers,
-                  colors: semantic,
-                );
-                final recentInteractions = _buildRecentInteractions(
-                  l10n: l10n,
-                  currentUserId: shell.currentUserId,
-                  currentUserLabel: shell.currentUserLabel,
-                  messages: shell.messages,
-                  colors: semantic,
-                );
-                final enabledAgents = shell.agents
-                    .where((agent) => agent.enabled)
-                    .length;
-                final isWorkspaceBootstrap =
-                    shell.workspaceId.isEmpty && conversations.isEmpty;
-                final needsConversationSetup =
-                    !isWorkspaceBootstrap && conversations.isEmpty;
-                final chatPanel = ChatPanel(
-                  channelName: shell.selectedConversation.title,
-                  conversationLabel: _conversationLabel(
-                    l10n,
-                    shell.selectedConversation,
-                  ),
-                  conversationDescription: _conversationDescription(
-                    l10n,
-                    shell.selectedConversation,
-                  ),
-                  statusLabel: _connectionLabel(l10n, shell.connectionStatus),
-                  statusColor: _connectionColor(
-                    semantic,
-                    shell.connectionStatus,
-                  ),
-                  canSendMessage: _canSendMessage(shell.selectedConversation),
-                  composerHintText: _composerHintText(
-                    l10n,
-                    shell.selectedConversation,
-                  ),
-                  emptyStateTitle: _emptyConversationTitle(
-                    l10n,
-                    shell.selectedConversation,
-                  ),
-                  emptyStateDescription: _emptyConversationDescription(
-                    l10n,
-                    shell.selectedConversation,
-                  ),
-                  emptyStateIcon: _emptyConversationIcon(
-                    shell.selectedConversation,
-                  ),
-                  messages: shell.messages,
-                  currentUserId: shell.currentUserId,
-                  currentUserLabel: shell.currentUserLabel,
-                  knowledgeDocuments: shell.knowledgeDocuments,
-                  onCreateTask: shell.workspaceId.isEmpty
-                      ? null
-                      : (message) => _createTaskFromMessage(
-                          shell.workspaceId,
-                          shell.selectedConversation.id,
-                          message,
+                      ShellDestination.diagnostics => _EmbeddedDestination(
+                        title: l10n.destinationDiagnostics,
+                        onBack: () =>
+                            _selectDestination(ShellDestination.conversation),
+                        child: AgentDiagnosticsPage(
+                          workspaceId: shell.workspaceId,
+                          embedded: true,
                         ),
-                  onKnowledgeCitationTap: (documentId) {
-                    setState(() {
-                      _knowledgeDocumentId = documentId;
-                      _destination = ShellDestination.knowledge;
-                      _compactPane = 0;
-                    });
-                  },
-                  participants: _buildConversationParticipants(
-                    l10n: l10n,
-                    currentUserId: shell.currentUserId,
-                    currentUserLabel: shell.currentUserLabel,
-                    selectedConversation: shell.selectedConversation,
-                    messages: shell.messages,
-                    colors: semantic,
-                  ),
-                  activeParticipantCount: _conversationParticipantCount(
-                    l10n: l10n,
-                    currentUserId: shell.currentUserId,
-                    currentUserLabel: shell.currentUserLabel,
-                    selectedConversation: shell.selectedConversation,
-                    messages: shell.messages,
-                    colors: semantic,
-                  ),
-                  suggestedMentions: _buildSuggestedMentions(
-                    shell.agents,
-                    shell.selectedConversation,
-                  ),
-                  collaborationModeAvailable: _supportsCollaboration(
-                    shell.selectedConversation,
-                    shell.agents,
-                  ),
-                  collaborationModeEnabled:
-                      shell.isCollaborationEnabledForSelectedConversation,
-                  collaborationStatusText: _collaborationStatusText(
-                    l10n,
-                    shell.selectedCollaborationStatus,
-                  ),
-                  collaborationSnapshot: shell.selectedCollaborationStatus,
-                  collaborationRuns: shell.selectedCollaborationRuns,
-                  onCollaborationModeChanged: (enabled) {
-                    ref
-                        .read(workspaceShellControllerProvider.notifier)
-                        .setCollaborationModeForSelectedConversation(enabled);
-                  },
-                  compact: isPhone,
-                  isSendingMessage: shell.isSendingMessage,
-                  messageError: shell.messageError,
-                  onSend: (value) {
-                    return ref
-                        .read(workspaceShellControllerProvider.notifier)
-                        .sendMessage(value);
-                  },
-                );
-
-                void openConversation(
-                  WorkspaceConversationSummary conversation,
-                ) {
-                  _openConversation(
-                    ref: ref,
-                    conversation: conversation,
-                    onConversationOpened: () {
-                      setState(() {
-                        _compactPane = 0;
-                        _destination = ShellDestination.conversation;
-                      });
-                    },
-                  );
-                }
-
-                final indexPanel = _ScrollablePanel(
-                  child: WorkspacePanel(
-                    workspaceName: shell.workspaceName,
-                    description: l10n.workspaceDescription,
-                    channels: _filterConversationSummaries(
-                      shell.conversations,
-                      WorkspaceConversationKind.channel,
-                      colors: semantic,
-                    ),
-                    conversations: conversations,
-                    members: members,
-                    recentInteractions: recentInteractions,
-                    selectedConversationId: shell.selectedConversationId,
-                    compact: isPhone,
-                    titleMaxLines: relaxedTitles ? 2 : 1,
-                    onOpenConversation: openConversation,
-                  ),
-                );
-                final setupPanel = _WorkspaceSetupPanel(
-                  compact: isPhone,
-                  title: isWorkspaceBootstrap
-                      ? shell.workspaceName
-                      : l10n.noMessagesTitle,
-                  eyebrow: isWorkspaceBootstrap
-                      ? l10n.workspaceHub
-                      : shell.workspaceName,
-                  description: isWorkspaceBootstrap
-                      ? l10n.workspaceDescription
-                      : l10n.noMessagesDescription,
-                  primaryStatValue: '${conversations.length}',
-                  primaryStatLabel: l10n.conversations,
-                  secondaryStatValue: '$enabledAgents',
-                  secondaryStatLabel: l10n.availableAgents,
-                  primaryActionLabel: !isWorkspaceBootstrap && isPhone
-                      ? l10n.indexTab
-                      : null,
-                  onPrimaryAction: !isWorkspaceBootstrap && isPhone
-                      ? () => setState(() => _compactPane = 1)
-                      : null,
-                  primaryActionIcon: Icons.list_alt_rounded,
-                  secondaryActionLabel: isWorkspaceBootstrap
-                      ? l10n.signOutTooltip
-                      : null,
-                  onSecondaryAction: isWorkspaceBootstrap ? _signOut : null,
-                  secondaryActionIcon: Icons.logout_rounded,
-                );
-                final conversationCanvas =
-                    needsConversationSetup || isWorkspaceBootstrap
-                    ? setupPanel
-                    : chatPanel;
-                final embeddedCanvas = switch (_destination) {
-                  ShellDestination.knowledge => _EmbeddedDestination(
-                    title: l10n.destinationKnowledge,
-                    onBack: () =>
-                        _selectDestination(ShellDestination.conversation),
-                    child: _KnowledgeSheet(
-                      shell: shell,
-                      embedded: true,
-                      initialDocumentId: _knowledgeDocumentId,
-                      onRefresh: () {
-                        return ref
-                            .read(workspaceShellControllerProvider.notifier)
-                            .refreshKnowledgeDocuments();
-                      },
-                      onUpload: (targetChannelId) =>
-                          _uploadKnowledge(targetChannelId: targetChannelId),
-                    ),
-                  ),
-                  ShellDestination.tasks => _EmbeddedDestination(
-                    title: l10n.destinationMyWork,
-                    onBack: () =>
-                        _selectDestination(ShellDestination.conversation),
-                    child: MyWorkPage(
-                      key: const Key('my-work'),
-                      workspaceId: shell.workspaceId,
-                      members: shell.workspaceMembers,
-                      currentUserId: shell.currentUserId,
-                      onRunAgent: shell.workspaceId.isEmpty
-                          ? null
-                          : (task) =>
-                                _runAgentForTask(shell.workspaceId, task.id),
-                    ),
-                  ),
-                  ShellDestination.connectors => _EmbeddedDestination(
-                    title: l10n.destinationConnectors,
-                    onBack: () =>
-                        _selectDestination(ShellDestination.conversation),
-                    child: ConnectorSettingsPage(
-                      key: const Key('connector-settings'),
-                      workspaceId: shell.workspaceId,
-                      members: [
-                        for (final member in shell.workspaceMembers)
-                          if (member.userId != shell.currentUserId)
-                            ConnectorMemberOption(
-                              userId: member.userId,
-                              label: member.displayName.isEmpty
-                                  ? member.email
-                                  : member.displayName,
-                            ),
-                      ],
-                    ),
-                  ),
-                  ShellDestination.accounting => _EmbeddedDestination(
-                    title: l10n.destinationAccounting,
-                    onBack: () =>
-                        _selectDestination(ShellDestination.conversation),
-                    child: AccountingPage(
-                      workspaceId: shell.workspaceId,
-                      embedded: true,
-                    ),
-                  ),
-                  ShellDestination.diagnostics => _EmbeddedDestination(
-                    title: l10n.destinationDiagnostics,
-                    onBack: () =>
-                        _selectDestination(ShellDestination.conversation),
-                    child: AgentDiagnosticsPage(
-                      workspaceId: shell.workspaceId,
-                      embedded: true,
-                    ),
-                  ),
-                  ShellDestination.workspaceManagement => _EmbeddedDestination(
-                    title: l10n.workspaceManagementTitle,
-                    onBack: () =>
-                        _selectDestination(ShellDestination.conversation),
-                    child: WorkspaceManagementPage(
-                      workspaceId: shell.workspaceId,
-                      workspaceName: shell.workspaceName,
-                      currentUserId: shell.currentUserId,
-                      members: shell.workspaceMembers,
-                      repository: ref.watch(workspaceRepositoryProvider),
-                      onMemberChanged: (member) => ref
-                          .read(workspaceShellControllerProvider.notifier)
-                          .updateWorkspaceMember(shell.workspaceId, member),
-                    ),
-                  ),
-                  ShellDestination.conversation => conversationCanvas,
-                };
-                final tools = _toolsFor(shell);
-                final inspector = WorkspaceInspector(
-                  title: shell.selectedConversation.title,
-                  description: _conversationDescription(
-                    l10n,
-                    shell.selectedConversation,
-                  ),
-                  participants:
-                      _buildConversationParticipants(
-                            l10n: l10n,
+                      ),
+                      ShellDestination.workspaceManagement =>
+                        _EmbeddedDestination(
+                          title: l10n.workspaceManagementTitle,
+                          onBack: () =>
+                              _selectDestination(ShellDestination.conversation),
+                          child: WorkspaceManagementPage(
+                            workspaceId: shell.workspaceId,
+                            workspaceName: shell.workspaceName,
                             currentUserId: shell.currentUserId,
-                            currentUserLabel: shell.currentUserLabel,
-                            selectedConversation: shell.selectedConversation,
-                            messages: shell.messages,
-                            colors: semantic,
-                          )
-                          .map(
-                            (person) => InspectorPerson(
-                              label: person.label,
-                              icon: person.label.startsWith('@')
-                                  ? Icons.smart_toy_outlined
-                                  : Icons.person_outline_rounded,
-                            ),
-                          )
-                          .toList(growable: false),
-                  collaborationSummary:
-                      _collaborationStatusText(
-                        l10n,
-                        shell.selectedCollaborationStatus,
-                      ) ??
-                      l10n.idle,
-                  onOpenKnowledge: () =>
-                      _selectDestination(ShellDestination.knowledge),
-                  execution: AgentExecutionPanel(
-                    key: const Key('inspector-execution'),
-                    workspaceId: shell.workspaceId,
-                    title: l10n.agentRunsTitle,
-                  ),
-                );
-                final showRail =
-                    windowClass == AppWindowClass.expanded ||
-                    windowClass == AppWindowClass.large;
-                final showInspector =
-                    windowClass == AppWindowClass.large &&
-                    _destination == ShellDestination.conversation &&
-                    !isWorkspaceBootstrap;
-                final compactBody = switch (_compactPane) {
-                  1 => indexPanel,
-                  2 => tools,
-                  _ => embeddedCanvas,
-                };
-                return FocusTraversalGroup(
-                  policy: OrderedTraversalPolicy(),
-                  child: Scaffold(
-                    key: _drawerKey,
-                    backgroundColor: Colors.transparent,
-                    endDrawer:
-                        isTablet || windowClass == AppWindowClass.expanded
-                        ? Drawer(width: 320, child: inspector)
-                        : null,
-                    body: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (showRail)
-                          WorkspaceDestinationRail(
-                            selected: _destination,
-                            showLabels: windowClass == AppWindowClass.large,
-                            onSelected: _selectDestination,
-                          ),
-                        if (showRail) const SizedBox(width: AppSpacing.sm),
-                        Expanded(
-                          child: WorkspaceShellBody(
-                            windowClass: windowClass,
-                            showIndex: !isWorkspaceBootstrap && !isPhone,
-                            showInspector: showInspector,
-                            index: indexPanel,
-                            canvas: isPhone ? compactBody : embeddedCanvas,
-                            inspector: inspector,
+                            members: shell.workspaceMembers,
+                            repository: ref.watch(workspaceRepositoryProvider),
+                            onMemberChanged: (member) => ref
+                                .read(workspaceShellControllerProvider.notifier)
+                                .updateWorkspaceMember(
+                                  shell.workspaceId,
+                                  member,
+                                ),
                           ),
                         ),
-                      ],
-                    ),
+                      ShellDestination.conversation => conversationCanvas,
+                    };
+                    final tools = _toolsFor(shell);
+                    final inspector = WorkspaceInspector(
+                      title: shell.selectedConversation.title,
+                      description: _conversationDescription(
+                        l10n,
+                        shell.selectedConversation,
+                      ),
+                      participants:
+                          _buildConversationParticipants(
+                                l10n: l10n,
+                                currentUserId: shell.currentUserId,
+                                currentUserLabel: shell.currentUserLabel,
+                                selectedConversation:
+                                    shell.selectedConversation,
+                                messages: shell.messages,
+                                colors: semantic,
+                              )
+                              .map(
+                                (person) => InspectorPerson(
+                                  label: person.label,
+                                  icon: person.label.startsWith('@')
+                                      ? Icons.smart_toy_outlined
+                                      : Icons.person_outline_rounded,
+                                ),
+                              )
+                              .toList(growable: false),
+                      collaborationSummary:
+                          _collaborationStatusText(
+                            l10n,
+                            shell.selectedCollaborationStatus,
+                          ) ??
+                          l10n.idle,
+                      onOpenKnowledge: () =>
+                          _selectDestination(ShellDestination.knowledge),
+                      execution: AgentExecutionPanel(
+                        key: const Key('inspector-execution'),
+                        workspaceId: shell.workspaceId,
+                        title: l10n.agentRunsTitle,
+                      ),
+                    );
+                    final showRail = !isPhone;
+                    final showInspector =
+                        windowClass == AppWindowClass.large &&
+                        _destination == ShellDestination.conversation &&
+                        !isWorkspaceBootstrap;
+                    final compactBody = switch (_compactPane) {
+                      1 => indexPanel,
+                      2 => tools,
+                      _ => embeddedCanvas,
+                    };
+                    return FocusTraversalGroup(
+                      policy: OrderedTraversalPolicy(),
+                      child: Scaffold(
+                        key: _drawerKey,
+                        backgroundColor: Colors.transparent,
+                        endDrawer:
+                            isTablet || windowClass == AppWindowClass.expanded
+                            ? Drawer(width: 320, child: inspector)
+                            : null,
+                        body: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (showRail)
+                              WorkspaceDestinationRail(
+                                selected: _destination,
+                                showLabels: isDesktop,
+                                onSelected: _selectDestination,
+                              ),
+                            if (showRail) const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: WorkspaceShellBody(
+                                windowClass: windowClass,
+                                showIndex:
+                                    !isWorkspaceBootstrap &&
+                                    !isPhone &&
+                                    _destination ==
+                                        ShellDestination.conversation,
+                                showInspector: showInspector,
+                                index: indexPanel,
+                                canvas: isPhone ? compactBody : embeddedCanvas,
+                                inspector: inspector,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  loading: () => WorkspaceHomeSkeleton(
+                    compact: isPhone,
+                    showAgents: isDesktop,
                   ),
-                );
-              },
-              loading: () => WorkspaceHomeSkeleton(
-                compact: isPhone,
-                showAgents: isDesktop,
-              ),
-              error: (error, _) => Center(
-                child: Text(l10n.workspaceLoadError(error.toString())),
+                  error: (error, _) => Center(
+                    child: Text(l10n.workspaceLoadError(error.toString())),
+                  ),
+                ),
               ),
             ),
           ),
+          bottomNavigationBar: isPhone && !keyboardVisible
+              ? WorkspaceBottomNavigation(
+                  currentIndex: _mobileNavIndex,
+                  hasWorkspace: shellValue?.workspaceId.isNotEmpty ?? false,
+                  onSelected: _selectMobileDestination,
+                )
+              : null,
         ),
       ),
-      bottomNavigationBar: isPhone && !keyboardVisible
-          ? _MobileBottomNav(
-              currentIndex: _compactPane,
-              onSelected: (index) {
-                setState(() {
-                  _compactPane = index;
-                  if (index == 0) {
-                    _destination = ShellDestination.conversation;
-                  }
-                });
-              },
-              items: [
-                _MobileNavItemData(
-                  icon: Icons.forum_outlined,
-                  label: l10n.destinationConversation,
-                ),
-                _MobileNavItemData(
-                  icon: Icons.list_alt_rounded,
-                  label: l10n.indexTab,
-                ),
-                _MobileNavItemData(
-                  icon: Icons.handyman_outlined,
-                  label: l10n.toolsTab,
-                ),
-              ],
-            )
-          : null,
     );
   }
 }
@@ -1188,16 +1365,21 @@ Future<void> _openConversation({
   required WidgetRef ref,
   required WorkspaceConversationSummary conversation,
   VoidCallback? onConversationOpened,
+  ValueChanged<Object>? onError,
 }) async {
-  await ref
-      .read(workspaceShellControllerProvider.notifier)
-      .selectConversation(
-        conversationId: conversation.id,
-        title: conversation.title,
-        kind: _toSelectedConversationKind(conversation.kind),
-        isAvailable: conversation.isAvailable,
-      );
-  onConversationOpened?.call();
+  try {
+    await ref
+        .read(workspaceShellControllerProvider.notifier)
+        .selectConversation(
+          conversationId: conversation.id,
+          title: conversation.title,
+          kind: _toSelectedConversationKind(conversation.kind),
+          isAvailable: conversation.isAvailable,
+        );
+    onConversationOpened?.call();
+  } catch (error) {
+    onError?.call(error);
+  }
 }
 
 List<WorkspaceConversationSummary> _mapConversationSummaries(
@@ -2103,7 +2285,7 @@ class _KnowledgeDocumentTile extends StatelessWidget {
 }
 
 class _ScrollablePanel extends StatelessWidget {
-  const _ScrollablePanel({required this.child});
+  const _ScrollablePanel({super.key, required this.child});
 
   final Widget child;
 
@@ -2258,132 +2440,6 @@ class _WorkspaceSetupPanel extends StatelessWidget {
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileNavItemData {
-  const _MobileNavItemData({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-}
-
-class _MobileBottomNav extends StatelessWidget {
-  const _MobileBottomNav({
-    required this.currentIndex,
-    required this.onSelected,
-    required this.items,
-  });
-
-  final int currentIndex;
-  final ValueChanged<int> onSelected;
-  final List<_MobileNavItemData> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.sm,
-          AppSpacing.xs,
-          AppSpacing.sm,
-          AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          border: Border(top: BorderSide(color: theme.dividerColor)),
-        ),
-        child: Row(
-          children: [
-            for (var index = 0; index < items.length; index++)
-              Expanded(
-                child: _MobileNavItem(
-                  data: items[index],
-                  selected: index == currentIndex,
-                  onTap: () => onSelected(index),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MobileNavItem extends StatelessWidget {
-  const _MobileNavItem({
-    required this.data,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _MobileNavItemData data;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadii.small),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: MediaQuery.disableAnimationsOf(context)
-              ? Duration.zero
-              : AppMotion.fast,
-          curve: AppMotion.curve,
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xs,
-            vertical: AppSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppSemanticColors.of(context).selectedOverlay
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadii.small),
-            border: Border(
-              top: BorderSide(
-                color: selected
-                    ? theme.colorScheme.primary
-                    : Colors.transparent,
-                width: 2,
-              ),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                data.icon,
-                size: 20,
-                color: selected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                data.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: selected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurfaceVariant,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

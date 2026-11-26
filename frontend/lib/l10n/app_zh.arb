@@ -539,5 +539,18 @@
   "agentRunEventUpdated": "运行已更新",
   "workspaceManagementTitle": "工作区管理",
   "destinationWorkspaceManagement": "管理",
-  "toolWorkspaceManagementDescription": "查看工作区成员并管理角色。"
+  "toolWorkspaceManagementDescription": "查看工作区成员并管理角色。",
+  "searchConversationsHint": "搜索会话",
+  "noMatchingConversations": "没有匹配的会话",
+  "clearSearch": "清除搜索",
+  "mentionAgent": "提及 Agent",
+  "composerShortcuts": "{modifier}+Enter 发送 · Enter 换行",
+  "@composerShortcuts": {"placeholders": {"modifier": {"type": "String"}}},
+  "workspaceToolsHeading": "工作区工具",
+  "preferencesHeading": "偏好设置",
+  "languageChinese": "中文",
+  "chooseTaskGroup": "选择任务分组",
+  "conversationLoadError": "无法打开会话，请重试：{error}",
+  "@conversationLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "switchingWorkspaceLabel": "正在切换工作区"
 }

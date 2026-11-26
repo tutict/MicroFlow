@@ -5,7 +5,7 @@ import '../../../../core/utils/date_time_formatter.dart';
 import '../../../../shared/theme/app_tokens.dart';
 import '../../../../shared/widgets/app_layout.dart';
 
-class WorkspacePanel extends StatelessWidget {
+class WorkspacePanel extends StatefulWidget {
   const WorkspacePanel({
     super.key,
     required this.workspaceName,
@@ -18,6 +18,9 @@ class WorkspacePanel extends StatelessWidget {
     required this.onOpenConversation,
     this.compact = false,
     this.titleMaxLines = 1,
+    this.searchFocusNode,
+    this.initialSearchQuery = '',
+    this.onSearchChanged,
   });
 
   final String workspaceName;
@@ -30,14 +33,52 @@ class WorkspacePanel extends StatelessWidget {
   final ValueChanged<WorkspaceConversationSummary> onOpenConversation;
   final bool compact;
   final int titleMaxLines;
+  final FocusNode? searchFocusNode;
+  final String initialSearchQuery;
+  final ValueChanged<String>? onSearchChanged;
+
+  @override
+  State<WorkspacePanel> createState() => _WorkspacePanelState();
+}
+
+class _WorkspacePanelState extends State<WorkspacePanel> {
+  late final TextEditingController _search;
+
+  @override
+  void initState() {
+    super.initState();
+    _search = TextEditingController(text: widget.initialSearchQuery);
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _search.clear();
+    widget.onSearchChanged?.call('');
+    setState(() {});
+    widget.searchFocusNode?.requestFocus();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final query = _search.text.trim().toLowerCase();
+    final conversations = widget.conversations
+        .where(
+          (conversation) =>
+              query.isEmpty ||
+              conversation.title.toLowerCase().contains(query) ||
+              conversation.subtitle.toLowerCase().contains(query),
+        )
+        .toList(growable: false);
     return Semantics(
       container: true,
-      label: description,
+      label: widget.description,
       child: Material(
         color: theme.colorScheme.surface,
         clipBehavior: Clip.antiAlias,
@@ -46,7 +87,9 @@ class WorkspacePanel extends StatelessWidget {
           side: BorderSide(color: theme.dividerColor),
         ),
         child: Padding(
-          padding: EdgeInsets.all(compact ? AppSpacing.sm : AppSpacing.md),
+          padding: EdgeInsets.all(
+            widget.compact ? AppSpacing.sm : AppSpacing.md,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -55,32 +98,79 @@ class WorkspacePanel extends StatelessWidget {
                 count: conversations.length,
               ),
               const SizedBox(height: AppSpacing.sm),
-              _ConversationInbox(
-                conversations: conversations,
-                selectedConversationId: selectedConversationId,
-                titleMaxLines: titleMaxLines,
-                onOpenConversation: onOpenConversation,
+              TextField(
+                key: const Key('conversation-search'),
+                controller: _search,
+                focusNode: widget.searchFocusNode,
+                textInputAction: TextInputAction.search,
+                onChanged: (value) {
+                  widget.onSearchChanged?.call(value);
+                  setState(() {});
+                },
+                decoration: InputDecoration(
+                  hintText: l10n.searchConversationsHint,
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                  suffixIcon: _search.text.isEmpty
+                      ? null
+                      : IconButton(
+                          key: const Key('conversation-search-clear'),
+                          tooltip: l10n.clearSearch,
+                          onPressed: _clearSearch,
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                        ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerLow,
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: AppSpacing.sm,
+                    horizontal: AppSpacing.xs,
+                  ),
+                ),
               ),
-              if (members.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              if (query.isNotEmpty && conversations.isEmpty)
+                Semantics(
+                  liveRegion: true,
+                  child: Padding(
+                    key: const Key('conversation-search-empty'),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.lg,
+                    ),
+                    child: Text(
+                      l10n.noMatchingConversations,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                _ConversationInbox(
+                  conversations: conversations,
+                  selectedConversationId: widget.selectedConversationId,
+                  titleMaxLines: widget.titleMaxLines,
+                  onOpenConversation: widget.onOpenConversation,
+                ),
+              if (query.isEmpty && widget.members.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 Divider(height: 1, color: theme.dividerColor),
                 _SecondarySection(
                   title: l10n.members,
-                  count: members.length,
+                  count: widget.members.length,
                   children: [
-                    for (final member in members)
+                    for (final member in widget.members)
                       _MemberListRow(member: member),
                   ],
                 ),
               ],
-              if (recentInteractions.isNotEmpty) ...[
+              if (query.isEmpty && widget.recentInteractions.isNotEmpty) ...[
                 Divider(height: 1, color: theme.dividerColor),
                 _SecondarySection(
                   title: l10n.recentInteractions,
-                  count: recentInteractions.length,
-                  initiallyExpanded: compact,
+                  count: widget.recentInteractions.length,
+                  initiallyExpanded: widget.compact,
                   children: [
-                    for (final interaction in recentInteractions)
+                    for (final interaction in widget.recentInteractions)
                       _RecentInteractionRow(interaction: interaction),
                   ],
                 ),

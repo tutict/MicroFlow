@@ -539,5 +539,18 @@
   "agentRunEventUpdated": "Run updated",
   "workspaceManagementTitle": "Workspace management",
   "destinationWorkspaceManagement": "Manage",
-  "toolWorkspaceManagementDescription": "Review members and manage their roles."
+  "toolWorkspaceManagementDescription": "Review members and manage their roles.",
+  "searchConversationsHint": "Search conversations",
+  "noMatchingConversations": "No matching conversations",
+  "clearSearch": "Clear search",
+  "mentionAgent": "Mention an agent",
+  "composerShortcuts": "{modifier}+Enter to send · Enter for a new line",
+  "@composerShortcuts": {"placeholders": {"modifier": {"type": "String"}}},
+  "workspaceToolsHeading": "Workspace tools",
+  "preferencesHeading": "Preferences",
+  "languageChinese": "中文",
+  "chooseTaskGroup": "Choose task group",
+  "conversationLoadError": "Couldn't open the conversation. Try again: {error}",
+  "@conversationLoadError": {"placeholders": {"error": {"type": "String"}}},
+  "switchingWorkspaceLabel": "Switching workspace"
 }

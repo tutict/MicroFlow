@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../../shared/theme/app_tokens.dart';
+import '../../../../shared/theme/app_theme_extensions.dart';
 import 'shell_destination.dart';
 
 class WorkspaceDestinationRail extends StatelessWidget {
@@ -27,14 +28,14 @@ class WorkspaceDestinationRail extends StatelessWidget {
         label: l10n.destinationConversation,
       ),
       _RailItem(
-        destination: ShellDestination.knowledge,
-        icon: Icons.library_books_outlined,
-        label: l10n.destinationKnowledge,
-      ),
-      _RailItem(
         destination: ShellDestination.tasks,
         icon: Icons.checklist_outlined,
         label: l10n.destinationMyWork,
+      ),
+      _RailItem(
+        destination: ShellDestination.knowledge,
+        icon: Icons.library_books_outlined,
+        label: l10n.destinationKnowledge,
       ),
       _RailItem(
         destination: ShellDestination.connectors,
@@ -59,20 +60,39 @@ class WorkspaceDestinationRail extends StatelessWidget {
     ];
     return FocusTraversalOrder(
       order: const NumericFocusOrder(1),
-      child: ColoredBox(
+      child: Material(
         color: theme.colorScheme.surfaceContainerLow,
         child: SizedBox(
-          width: showLabels ? 96 : 72,
+          width: showLabels ? 176 : 64,
           child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            padding: const EdgeInsets.all(AppSpacing.xs),
             children: [
-              for (final item in items)
+              for (var index = 0; index < items.length; index++) ...[
+                if (index == 3) ...[
+                  const Divider(height: AppSpacing.lg),
+                  if (showLabels)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.xs,
+                        0,
+                        AppSpacing.xs,
+                        AppSpacing.xs,
+                      ),
+                      child: Text(
+                        l10n.workspaceToolsHeading,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                ],
                 _RailButton(
-                  item: item,
-                  selected: item.destination == selected,
+                  item: items[index],
+                  selected: items[index].destination == selected,
                   showLabel: showLabels,
-                  onSelected: () => onSelected(item.destination),
+                  onSelected: () => onSelected(items[index].destination),
                 ),
+              ],
             ],
           ),
         ),
@@ -112,53 +132,61 @@ class _RailButton extends StatelessWidget {
     final color = selected
         ? theme.colorScheme.primary
         : theme.colorScheme.onSurfaceVariant;
-    final button = Semantics(
-      selected: selected,
-      button: true,
-      label: item.label,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(
-                color: selected
-                    ? theme.colorScheme.primary
-                    : Colors.transparent,
-                width: 2,
-              ),
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.xs,
-              vertical: AppSpacing.xs,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(item.icon, size: 24, color: color),
-                if (showLabel) ...[
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    item.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: color,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                    ),
+    final contents = ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48, minWidth: 44),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xs),
+        child: Row(
+          mainAxisAlignment: showLabel
+              ? MainAxisAlignment.start
+              : MainAxisAlignment.center,
+          children: [
+            Icon(item.icon, size: 20, color: color),
+            if (showLabel) ...[
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  item.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: color,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   ),
-                ],
-              ],
-            ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+    final button = Material(
+      color: selected
+          ? AppSemanticColors.of(context).selectedOverlay
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppRadii.small),
+      child: InkWell(
+        onTap: onSelected,
+        borderRadius: BorderRadius.circular(AppRadii.small),
+        focusColor: theme.colorScheme.primaryContainer,
+        child: contents,
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+      child: Tooltip(
+        message: item.label,
+        excludeFromSemantics: true,
+        child: MergeSemantics(
+          child: Semantics(
+            key: Key('shell-nav-${item.destination.name}'),
+            selected: selected,
+            button: true,
+            label: showLabel ? null : item.label,
+            child: button,
           ),
         ),
       ),
     );
-    if (showLabel) {
-      return InkWell(onTap: onSelected, child: button);
-    }
-    return IconButton(tooltip: item.label, onPressed: onSelected, icon: button);
   }
 }

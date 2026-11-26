@@ -21,6 +21,39 @@ import 'package:microflow_frontend/l10n/app_localizations.dart';
 const _workspaceId = 'ws_1';
 
 void main() {
+  testWidgets('a narrow large-text queue can select any task lane', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 700);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final repository = _FakeTaskRepository(
+      agenda: const MyWorkAgenda(
+        blocked: [
+          TaskItem(
+            id: 'blocked',
+            workspaceId: _workspaceId,
+            title: 'Blocked task',
+            status: 'BLOCKED',
+            priority: 'NORMAL',
+          ),
+        ],
+      ),
+    );
+    await tester.pumpWidget(_harness(repository, textScale: 1.8));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    final lanes = find.byKey(const Key('my-work-lane-menu'));
+    expect(lanes, findsOneWidget);
+    await tester.tap(lanes);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('my-work-lane-blocked')));
+    await tester.pumpAndSettle();
+    expect(find.text('Blocked task'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test(
     'queue actions share an unfinished status write across row remounts',
     () async {
@@ -545,6 +578,7 @@ class _PendingStatusRepository extends _FakeTaskRepository {
 
 Widget _harness(
   TaskRepository repository, {
+  double textScale = 1,
   Map<String, AgentRunSummary> runIndex = const {},
   Future<void> Function(TaskItem task)? onRunAgent,
 }) {
@@ -557,6 +591,12 @@ Widget _harness(
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: Scaffold(
         body: MyWorkPage(
           workspaceId: _workspaceId,

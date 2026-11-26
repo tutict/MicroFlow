@@ -94,7 +94,9 @@ class _MyWorkPageState extends ConsumerState<MyWorkPage> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Row(
+          child: Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
             children: [
               _ScopeChip(
                 key: const Key('my-work-scope-mine'),
@@ -102,7 +104,6 @@ class _MyWorkPageState extends ConsumerState<MyWorkPage> {
                 selected: _scope == MyWorkScope.mine,
                 onSelected: () => setState(() => _scope = MyWorkScope.mine),
               ),
-              const SizedBox(width: AppSpacing.xs),
               _ScopeChip(
                 key: const Key('my-work-scope-all'),
                 label: l10n.myWorkScopeAll,
@@ -173,21 +174,85 @@ class _MyWorkQueue extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                children: [
-                  for (final candidate in MyWorkLane.values)
-                    _LaneChip(
-                      key: Key('my-work-lane-${candidate.name}'),
-                      label: _laneLabel(l10n, candidate),
-                      count: data.countFor(candidate),
-                      selected: candidate == lane,
-                      onSelected: () => onLaneSelected(candidate),
-                    ),
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 640 ||
+                      MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+                    return PopupMenuButton<MyWorkLane>(
+                      key: const Key('my-work-lane-menu'),
+                      tooltip: l10n.chooseTaskGroup,
+                      onSelected: onLaneSelected,
+                      itemBuilder: (context) => [
+                        for (final candidate in MyWorkLane.values)
+                          PopupMenuItem(
+                            key: Key('my-work-lane-${candidate.name}'),
+                            value: candidate,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${_laneLabel(l10n, candidate)} · ${data.countFor(candidate)}',
+                                  ),
+                                ),
+                                if (candidate == lane)
+                                  const Icon(Icons.check_rounded, size: 18),
+                              ],
+                            ),
+                          ),
+                      ],
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).dividerColor,
+                          ),
+                          borderRadius: BorderRadius.circular(AppRadii.small),
+                        ),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(minHeight: 44),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${_laneLabel(l10n, lane)} · ${data.countFor(lane)}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelLarge,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                const Icon(Icons.expand_more_rounded, size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      for (final candidate in MyWorkLane.values)
+                        _LaneChip(
+                          key: Key('my-work-lane-${candidate.name}'),
+                          label: _laneLabel(l10n, candidate),
+                          count: data.countFor(candidate),
+                          selected: candidate == lane,
+                          onSelected: () => onLaneSelected(candidate),
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
             Expanded(
@@ -204,8 +269,7 @@ class _MyWorkQueue extends ConsumerWidget {
                         key: const Key('my-work-list'),
                         padding: const EdgeInsets.all(AppSpacing.md),
                         itemCount: tasks.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: AppSpacing.xs),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final task = tasks[index];
                           return _MyWorkRow(
@@ -283,12 +347,22 @@ class _LaneChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: AppSpacing.xs),
-      child: FilterChip(
-        label: Text('$label · $count'),
-        selected: selected,
-        onSelected: (_) => onSelected(),
+    final theme = Theme.of(context);
+    return Semantics(
+      selected: selected,
+      child: TextButton(
+        onPressed: onSelected,
+        style: TextButton.styleFrom(
+          minimumSize: const Size(44, 44),
+          foregroundColor: selected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.onSurfaceVariant,
+          backgroundColor: selected ? theme.colorScheme.primaryContainer : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.small),
+          ),
+        ),
+        child: Text('$label · $count'),
       ),
     );
   }
@@ -352,11 +426,7 @@ class _MyWorkRowState extends State<_MyWorkRow> {
       container: true,
       label: task.title,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppRadii.medium),
-          border: Border.all(color: theme.dividerColor),
-        ),
+        decoration: BoxDecoration(color: theme.colorScheme.surface),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.sm),
           child: Row(
@@ -403,7 +473,17 @@ class _MyWorkRowState extends State<_MyWorkRow> {
                       key: Key('my-work-run-${task.id}'),
                       borderRadius: BorderRadius.circular(AppRadii.small),
                       onTap: () => showAgentRunDetailSheet(context, run.id),
-                      child: AgentRunStatusChip(status: run.status),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: 44,
+                          minWidth: 44,
+                        ),
+                        child: Center(
+                          widthFactor: 1,
+                          heightFactor: 1,
+                          child: AgentRunStatusChip(status: run.status),
+                        ),
+                      ),
                     ),
                   ),
                 ),
