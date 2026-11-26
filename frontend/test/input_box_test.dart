@@ -1,10 +1,11 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/features/chat/presentation/widgets/input_box.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   testWidgets('blank drafts cannot be sent', (tester) async {
@@ -117,7 +118,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         home: Scaffold(body: InputBox(onSend: _failingSend)),
       ),
     );
@@ -138,7 +139,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         home: Scaffold(
           body: InputBox(
             collaborationModeVisible: true,
@@ -165,7 +166,7 @@ Future<void> _pumpComposer(
 }) => tester.pumpWidget(
   MaterialApp(
     supportedLocales: AppLocalizations.supportedLocales,
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: appLocalizationsDelegates,
     home: Scaffold(
       body: InputBox(
         onSend: onSend,

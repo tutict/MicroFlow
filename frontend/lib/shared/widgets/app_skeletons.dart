@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import '../layout/window_class.dart';
@@ -77,7 +77,10 @@ class AppPageSkeleton extends StatelessWidget {
       color: theme.scaffoldBackgroundColor,
       child: SafeArea(
         top: false,
-        child: Skeletonizer(enabled: true, child: content),
+        child: SkeletonizerConfig(
+          data: SkeletonizerConfigData(brightness: theme.brightness),
+          child: Skeletonizer(enabled: true, child: content),
+        ),
       ),
     );
   }

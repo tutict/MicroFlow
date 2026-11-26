@@ -19,7 +19,9 @@ class AgentConnectorDto {
       name: _json['name'] as String? ?? '',
       config: (_json['config'] as Map?)?.cast<String, Object?>() ?? const {},
       secretFields: _strings(_json['secretFields']),
-      sharingScope: ConnectorSharingScope.parse(_json['sharingScope'] as String?),
+      sharingScope: ConnectorSharingScope.parse(
+        _json['sharingScope'] as String?,
+      ),
       sharedUserIds: _strings(_json['sharedUserIds']),
       sharedAgentKeys: _strings(_json['sharedAgentKeys']),
       status: ConnectorStatus.parse(_json['status'] as String?),

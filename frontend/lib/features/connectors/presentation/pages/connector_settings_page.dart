@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
@@ -57,9 +57,9 @@ class _ConnectorSettingsPageState extends ConsumerState<ConnectorSettingsPage> {
     } catch (error) {
       if (mounted) {
         setState(
-          () => _inlineError = AppLocalizations.of(
-            context,
-          )!.connectorSaveFailed(_messageOf(error)),
+          () =>
+              _inlineError = AppLocalizations.of(context)!
+                  .connectorSaveFailed(_messageOf(error)),
         );
       }
     }
@@ -160,8 +160,10 @@ class _ConnectorSettingsPageState extends ConsumerState<ConnectorSettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(l10n.connectorsTitle,
-                        style: theme.textTheme.titleMedium),
+                    Text(
+                      l10n.connectorsTitle,
+                      style: theme.textTheme.titleMedium,
+                    ),
                     Text(
                       l10n.connectorsSubtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -280,8 +282,7 @@ class _ConnectorTile extends StatelessWidget {
               spacing: AppSpacing.xxs,
               runSpacing: AppSpacing.xxs,
               children: [
-                if (connector.readEnabled)
-                  _Badge(label: l10n.connectorRead),
+                if (connector.readEnabled) _Badge(label: l10n.connectorRead),
                 if (connector.writeEnabled)
                   _Badge(label: l10n.connectorWrite, emphasized: true),
                 _Badge(label: _sharingLabel(l10n, connector)),
@@ -375,9 +376,7 @@ class _StatusChip extends StatelessWidget {
         const SizedBox(width: AppSpacing.xxs),
         Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: color),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
         ),
       ],
     );

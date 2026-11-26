@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
@@ -17,6 +17,7 @@ import 'package:microflow_frontend/features/tasks/domain/repositories/task_repos
 import 'package:microflow_frontend/features/tasks/presentation/pages/my_work_page.dart';
 import 'package:microflow_frontend/features/tasks/presentation/providers/task_queue_providers.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 const _workspaceId = 'ws_1';
 
@@ -54,62 +55,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  test(
-    'queue actions share an unfinished status write across row remounts',
-    () async {
-      final repository = _PendingStatusRepository();
-      final container = ProviderContainer(
-        overrides: [taskRepositoryProvider.overrideWithValue(repository)],
-      );
-      addTearDown(container.dispose);
-      final actions = container.read(taskQueueActionsProvider);
-      final first = actions.setStatus(
+  test('queue actions share an unfinished status write across row remounts', () async {
+    final repository = _PendingStatusRepository();
+    final container = ProviderContainer(
+      overrides: [taskRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+    final actions = container.read(taskQueueActionsProvider);
+    final first = actions.setStatus(
+      workspaceId: _workspaceId,
+      taskId: 'task_1',
+      status: 'DONE',
+    );
+    final second = actions.setStatus(
+      workspaceId: _workspaceId,
+      taskId: 'task_1',
+      status: 'BLOCKED',
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(
+      repository.statusCalls,
+      1,
+      reason:
+          'a rebuilt row must not dispatch a second mutation for the same task',
+    );
+    final failureChecks = [
+      expectLater(first, throwsException),
+      expectLater(second, throwsException),
+    ];
+    repository.pending.completeError(Exception('controlled failure'));
+    await Future.wait(failureChecks);
+    repository.pending = Completer<TaskItem>();
+    final retry = actions.setStatus(
+      workspaceId: _workspaceId,
+      taskId: 'task_1',
+      status: 'DONE',
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(
+      repository.statusCalls,
+      2,
+      reason: 'failed writes must release the task for retry',
+    );
+    repository.pending.complete(
+      const TaskItem(
+        id: 'task_1',
         workspaceId: _workspaceId,
-        taskId: 'task_1',
+        title: 'Recoverable task',
         status: 'DONE',
-      );
-      final second = actions.setStatus(
-        workspaceId: _workspaceId,
-        taskId: 'task_1',
-        status: 'BLOCKED',
-      );
-      await Future<void>.delayed(Duration.zero);
-      expect(
-        repository.statusCalls,
-        1,
-        reason:
-            'a rebuilt row must not dispatch a second mutation for the same task',
-      );
-      final failureChecks = [
-        expectLater(first, throwsException),
-        expectLater(second, throwsException),
-      ];
-      repository.pending.completeError(Exception('controlled failure'));
-      await Future.wait(failureChecks);
-      repository.pending = Completer<TaskItem>();
-      final retry = actions.setStatus(
-        workspaceId: _workspaceId,
-        taskId: 'task_1',
-        status: 'DONE',
-      );
-      await Future<void>.delayed(Duration.zero);
-      expect(
-        repository.statusCalls,
-        2,
-        reason: 'failed writes must release the task for retry',
-      );
-      repository.pending.complete(
-        const TaskItem(
-          id: 'task_1',
-          workspaceId: _workspaceId,
-          title: 'Recoverable task',
-          status: 'DONE',
-          priority: 'NORMAL',
-        ),
-      );
-      await retry;
-    },
-  );
+        priority: 'NORMAL',
+      ),
+    );
+    await retry;
+  });
 
   for (final error in [
     Exception('network down'),
@@ -589,12 +587,11 @@ Widget _harness(
     ],
     child: MaterialApp(
       theme: AppTheme.light(),
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: appLocalizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: Scaffold(

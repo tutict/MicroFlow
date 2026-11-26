@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
@@ -7,6 +7,7 @@ import 'package:microflow_frontend/features/connectors/domain/repositories/conne
 import 'package:microflow_frontend/features/connectors/presentation/pages/connector_settings_page.dart';
 import 'package:microflow_frontend/features/connectors/presentation/providers/connector_providers.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   for (final entry in [
@@ -159,7 +160,7 @@ Future<void> _pump(WidgetTester tester, ConnectorRepository repository) async {
         theme: AppTheme.light(),
         locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         home: Scaffold(body: ConnectorSettingsPage(workspaceId: 'ws_1')),
       ),
     ),

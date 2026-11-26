@@ -120,7 +120,8 @@ final class RestClient {
     throw AppException(_errorMessage(response, _decodePayload(response)));
   }
 
-  Future<Map<String, Object?>> postMultipart(    String path, {
+  Future<Map<String, Object?>> postMultipart(
+    String path, {
     required String fileField,
     required String fileName,
     required Uint8List fileBytes,

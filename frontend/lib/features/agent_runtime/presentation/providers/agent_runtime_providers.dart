@@ -29,7 +29,7 @@ final agentTaskRunHistoryProvider = FutureProvider.autoDispose
           .watch(agentRuntimeRepositoryProvider)
           .listRuns(workspaceId: query.workspaceId, taskId: query.taskId);
       if (ref.mounted &&
-          ref.exists(agentWorkspaceRunsProvider(query.workspaceId))) {
+          ref.read(agentWorkspaceRunsProvider(query.workspaceId).exists)) {
         ref
             .read(agentWorkspaceRunsProvider(query.workspaceId).notifier)
             .upsertAll(runs);
@@ -123,7 +123,7 @@ class AgentRunActions {
 
   void _applyRun(AgentRunSummary run) {
     if (!_ref.mounted) return;
-    if (_ref.exists(agentWorkspaceRunsProvider(run.workspaceId))) {
+    if (_ref.read(agentWorkspaceRunsProvider(run.workspaceId).exists)) {
       _ref
           .read(agentWorkspaceRunsProvider(run.workspaceId).notifier)
           .upsert(run);

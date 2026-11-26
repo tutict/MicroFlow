@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../data/dto/agent_run_dto.dart';
 import '../../domain/entities/agent_run.dart';
 import '../../domain/entities/agent_run_event.dart';
@@ -74,7 +75,7 @@ class AgentRuntimeSync {
     final hasGap = seq > (_seen[key] ?? 0) + 1;
     final listProvider = agentWorkspaceRunsProvider(key.workspaceId);
     AgentRunSummary? previous;
-    if (_ref.exists(listProvider)) {
+    if (_ref.read(listProvider.exists)) {
       for (final item
           in _ref.read(listProvider).value ?? const <AgentRunSummary>[]) {
         if (item.id == key.runId) previous = item;
@@ -111,11 +112,11 @@ class AgentRuntimeSync {
           .read(agentTaskQueueRevisionProvider(key.workspaceId).notifier)
           .changed();
     }
-    if (_ref.exists(agentRunEventsProvider(key.runId))) {
+    if (_ref.read(agentRunEventsProvider(key.runId).exists)) {
       await _ref
           .read(agentRunEventsProvider(key.runId).notifier)
           .accept(AgentRunEvent.fromSocket(payload));
-      if (_ref.mounted && _ref.exists(agentRunEventsProvider(key.runId))) {
+      if (_ref.mounted && _ref.read(agentRunEventsProvider(key.runId).exists)) {
         final trail = _ref.read(agentRunEventsProvider(key.runId)).value;
         await _applyHistoryHead(key, trail);
       }
@@ -139,7 +140,7 @@ class AgentRuntimeSync {
       for (final key in _seen.keys)
         if (key.workspaceId == workspaceId) key.runId,
     };
-    if (_ref.exists(listProvider)) {
+    if (_ref.read(listProvider.exists)) {
       ids.addAll(
         (_ref.read(listProvider).value ?? const <AgentRunSummary>[]).map(
           (run) => run.id,
@@ -155,11 +156,11 @@ class AgentRuntimeSync {
     }
     for (final id in ids) {
       if (!_ref.mounted) return;
-      if (_ref.exists(agentRunEventsProvider(id))) {
+      if (_ref.read(agentRunEventsProvider(id).exists)) {
         await _ref.read(agentRunEventsProvider(id).notifier).catchUp();
       }
       if (!_ref.mounted) return;
-      if (_ref.exists(agentRunEventsProvider(id))) {
+      if (_ref.read(agentRunEventsProvider(id).exists)) {
         final trail = _ref.read(agentRunEventsProvider(id)).value;
         final key = (workspaceId: workspaceId, runId: id);
         await _applyHistoryHead(key, trail);

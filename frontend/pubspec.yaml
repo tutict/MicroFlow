@@ -33,21 +33,24 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  material_ui: ^1.11.1
+  cupertino_ui: ^1.1.7
 
-  file_picker: ^11.0.2
-  flex_color_scheme: ^8.4.0
-  flutter_riverpod: ^3.3.2
-  flutter_secure_storage: ^9.2.4
-  http: ^1.5.0
-  intl: any
-  mobile_scanner: ^7.3.0
-  shared_preferences: ^2.5.3
-  skeletonizer: ^2.1.3
+  file_picker: ^13.4.1
+  flex_color_scheme: ^9.0.0
+  flutter_riverpod: ^3.5.0
+  # 10.x migrates existing 9.x stores; 11.x removes that migration path.
+  flutter_secure_storage: ^10.3.4
+  http: ^1.6.0
+  intl: ^0.20.3
+  mobile_scanner: ^7.5.0
+  shared_preferences: ^2.5.6
+  skeletonizer: ^3.0.0
   web_socket_channel: ^3.0.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^2.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../domain/entities/agent_approval.dart';
 import '../../domain/entities/agent_artifact.dart';
 import '../../domain/entities/agent_context_source.dart';

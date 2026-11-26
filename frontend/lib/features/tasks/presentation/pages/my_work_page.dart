@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
@@ -224,9 +224,9 @@ class _MyWorkQueue extends ConsumerWidget {
                                 Expanded(
                                   child: Text(
                                     '${_laneLabel(l10n, lane)} · ${data.countFor(lane)}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge,
                                   ),
                                 ),
                                 const SizedBox(width: AppSpacing.xs),

@@ -36,10 +36,8 @@ class AuthRepositoryImpl implements AuthRepository {
       authenticated: false,
       body: dto.toJson(),
     );
-    final tokens = AuthTokensDto.fromJson({
-      ...response,
-      'email': email,
-    }).toDomain();
+    final tokens = AuthTokensDto.fromJson({...response, 'email': email})
+        .toDomain();
     await _persist(tokens);
     return tokens;
   }

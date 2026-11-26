@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import 'package:microflow_frontend/features/agent_runtime/presentation/providers
 import 'package:microflow_frontend/features/agent_runtime/presentation/widgets/agent_execution_panel.dart';
 import 'package:microflow_frontend/features/tasks/presentation/providers/task_queue_providers.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 import 'support/recording_runtime_repository.dart';
 
@@ -165,9 +167,8 @@ void main() {
     const query = (workspaceId: 'ws_1', taskId: 'old_task');
     container.listen(agentRunsProvider(query), (_, _) {});
     expect(
-      (await container.read(
-        agentRunsProvider(query).future,
-      )).map((run) => run.id),
+      (await container.read(agentRunsProvider(query).future))
+          .map((run) => run.id),
       ['old_finished'],
     );
   });
@@ -233,7 +234,7 @@ void main() {
             theme: AppTheme.light(),
             locale: const Locale('en'),
             supportedLocales: AppLocalizations.supportedLocales,
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            localizationsDelegates: appLocalizationsDelegates,
             home: const Scaffold(
               body: AgentExecutionPanel(workspaceId: 'ws_1', taskId: 'task_1'),
             ),
@@ -273,7 +274,7 @@ void main() {
           theme: AppTheme.light(),
           locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           home: const Scaffold(body: AgentExecutionPanel(workspaceId: 'ws_1')),
         ),
       ),
@@ -349,43 +350,35 @@ void main() {
           .startOnTask(workspaceId: 'ws_1', taskId: 'task_1');
       await Future<void>.delayed(Duration.zero);
       expect(
-        (await container.read(
-          agentRunsProvider(query).future,
-        )).map((run) => run.id),
+        (await container.read(agentRunsProvider(query).future))
+            .map((run) => run.id),
         ['run_1'],
       );
       expect(repository.listQueries, hasLength(1));
     },
   );
 
-  test(
-    'an older pending approval outranks a newer running badge for the same task',
-    () async {
-      final repository = RecordingRuntimeRepository(
-        runs: [
-          testRun(
-            id: 'waiting',
-            status: AgentRunStatus.waitingApproval,
-            createdAt: '2020-01-01T00:00:00Z',
-          ),
-          testRun(id: 'running', status: AgentRunStatus.running),
-        ],
-      );
-      final container = ProviderContainer(
-        overrides: [
-          agentRuntimeRepositoryProvider.overrideWithValue(repository),
-        ],
-      );
-      addTearDown(container.dispose);
-      container.listen(taskRunIndexProvider('ws_1'), (_, _) {});
-      expect(
-        (await container.read(
-          taskRunIndexProvider('ws_1').future,
-        ))['task_1']?.id,
-        'waiting',
-      );
-    },
-  );
+  test('an older pending approval outranks a newer running badge for the same task', () async {
+    final repository = RecordingRuntimeRepository(
+      runs: [
+        testRun(
+          id: 'waiting',
+          status: AgentRunStatus.waitingApproval,
+          createdAt: '2020-01-01T00:00:00Z',
+        ),
+        testRun(id: 'running', status: AgentRunStatus.running),
+      ],
+    );
+    final container = ProviderContainer(
+      overrides: [agentRuntimeRepositoryProvider.overrideWithValue(repository)],
+    );
+    addTearDown(container.dispose);
+    container.listen(taskRunIndexProvider('ws_1'), (_, _) {});
+    expect(
+      (await container.read(taskRunIndexProvider('ws_1').future))['task_1']?.id,
+      'waiting',
+    );
+  });
 
   testWidgets(
     'execution panel follows workspace and task changes on the same widget',
@@ -413,7 +406,7 @@ void main() {
           theme: AppTheme.light(),
           locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           home: Scaffold(
             body: AgentExecutionPanel(
               key: const Key('execution'),

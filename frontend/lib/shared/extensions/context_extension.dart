@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 extension ContextExtension on BuildContext {
   TextTheme get text => Theme.of(this).textTheme;

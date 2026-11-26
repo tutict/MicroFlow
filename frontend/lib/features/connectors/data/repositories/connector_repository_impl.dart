@@ -20,7 +20,10 @@ class ConnectorRepositoryImpl implements ConnectorRepository {
   }
 
   @override
-  Future<AgentConnector> create(String workspaceId, ConnectorDraft draft) async {
+  Future<AgentConnector> create(
+    String workspaceId,
+    ConnectorDraft draft,
+  ) async {
     final response = await _restClient.postJson(
       ApiEndpoints.workspaceConnectors(workspaceId),
       body: _body(draft),

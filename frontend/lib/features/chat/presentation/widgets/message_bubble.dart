@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
 import '../../../workspace/domain/entities/knowledge_document.dart';
@@ -111,7 +111,10 @@ class MessageBubble extends StatelessWidget {
                     key: Key('chat-message-task-${message.id}'),
                     tooltip: l10n.chatCreateTaskTooltip,
                     onPressed: onCreateTask,
-                    icon: const Icon(Icons.playlist_add_check_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.playlist_add_check_rounded,
+                      size: 18,
+                    ),
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(

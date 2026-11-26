@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
@@ -8,6 +8,7 @@ import 'package:microflow_frontend/features/agent_runtime/presentation/providers
 import 'package:microflow_frontend/features/agent_runtime/presentation/widgets/agent_run_card.dart';
 import 'package:microflow_frontend/features/agent_runtime/presentation/widgets/agent_run_detail_sheet.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 import 'support/recording_runtime_repository.dart';
 
@@ -155,7 +156,7 @@ Widget _host(RecordingRuntimeRepository repository, Widget child) =>
         theme: AppTheme.light(),
         locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         home: Scaffold(body: child),
       ),
     );

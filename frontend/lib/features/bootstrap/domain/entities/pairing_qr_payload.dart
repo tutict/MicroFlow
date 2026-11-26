@@ -39,9 +39,8 @@ final class PairingQrPayload {
         : rawCode.length == 8
         ? '${rawCode.substring(0, 4)}-${rawCode.substring(4)}'
         : rawCode;
-    if (!RegExp(
-      r'^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$',
-    ).hasMatch(pairingCode)) {
+    if (!RegExp(r'^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$')
+        .hasMatch(pairingCode)) {
       throw const FormatException('Invalid pairing code');
     }
 

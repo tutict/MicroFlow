@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/core/providers/locale_controller.dart';
@@ -7,7 +6,7 @@ import 'package:microflow_frontend/core/providers/app_providers.dart';
 import 'package:microflow_frontend/features/bootstrap/domain/entities/server_connection.dart';
 import 'package:microflow_frontend/features/bootstrap/domain/repositories/server_connection_repository.dart';
 import 'package:microflow_frontend/features/bootstrap/presentation/pages/connect_server_page.dart';
-import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   testWidgets('renders device-first connect page', (WidgetTester tester) async {
@@ -21,12 +20,7 @@ void main() {
         child: MaterialApp(
           locale: const Locale('en'),
           supportedLocales: supportedAppLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          localizationsDelegates: appLocalizationsDelegates,
           home: const ConnectServerPage(),
         ),
       ),

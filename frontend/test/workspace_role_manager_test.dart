@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
 import 'package:microflow_frontend/core/errors/app_exception.dart';
@@ -14,6 +14,7 @@ import 'package:microflow_frontend/features/workspace/domain/entities/workspace_
 import 'package:microflow_frontend/features/workspace/domain/repositories/workspace_repository.dart';
 import 'package:microflow_frontend/features/workspace/presentation/widgets/workspace_role_manager.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   for (final outcome in ['success', 'app error', 'unexpected error']) {
@@ -324,7 +325,7 @@ void main() {
 Widget _host(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    localizationsDelegates: appLocalizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(body: child),
   );

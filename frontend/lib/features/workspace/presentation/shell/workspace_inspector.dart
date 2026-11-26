@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:microflow_frontend/l10n/app_localizations.dart';
 
@@ -90,10 +90,7 @@ class _WorkspaceInspectorState extends State<WorkspaceInspector> {
             child: IndexedStack(
               index: _view == InspectorView.context ? 0 : 1,
               sizing: StackFit.expand,
-              children: [
-                _buildContextList(context, l10n),
-                ?execution,
-              ],
+              children: [_buildContextList(context, l10n), ?execution],
             ),
           ),
         ],

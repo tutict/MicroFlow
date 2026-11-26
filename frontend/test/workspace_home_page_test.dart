@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:ui' show Tristate;
 
-import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,10 +45,48 @@ import 'package:microflow_frontend/features/workspace/presentation/providers/wor
 import 'package:microflow_frontend/features/workspace/presentation/state/workspace_selected_conversation.dart';
 import 'package:microflow_frontend/features/workspace/presentation/state/workspace_shell_state.dart';
 import 'package:microflow_frontend/features/workspace/presentation/shell/workspace_destination_rail.dart';
+import 'package:microflow_frontend/features/workspace/presentation/shell/shell_destination.dart';
 import 'package:microflow_frontend/features/workspace/presentation/widgets/workspace_panel.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
+  for (final size in [const Size(1280, 850), const Size(390, 844)]) {
+    for (final canceled in [false, true]) {
+      testWidgets(
+        'knowledge picker ${canceled ? 'cancellation' : 'upload'} at ${size.width}',
+        (tester) async {
+          final bytes = Uint8List.fromList([65, 0, 66, 255]);
+          final picker = _KnowledgeFilePicker(
+            canceled ? null : _KnowledgeFile('runbook.md', bytes),
+          );
+          final previousPicker = FilePickerPlatform.instance;
+          FilePickerPlatform.instance = picker;
+          addTearDown(() => FilePickerPlatform.instance = previousPicker);
+          final shell = _KnowledgeUploadShell(_experienceState());
+          await _pumpWorkspaceHomePage(
+            tester,
+            state: _experienceState(),
+            size: size,
+            initialDestination: ShellDestination.knowledge,
+            controllerFactory: () => shell,
+          );
+          await tester.pumpAndSettle();
+          await tester.tap(find.byTooltip('Upload file'));
+          await tester.pumpAndSettle();
+
+          expect(picker.calls, 1);
+          expect(shell.uploads, hasLength(canceled ? 0 : 1));
+          if (!canceled) {
+            expect(shell.uploads.single.$1, 'runbook.md');
+            expect(shell.uploads.single.$2, bytes);
+          }
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
+  }
+
   for (final succeeds in [true, false]) {
     testWidgets(
       'a remounted composer reconciles a pending ${succeeds ? 'successful' : 'failed'} send',
@@ -1671,6 +1710,7 @@ Future<void> _pumpWorkspaceHomePage(
   AgentRuntimeRepository? agentRuntimeRepository,
   TaskRepository? taskRepository,
   WorkspaceShellController Function()? controllerFactory,
+  ShellDestination initialDestination = ShellDestination.conversation,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1.0;
@@ -1703,7 +1743,7 @@ Future<void> _pumpWorkspaceHomePage(
         theme: dark ? AppTheme.dark() : AppTheme.light(),
         locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         builder: (context, child) {
           final media = MediaQuery.of(context);
           return MediaQuery(
@@ -1711,7 +1751,7 @@ Future<void> _pumpWorkspaceHomePage(
             child: child ?? const SizedBox.shrink(),
           );
         },
-        home: const WorkspaceHomePage(),
+        home: WorkspaceHomePage(initialDestination: initialDestination),
       ),
     ),
   );
@@ -1784,6 +1824,60 @@ WorkspaceShellState _buildState({
     collaborationStatusByConversation: collaborationStatusByConversation,
     collaborationRunsByConversation: collaborationRunsByConversation,
   );
+}
+
+class _KnowledgeUploadShell extends _FakeWorkspaceShellController {
+  _KnowledgeUploadShell(super.state);
+  final uploads = <(String, List<int>)>[];
+
+  @override
+  Future<void> uploadKnowledgeDocument({
+    required String fileName,
+    required Uint8List bytes,
+    String? channelId,
+    bool inheritSelectedConversation = true,
+  }) async {
+    uploads.add((fileName, bytes));
+  }
+}
+
+final class _KnowledgeFile extends PlatformFile {
+  _KnowledgeFile(this.name, this.bytes);
+
+  @override
+  final String name;
+  final Uint8List bytes;
+
+  @override
+  Future<Uint8List> readAsBytes() async => bytes;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('$invocation');
+}
+
+class _KnowledgeFilePicker extends FilePickerPlatform {
+  _KnowledgeFilePicker(this.file);
+  final PlatformFile? file;
+  int calls = 0;
+
+  @override
+  Future<PlatformFile?> pickFile({
+    String? dialogTitle,
+    String? initialDirectory,
+    FileType type = FileType.any,
+    List<String>? allowedExtensions,
+    Function(FilePickerStatus)? onFileLoading,
+    int compressionQuality = 0,
+    AndroidOptions androidOptions = const AndroidOptions(),
+    DarwinOptions darwinOptions = const DarwinOptions(),
+    WindowsOptions windowsOptions = const WindowsOptions(),
+    LinuxOptions linuxOptions = const LinuxOptions(),
+    WebOptions webOptions = const WebOptions(),
+  }) async {
+    calls++;
+    return file;
+  }
 }
 
 class _PendingSendShell extends _FakeWorkspaceShellController {

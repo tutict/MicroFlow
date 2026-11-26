@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -1240,9 +1240,8 @@ class _VoucherLineEditorRow extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.36),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.36),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Theme.of(context).dividerColor),
           ),
@@ -1527,13 +1526,10 @@ class _AccountingCopy {
         removeLine: '\u79fb\u9664\u5206\u5f55',
         postVoucher: '\u8fc7\u8d26',
         voucherPosted: '\u51ed\u8bc1\u5df2\u8fc7\u8d26',
-        needAccounts:
-            '\u81f3\u5c11\u9700\u8981\u4e24\u4e2a\u79d1\u76ee\u624d\u80fd\u5f55\u5165\u51ed\u8bc1\u3002',
-        noAccounts:
-            '\u8fd8\u6ca1\u6709\u79d1\u76ee\u3002\u5148\u65b0\u5efa\u79d1\u76ee\u8868\u3002',
+        needAccounts: '\u81f3\u5c11\u9700\u8981\u4e24\u4e2a\u79d1\u76ee\u624d\u80fd\u5f55\u5165\u51ed\u8bc1\u3002',
+        noAccounts: '\u8fd8\u6ca1\u6709\u79d1\u76ee\u3002\u5148\u65b0\u5efa\u79d1\u76ee\u8868\u3002',
         noVouchers: '\u8fd8\u6ca1\u6709\u51ed\u8bc1\u3002',
-        noTrialBalance:
-            '\u5f53\u524d\u671f\u95f4\u6ca1\u6709\u8bd5\u7b97\u6570\u636e\u3002',
+        noTrialBalance: '\u5f53\u524d\u671f\u95f4\u6ca1\u6709\u8bd5\u7b97\u6570\u636e\u3002',
         requiredFields: '\u8bf7\u586b\u5199\u5fc5\u586b\u5b57\u6bb5\u3002',
         periodFormatError:
             '\u671f\u95f4\u683c\u5f0f\u5fc5\u987b\u662f yyyy-MM\u3002',

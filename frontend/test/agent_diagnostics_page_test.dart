@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/core/providers/app_providers.dart';
@@ -9,6 +8,7 @@ import 'package:microflow_frontend/features/agents/domain/entities/agent_diagnos
 import 'package:microflow_frontend/features/agents/domain/entities/agent_run.dart';
 import 'package:microflow_frontend/features/agents/domain/repositories/agent_repository.dart';
 import 'package:microflow_frontend/features/agents/presentation/pages/agent_diagnostics_page.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   testWidgets('saving without applying keeps the default role strategy', (
@@ -183,7 +183,7 @@ Future<void> _pumpDiagnosticsPage(
         theme: AppTheme.light(),
         locale: locale,
         supportedLocales: const [Locale('en'), Locale('zh')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        localizationsDelegates: appLocalizationsDelegates,
         home: const AgentDiagnosticsPage(workspaceId: 'ws_1'),
       ),
     ),

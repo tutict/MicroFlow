@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
 import 'package:microflow_frontend/features/tasks/data/dto/task_activity_dto.dart';
@@ -13,6 +13,7 @@ import 'package:microflow_frontend/features/tasks/domain/entities/task_summary.d
 import 'package:microflow_frontend/features/tasks/domain/repositories/task_repository.dart';
 import 'package:microflow_frontend/features/tasks/presentation/pages/task_workbench_page.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   testWidgets('create Enter plus tap sends one write while the button waits', (
@@ -514,7 +515,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TaskWorkbenchView(workspaceId: 'ws_1', repository: repository),
@@ -536,7 +537,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TaskWorkbenchView(
@@ -562,7 +563,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TaskWorkbenchView(workspaceId: 'ws_1', repository: repository),
@@ -592,7 +593,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TaskWorkbenchView(workspaceId: 'ws_1', repository: repository),
@@ -619,7 +620,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TaskWorkbenchView(workspaceId: 'ws_1', repository: repository),
@@ -637,7 +638,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: TaskWorkbenchView(workspaceId: 'ws_1', repository: repository),
@@ -690,7 +691,7 @@ Widget _scopeHarness(
   Future<void> Function(TaskItem)? onRunAgent,
 }) => MaterialApp(
   theme: AppTheme.light(),
-  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  localizationsDelegates: appLocalizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
   home: Scaffold(
     body: TaskWorkbenchView(

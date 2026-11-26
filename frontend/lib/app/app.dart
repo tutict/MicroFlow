@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 import '../core/providers/locale_controller.dart';
 import '../core/providers/theme_mode_controller.dart';
 import '../features/auth/presentation/widgets/session_gate.dart';
 import 'router.dart';
+import 'material_compatibility.dart';
 import 'theme/app_theme.dart';
 
 class AppRoot extends StatelessWidget {
@@ -36,12 +37,8 @@ class MicroFlowApp extends ConsumerWidget {
       themeMode: themeMode,
       locale: locale,
       supportedLocales: supportedAppLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      localizationsDelegates: appLocalizationsDelegates,
+      builder: buildAppMaterialCompatibility,
       home: const SessionGate(),
       onGenerateRoute: AppRouter.onGenerateRoute,
     );

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/app/theme/app_theme.dart';
@@ -12,6 +12,7 @@ import 'package:microflow_frontend/features/agent_runtime/domain/repositories/ag
 import 'package:microflow_frontend/features/agent_runtime/presentation/providers/agent_runtime_providers.dart';
 import 'package:microflow_frontend/features/agent_runtime/presentation/widgets/agent_run_card.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   testWidgets('approval card states the impact and records a decision', (
@@ -131,7 +132,7 @@ Future<void> _pumpCard(
         theme: AppTheme.light(),
         locale: const Locale('en'),
         supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: appLocalizationsDelegates,
         home: Scaffold(
           body: SingleChildScrollView(child: AgentRunCard(run: run)),
         ),

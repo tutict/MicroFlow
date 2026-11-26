@@ -113,10 +113,7 @@ void main() {
       // Whatever the build passed, the raw string is readable; this is what made
       // the bool.fromEnvironment failure visible in the first place.
       expect(DevSessionBypass.enableFlagValue, isA<String>());
-      expect(
-        DevSessionBypass.enableFlagValue.toLowerCase(),
-        anyOf('true', ''),
-      );
+      expect(DevSessionBypass.enableFlagValue.toLowerCase(), anyOf('true', ''));
     });
 
     test('the storage keys it relies on are the ones the repository reads', () {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/theme/app_tokens.dart';
@@ -79,15 +79,13 @@ class TaskStatusBadge extends StatelessWidget {
           const SizedBox(width: AppSpacing.xxs),
           Text(
             presentation.label,
-            style: theme.textTheme.labelSmall?.copyWith(color: presentation.color),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: presentation.color,
+            ),
           ),
           if (task.isOverdue) ...[
             const SizedBox(width: AppSpacing.xxs),
-            Icon(
-              Icons.schedule,
-              size: 14,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.schedule, size: 14, color: theme.colorScheme.error),
           ],
         ],
       ),

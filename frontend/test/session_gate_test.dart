@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:microflow_frontend/core/providers/app_providers.dart';
@@ -12,6 +11,7 @@ import 'package:microflow_frontend/features/bootstrap/domain/entities/server_con
 import 'package:microflow_frontend/features/bootstrap/domain/repositories/server_connection_repository.dart';
 import 'package:microflow_frontend/features/bootstrap/presentation/pages/connect_server_page.dart';
 import 'package:microflow_frontend/l10n/app_localizations.dart';
+import 'package:microflow_frontend/l10n/app_localization_delegates.dart';
 
 void main() {
   testWidgets('pairing keeps the form mounted and shows failures for retry', (
@@ -37,12 +37,7 @@ void main() {
         child: MaterialApp(
           locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          localizationsDelegates: appLocalizationsDelegates,
           home: const SessionGate(),
         ),
       ),
@@ -108,7 +103,7 @@ void main() {
         child: MaterialApp(
           locale: const Locale('en'),
           supportedLocales: AppLocalizations.supportedLocales,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          localizationsDelegates: appLocalizationsDelegates,
           home: const SessionGate(),
         ),
       ),

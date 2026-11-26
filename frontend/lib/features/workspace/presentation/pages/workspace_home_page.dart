@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -133,9 +133,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
     if (!mounted) {
       return;
     }
-    Navigator.of(
-      context,
-    ).pushNamedAndRemoveUntil(AppRoutes.signIn, (route) => false);
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil(AppRoutes.signIn, (route) => false);
   }
 
   void _selectDestination(ShellDestination destination) {
@@ -261,16 +260,14 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.taskFromMessageCreated)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.taskFromMessageCreated)));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -295,14 +292,12 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
       if (!mounted || !isCurrent()) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.taskRunQueued)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.taskRunQueued)));
     } catch (error) {
       if (mounted && isCurrent()) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error.toString())));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
       }
       rethrow;
     }
@@ -379,17 +374,17 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
   }
 
   Future<void> _uploadKnowledge({required String? targetChannelId}) async {
-    final result = await FilePicker.pickFiles(withData: true);
-    if (result == null ||
-        result.files.isEmpty ||
-        result.files.first.bytes == null) {
+    final file = await FilePicker.pickFile();
+    if (file == null || !mounted) {
       return;
     }
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
     await ref
         .read(workspaceShellControllerProvider.notifier)
         .uploadKnowledgeDocument(
-          fileName: result.files.first.name,
-          bytes: result.files.first.bytes!,
+          fileName: file.name,
+          bytes: bytes,
           channelId: targetChannelId,
           inheritSelectedConversation:
               targetChannelId != null && targetChannelId.isNotEmpty,
@@ -440,9 +435,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -479,24 +473,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
                         .read(workspaceShellControllerProvider.notifier)
                         .refreshKnowledgeDocuments();
                   },
-                  onUpload: (targetChannelId) async {
-                    final result = await FilePicker.pickFiles(withData: true);
-                    if (result == null ||
-                        result.files.isEmpty ||
-                        result.files.first.bytes == null) {
-                      return;
-                    }
-                    await ref
-                        .read(workspaceShellControllerProvider.notifier)
-                        .uploadKnowledgeDocument(
-                          fileName: result.files.first.name,
-                          bytes: result.files.first.bytes!,
-                          channelId: targetChannelId,
-                          inheritSelectedConversation:
-                              targetChannelId != null &&
-                              targetChannelId.isNotEmpty,
-                        );
-                  },
+                  onUpload: (targetChannelId) =>
+                      _uploadKnowledge(targetChannelId: targetChannelId),
                 ),
               ),
             );
@@ -547,9 +525,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(error.toString())));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -571,9 +548,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
         if (!mounted || shell == null || shell.workspaceId.isEmpty) {
           return;
         }
-        Navigator.of(
-          context,
-        ).pushNamed(AppRoutes.accounting, arguments: shell.workspaceId);
+        Navigator.of(context)
+            .pushNamed(AppRoutes.accounting, arguments: shell.workspaceId);
         return;
       case _PhoneMenuAction.addMember:
         if (canManageMembers) {
@@ -584,9 +560,8 @@ class _WorkspaceHomePageState extends ConsumerState<WorkspaceHomePage> {
         if (!mounted || shell == null || shell.workspaceId.isEmpty) {
           return;
         }
-        Navigator.of(
-          context,
-        ).pushNamed(AppRoutes.agents, arguments: shell.workspaceId);
+        Navigator.of(context)
+            .pushNamed(AppRoutes.agents, arguments: shell.workspaceId);
         return;
       case _PhoneMenuAction.lightMode:
         ref

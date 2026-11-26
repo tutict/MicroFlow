@@ -260,63 +260,60 @@ void main() {
     expect(restored.messageError, contains('original send failed'));
   });
 
-  test(
-    'history catch-up applies a newer snapshot before suppressing its socket event',
-    () async {
-      final repository = RecordingRuntimeRepository(
-        runs: [testRun(status: runtime.AgentRunStatus.running)],
-      );
-      repository.events['run_1'] = [_historyEvent(1)];
-      final socket = _FakeRealtimeSocketService();
-      final container = _runtimeContainer(repository, socket);
-      const query = (workspaceId: 'ws_1', taskId: null);
-      container.listen(agentRunsProvider(query), (_, _) {});
-      container.listen(agentRunEventsProvider('run_1'), (_, _) {});
-      await container.read(agentRunsProvider(query).future);
-      await container.read(agentRunEventsProvider('run_1').future);
-      await _connectRuntime(container);
-      final completed = testRun(
-        status: runtime.AgentRunStatus.succeeded,
-        updatedAt: '2026-11-23T10:00:05Z',
-      );
-      final latestPayload =
-          _runtimeEvent(5, 'RUN_SUCCEEDED', completed)['payload']
-              as Map<String, Object?>;
-      repository.events['run_1'] = [
-        _historyEvent(1),
-        _historyEvent(2),
-        _historyEvent(3),
-        _historyEvent(4),
-        AgentRunEvent(
-          id: 'event_5',
-          seq: 5,
-          type: 'RUN_SUCCEEDED',
-          payload: latestPayload,
+  test('history catch-up applies a newer snapshot before suppressing its socket event', () async {
+    final repository = RecordingRuntimeRepository(
+      runs: [testRun(status: runtime.AgentRunStatus.running)],
+    );
+    repository.events['run_1'] = [_historyEvent(1)];
+    final socket = _FakeRealtimeSocketService();
+    final container = _runtimeContainer(repository, socket);
+    const query = (workspaceId: 'ws_1', taskId: null);
+    container.listen(agentRunsProvider(query), (_, _) {});
+    container.listen(agentRunEventsProvider('run_1'), (_, _) {});
+    await container.read(agentRunsProvider(query).future);
+    await container.read(agentRunEventsProvider('run_1').future);
+    await _connectRuntime(container);
+    final completed = testRun(
+      status: runtime.AgentRunStatus.succeeded,
+      updatedAt: '2026-11-23T10:00:05Z',
+    );
+    final latestPayload =
+        _runtimeEvent(5, 'RUN_SUCCEEDED', completed)['payload']
+            as Map<String, Object?>;
+    repository.events['run_1'] = [
+      _historyEvent(1),
+      _historyEvent(2),
+      _historyEvent(3),
+      _historyEvent(4),
+      AgentRunEvent(
+        id: 'event_5',
+        seq: 5,
+        type: 'RUN_SUCCEEDED',
+        payload: latestPayload,
+      ),
+    ];
+    socket.emit(
+      _runtimeEvent(
+        3,
+        'RUN_WAITING_APPROVAL',
+        testRun(
+          status: runtime.AgentRunStatus.waitingApproval,
+          updatedAt: '2026-11-23T10:00:03Z',
         ),
-      ];
-      socket.emit(
-        _runtimeEvent(
-          3,
-          'RUN_WAITING_APPROVAL',
-          testRun(
-            status: runtime.AgentRunStatus.waitingApproval,
-            updatedAt: '2026-11-23T10:00:03Z',
-          ),
-        ),
-      );
-      await _flushRuntime();
-      expect(
-        container.read(agentRunsProvider(query)).value?.single.status,
-        runtime.AgentRunStatus.succeeded,
-      );
-      socket.emit(_runtimeEvent(5, 'RUN_SUCCEEDED', completed));
-      await _flushRuntime();
-      expect(
-        container.read(agentRunsProvider(query)).value?.single.status,
-        runtime.AgentRunStatus.succeeded,
-      );
-    },
-  );
+      ),
+    );
+    await _flushRuntime();
+    expect(
+      container.read(agentRunsProvider(query)).value?.single.status,
+      runtime.AgentRunStatus.succeeded,
+    );
+    socket.emit(_runtimeEvent(5, 'RUN_SUCCEEDED', completed));
+    await _flushRuntime();
+    expect(
+      container.read(agentRunsProvider(query)).value?.single.status,
+      runtime.AgentRunStatus.succeeded,
+    );
+  });
 
   test(
     'runtime socket snapshots update one cached run without list requests',
@@ -357,47 +354,44 @@ void main() {
     },
   );
 
-  test(
-    'duplicate and late runtime events do not regress the run or reload resources',
-    () async {
-      final repository = RecordingRuntimeRepository(runs: [testRun()]);
-      final socket = _FakeRealtimeSocketService();
-      final container = _runtimeContainer(repository, socket);
-      const query = (workspaceId: 'ws_1', taskId: null);
-      container.listen(agentRunsProvider(query), (_, _) {});
-      await container.read(agentRunsProvider(query).future);
-      await _connectRuntime(container);
-      socket.emit(
-        _runtimeEvent(
-          2,
-          'RUN_SUCCEEDED',
-          testRun(status: runtime.AgentRunStatus.succeeded),
-        ),
-      );
-      await _flushRuntime();
-      final requests = repository.getQueries.length;
-      socket.emit(
-        _runtimeEvent(
-          1,
-          'RUN_STARTED',
-          testRun(status: runtime.AgentRunStatus.running),
-        ),
-      );
-      socket.emit(
-        _runtimeEvent(
-          2,
-          'RUN_SUCCEEDED',
-          testRun(status: runtime.AgentRunStatus.succeeded),
-        ),
-      );
-      await _flushRuntime();
-      expect(
-        container.read(agentRunsProvider(query)).value?.single.status,
-        runtime.AgentRunStatus.succeeded,
-      );
-      expect(repository.getQueries, hasLength(requests));
-    },
-  );
+  test('duplicate and late runtime events do not regress the run or reload resources', () async {
+    final repository = RecordingRuntimeRepository(runs: [testRun()]);
+    final socket = _FakeRealtimeSocketService();
+    final container = _runtimeContainer(repository, socket);
+    const query = (workspaceId: 'ws_1', taskId: null);
+    container.listen(agentRunsProvider(query), (_, _) {});
+    await container.read(agentRunsProvider(query).future);
+    await _connectRuntime(container);
+    socket.emit(
+      _runtimeEvent(
+        2,
+        'RUN_SUCCEEDED',
+        testRun(status: runtime.AgentRunStatus.succeeded),
+      ),
+    );
+    await _flushRuntime();
+    final requests = repository.getQueries.length;
+    socket.emit(
+      _runtimeEvent(
+        1,
+        'RUN_STARTED',
+        testRun(status: runtime.AgentRunStatus.running),
+      ),
+    );
+    socket.emit(
+      _runtimeEvent(
+        2,
+        'RUN_SUCCEEDED',
+        testRun(status: runtime.AgentRunStatus.succeeded),
+      ),
+    );
+    await _flushRuntime();
+    expect(
+      container.read(agentRunsProvider(query)).value?.single.status,
+      runtime.AgentRunStatus.succeeded,
+    );
+    expect(repository.getQueries, hasLength(requests));
+  });
 
   test(
     'a socket gap fetches missing event pages from the current cursor',
@@ -556,29 +550,23 @@ void main() {
     },
   );
 
-  test(
-    'transport closure updates the connection state instead of leaving it connected',
-    () async {
-      final socket = _FakeRealtimeSocketService();
-      final container = _runtimeContainer(RecordingRuntimeRepository(), socket);
-      await _connectRuntime(container);
-      socket.emit({
-        'type': 'ERROR',
-        'payload': {
-          'connectionState': 'DISCONNECTED',
-          'message': 'WebSocket disconnected',
-        },
-      });
-      await _flushRuntime();
-      expect(
-        container
-            .read(workspaceShellControllerProvider)
-            .value
-            ?.connectionStatus,
-        ChatConnectionStatus.disconnected,
-      );
-    },
-  );
+  test('transport closure updates the connection state instead of leaving it connected', () async {
+    final socket = _FakeRealtimeSocketService();
+    final container = _runtimeContainer(RecordingRuntimeRepository(), socket);
+    await _connectRuntime(container);
+    socket.emit({
+      'type': 'ERROR',
+      'payload': {
+        'connectionState': 'DISCONNECTED',
+        'message': 'WebSocket disconnected',
+      },
+    });
+    await _flushRuntime();
+    expect(
+      container.read(workspaceShellControllerProvider).value?.connectionStatus,
+      ChatConnectionStatus.disconnected,
+    );
+  });
 
   test(
     'uploadKnowledgeDocument forwards the selected conversation channel scope',
@@ -812,75 +800,70 @@ void main() {
     },
   );
 
-  test(
-    'build falls back to the first available conversation when channels are empty',
-    () async {
-      final container = ProviderContainer(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(
-            _FakeAuthRepository(
-              currentSessionValue: const AuthSession(
-                userId: 'usr_1',
-                email: 'demo@microflow.local',
-                displayName: 'Demo User',
-                accessToken: 'token',
-                refreshToken: 'refresh',
-              ),
+  test('build falls back to the first available conversation when channels are empty', () async {
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(
+          _FakeAuthRepository(
+            currentSessionValue: const AuthSession(
+              userId: 'usr_1',
+              email: 'demo@microflow.local',
+              displayName: 'Demo User',
+              accessToken: 'token',
+              refreshToken: 'refresh',
             ),
           ),
-          workspaceRepositoryProvider.overrideWithValue(
-            _FakeWorkspaceRepository(
-              workspaces: const [
-                WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 1),
-              ],
-              conversations: const [
-                WorkspaceConversation(
-                  id: 'dm_1',
-                  title: 'Alex',
-                  subtitle: 'Direct thread',
-                  kind: 'DIRECT_MESSAGE',
-                  unreadCount: 0,
-                  available: true,
-                  lastActivityAt: null,
+        ),
+        workspaceRepositoryProvider.overrideWithValue(
+          _FakeWorkspaceRepository(
+            workspaces: const [
+              WorkspaceSummary(id: 'ws_1', name: 'MicroFlow', memberCount: 1),
+            ],
+            conversations: const [
+              WorkspaceConversation(
+                id: 'dm_1',
+                title: 'Alex',
+                subtitle: 'Direct thread',
+                kind: 'DIRECT_MESSAGE',
+                unreadCount: 0,
+                available: true,
+                lastActivityAt: null,
+              ),
+            ],
+          ),
+        ),
+        chatRepositoryProvider.overrideWithValue(
+          _FakeChatRepository(
+            messagesByChannel: const {
+              'dm_1': [
+                ChatMessage(
+                  id: 'msg_1',
+                  author: 'usr_1',
+                  text: 'hello',
+                  createdAt: '2026-03-28T00:00:00Z',
+                  isAgent: false,
                 ),
               ],
-            ),
+            },
           ),
-          chatRepositoryProvider.overrideWithValue(
-            _FakeChatRepository(
-              messagesByChannel: const {
-                'dm_1': [
-                  ChatMessage(
-                    id: 'msg_1',
-                    author: 'usr_1',
-                    text: 'hello',
-                    createdAt: '2026-03-28T00:00:00Z',
-                    isAgent: false,
-                  ),
-                ],
-              },
-            ),
-          ),
-          agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
-          realtimeSocketServiceProvider.overrideWithValue(
-            _FakeRealtimeSocketService(),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
+        ),
+        agentRepositoryProvider.overrideWithValue(_FakeAgentRepository()),
+        realtimeSocketServiceProvider.overrideWithValue(
+          _FakeRealtimeSocketService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
 
-      final state = await container.read(
-        workspaceShellControllerProvider.future,
-      );
+    final state = await container.read(workspaceShellControllerProvider.future);
 
-      expect(state.selectedConversation.id, 'dm_1');
-      expect(
-        state.selectedConversation.kind,
-        WorkspaceSelectedConversationKind.directMessage,
-      );
-      expect(state.messages, hasLength(1));
-    },
-  );
+    expect(state.selectedConversation.id, 'dm_1');
+    expect(
+      state.selectedConversation.kind,
+      WorkspaceSelectedConversationKind.directMessage,
+    );
+    expect(state.messages, hasLength(1));
+  });
 
   test(
     'sendMessage prefixes @team when collaboration mode is enabled',

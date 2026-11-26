@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
@@ -435,9 +435,8 @@ Future<bool> _showRoleStrategyEditor({
                   const SizedBox(height: 12),
                   Text(
                     copy.templates,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -464,17 +463,18 @@ Future<bool> _showRoleStrategyEditor({
                         style: useDefaultSelected
                             ? OutlinedButton.styleFrom(
                                 side: BorderSide(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .secondary,
                                   width: 1.4,
                                 ),
-                                foregroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.secondary,
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).colorScheme.secondary.withValues(alpha: 0.12),
+                                foregroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .secondary,
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .secondary
+                                    .withValues(alpha: 0.12),
                               )
                             : null,
                         onPressed: isSaving ? null : () => applyTemplate(''),
@@ -538,32 +538,27 @@ List<_RoleStrategyTemplate> _roleStrategyTemplates(_AgentDiagnosticsCopy copy) {
     _RoleStrategyTemplate(
       kind: _RoleStrategyTemplateKind.synthesizer,
       label: copy.synthesizerTemplate,
-      strategy:
-          'You are the synthesizer. Reconcile the thread, surface consensus, and keep the team response concise.',
+      strategy: 'You are the synthesizer. Reconcile the thread, surface consensus, and keep the team response concise.',
     ),
     _RoleStrategyTemplate(
       kind: _RoleStrategyTemplateKind.reviewer,
       label: copy.reviewerTemplate,
-      strategy:
-          'You are the critic. Focus on risks, contradictions, edge cases, and what should be corrected.',
+      strategy: 'You are the critic. Focus on risks, contradictions, edge cases, and what should be corrected.',
     ),
     _RoleStrategyTemplate(
       kind: _RoleStrategyTemplateKind.planner,
       label: copy.plannerTemplate,
-      strategy:
-          'You are the planner. Provide structure, sequencing, and the minimum viable path to execution.',
+      strategy: 'You are the planner. Provide structure, sequencing, and the minimum viable path to execution.',
     ),
     _RoleStrategyTemplate(
       kind: _RoleStrategyTemplateKind.implementer,
       label: copy.implementerTemplate,
-      strategy:
-          'You are the implementer. Convert ideas into concrete actions, interfaces, and delivery details.',
+      strategy: 'You are the implementer. Convert ideas into concrete actions, interfaces, and delivery details.',
     ),
     _RoleStrategyTemplate(
       kind: _RoleStrategyTemplateKind.releaseCaptain,
       label: copy.releaseTemplate,
-      strategy:
-          'You are the release captain. Focus on launch sequencing, dependencies, and readiness gates.',
+      strategy: 'You are the release captain. Focus on launch sequencing, dependencies, and readiness gates.',
     ),
   ];
 }
@@ -883,11 +878,9 @@ class _AgentDiagnosticsCopy {
     }
     return const _AgentDiagnosticsCopy(
       title: 'Agent Diagnostics',
-      subtitle:
-          'Review the provider, endpoint, credential state, and editable collaboration role strategy for each agent in this workspace.',
+      subtitle: 'Review the provider, endpoint, credential state, and editable collaboration role strategy for each agent in this workspace.',
       refresh: 'Refresh',
-      workspaceRequired:
-          'No workspace context is available yet, so diagnostics cannot be loaded.',
+      workspaceRequired: 'No workspace context is available yet, so diagnostics cannot be loaded.',
       loadFailed: 'Failed to load diagnostics',
       workspace: 'Workspace',
       agents: 'Agents',
@@ -897,8 +890,7 @@ class _AgentDiagnosticsCopy {
       roleStrategy: 'Role strategy',
       defaultRoleStrategy: 'Using inferred default strategy',
       editRoleStrategy: 'Edit role strategy',
-      roleStrategyHint:
-          'Leave blank to use the built-in heuristic. When provided, this text is injected directly into multi-agent collaboration prompts for this agent.',
+      roleStrategyHint: 'Leave blank to use the built-in heuristic. When provided, this text is injected directly into multi-agent collaboration prompts for this agent.',
       roleStrategySaved: 'Role strategy updated',
       enabled: 'Enabled',
       latency: 'Latency',
@@ -918,8 +910,7 @@ class _AgentDiagnosticsCopy {
       save: 'Save',
       saving: 'Saving...',
       cancel: 'Cancel',
-      roleStrategyFieldHint:
-          'Example: You are the reviewer. Focus on risks, counterexamples, and what should be corrected.',
+      roleStrategyFieldHint: 'Example: You are the reviewer. Focus on risks, counterexamples, and what should be corrected.',
       templates: 'Templates',
       useDefaultStrategy: 'Use default',
       recommendedTemplate: 'Recommended template',

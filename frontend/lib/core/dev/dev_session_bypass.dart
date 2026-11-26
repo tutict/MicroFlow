@@ -60,7 +60,8 @@ final class DevSessionBypass {
 
   /// Raw enable-flag value, exposed so tests and diagnostics can show exactly
   /// what the build passed in instead of guessing from the boolean.
-  static String get enableFlagValue => const String.fromEnvironment(_enabledFlag);
+  static String get enableFlagValue =>
+      const String.fromEnvironment(_enabledFlag);
 
   static String get serverUrl =>
       const String.fromEnvironment(_serverUrlFlag).trim();
@@ -71,8 +72,10 @@ final class DevSessionBypass {
   static String get email =>
       const String.fromEnvironment(_emailFlag, defaultValue: _defaultEmail);
 
-  static String get password =>
-      const String.fromEnvironment(_passwordFlag, defaultValue: _defaultPassword);
+  static String get password => const String.fromEnvironment(
+    _passwordFlag,
+    defaultValue: _defaultPassword,
+  );
 
   /// Seeds a connection and a session if the device has neither.
   ///
@@ -106,16 +109,15 @@ final class DevSessionBypass {
       // check a previously paired device would silently keep using the old
       // server and the bypass would look broken.
       final existing = await connections.currentConnection();
-      final needsPairing = existing == null ||
+      final needsPairing =
+          existing == null ||
           DevBypassConfig.normalizeOrigin(existing.serverOrigin) !=
               desiredOrigin;
       if (needsPairing) {
-        await connections.pair(
-          serverUrl: serverUrl,
-          pairingCode: pairingCode,
-        );
+        await connections.pair(serverUrl: serverUrl, pairingCode: pairingCode);
       }
-      final session = await auth.currentSession() ??
+      final session =
+          await auth.currentSession() ??
           await auth.login(email: email, password: password);
       return DevBypassReport.ready(
         serverOrigin: desiredOrigin,
@@ -130,13 +132,9 @@ final class DevSessionBypass {
 
 /// Outcome of a bypass attempt, for logging.
 final class DevBypassReport {
-  const DevBypassReport._({
-    required this.outcome,
-    this.detail = '',
-  });
+  const DevBypassReport._({required this.outcome, this.detail = ''});
 
-  const DevBypassReport.skipped()
-    : this._(outcome: DevBypassOutcome.skipped);
+  const DevBypassReport.skipped() : this._(outcome: DevBypassOutcome.skipped);
 
   const DevBypassReport.ready({
     required String serverOrigin,
@@ -144,7 +142,8 @@ final class DevBypassReport {
     required bool paired,
   }) : this._(
          outcome: DevBypassOutcome.ready,
-         detail: 'server=$serverOrigin user=$displayName '
+         detail:
+             'server=$serverOrigin user=$displayName '
              'pairedNow=$paired',
        );
 

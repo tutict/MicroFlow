@@ -1,5 +1,5 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../shared/theme/app_colors.dart';
 import '../../shared/theme/app_contrast.dart';
@@ -68,9 +68,8 @@ final class AppTheme {
             subThemesData: _subThemes,
             visualDensity: VisualDensity.standard,
           );
-    final text = _textTheme(
-      base.textTheme,
-    ).apply(bodyColor: palette.text, displayColor: palette.text);
+    final text = _textTheme(base.textTheme)
+        .apply(bodyColor: palette.text, displayColor: palette.text);
     final focusBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadii.medium),
       borderSide: BorderSide(color: palette.brand, width: 2),

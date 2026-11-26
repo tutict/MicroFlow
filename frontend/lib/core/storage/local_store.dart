@@ -7,7 +7,11 @@ final class LocalStore {
 
   static const FlutterSecureStorage _defaultSecureStorage =
       FlutterSecureStorage(
-        aOptions: AndroidOptions(encryptedSharedPreferences: true),
+        aOptions: AndroidOptions(
+          resetOnError: false,
+          migrateOnAlgorithmChange: true,
+          migrateWithBackup: true,
+        ),
       );
 
   final FlutterSecureStorage _secureStorage;

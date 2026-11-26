@@ -115,18 +115,18 @@ void main() {
         if (boundary == 'repository') {
           container.read(_runtimeHolder.notifier).replace(_StartRepository());
         } else {
-          (container.read(authSessionControllerProvider.notifier)
-                  as _SessionController)
-              .replace(_session('B'));
+          (container.read(
+            authSessionControllerProvider.notifier,
+          ) as _SessionController).replace(_session('B'));
         }
         await Future<void>.delayed(Duration.zero);
         container.read(agentRunActionsProvider);
         if (boundary == 'repository') {
           container.read(_runtimeHolder.notifier).replace(repository);
         } else {
-          (container.read(authSessionControllerProvider.notifier)
-                  as _SessionController)
-              .replace(_session('A'));
+          (container.read(
+            authSessionControllerProvider.notifier,
+          ) as _SessionController).replace(_session('A'));
         }
         await Future<void>.delayed(Duration.zero);
         await container.read(agentWorkspaceRunsProvider('ws_1').future);

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../features/bootstrap/presentation/pages/connect_server_page.dart';
 import '../features/auth/presentation/pages/sign_in_page.dart';

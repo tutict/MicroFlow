@@ -91,7 +91,7 @@ class TaskQueueActions {
   /// advanced without the client hearing about it.
   void refresh(String workspaceId) {
     _ref.invalidate(myWorkAgendaProvider(workspaceId));
-    if (_ref.exists(agentWorkspaceRunsProvider(workspaceId))) {
+    if (_ref.read(agentWorkspaceRunsProvider(workspaceId).exists)) {
       _ref.read(agentWorkspaceRunsProvider(workspaceId).notifier).refresh();
     }
   }
