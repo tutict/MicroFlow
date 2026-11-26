@@ -2,8 +2,8 @@ package com.microflow.agent.runtime.infrastructure.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.domain.model.AgentExecutionTarget;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnRequest;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnResult;
@@ -47,11 +47,11 @@ class OpenClawStructuredProtocolRepairTest {
         var capability = gateway().detectCapability("assistant", target);
         assertThat(capability.supportsToolCalls()).isTrue();
         var payload = requests.getFirst();
-        assertThat(payload.path("tool_choice").path("function").path("name").asText()).isEqualTo("capability_probe");
-        assertThat(payload.path("messages").get(0).path("content").asText()).contains("capability_probe", "microflow-tool-probe");
-        assertThat(payload.path("tools").get(0).path("function").path("parameters").path("required").get(0).asText())
+        assertThat(payload.path("tool_choice").path("function").path("name").asString()).isEqualTo("capability_probe");
+        assertThat(payload.path("messages").get(0).path("content").asString()).contains("capability_probe", "microflow-tool-probe");
+        assertThat(payload.path("tools").get(0).path("function").path("parameters").path("required").get(0).asString())
                 .isEqualTo("marker");
-        assertThat(payload.path("tools").get(0).path("function").path("description").asText()).contains("no side effects");
+        assertThat(payload.path("tools").get(0).path("function").path("description").asString()).contains("no side effects");
         assertThat(agentHeaders).containsExactly("assistant");
     }
 
@@ -171,8 +171,8 @@ class OpenClawStructuredProtocolRepairTest {
         assertThat(result.kind()).isEqualTo(AgentTurnResult.Kind.TOOL_CALLS);
         assertThat(result.toolCalls().getFirst().input()).containsEntry("status", "DONE");
         var payload = requests.getFirst();
-        assertThat(payload.path("tools").get(0).path("function").path("name").asText()).isEqualTo("task.update_status");
-        assertThat(payload.path("messages").get(0).path("content").asText()).contains("fixture context");
+        assertThat(payload.path("tools").get(0).path("function").path("name").asString()).isEqualTo("task.update_status");
+        assertThat(payload.path("messages").get(0).path("content").asString()).contains("fixture context");
     }
 
     @Test

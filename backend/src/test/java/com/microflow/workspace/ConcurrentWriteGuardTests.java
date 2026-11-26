@@ -2,8 +2,8 @@ package com.microflow.workspace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.task.domain.model.TaskStatus;
 import com.microflow.task.infrastructure.persistence.JdbcTaskRepository;
 import com.microflow.testing.MicroFlowApiTestSupport;

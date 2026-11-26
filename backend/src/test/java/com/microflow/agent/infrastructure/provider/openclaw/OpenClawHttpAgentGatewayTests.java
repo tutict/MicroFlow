@@ -2,7 +2,7 @@ package com.microflow.agent.infrastructure.provider.openclaw;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.domain.model.AgentExecutionRequest;
 import com.microflow.agent.domain.model.AgentExecutionTarget;
 import com.sun.net.httpserver.HttpExchange;

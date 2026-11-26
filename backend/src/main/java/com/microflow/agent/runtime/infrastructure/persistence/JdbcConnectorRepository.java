@@ -1,7 +1,7 @@
 package com.microflow.agent.runtime.infrastructure.persistence;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.runtime.domain.model.AgentConnector;
 import com.microflow.agent.runtime.domain.model.ConnectorKind;
 import com.microflow.agent.runtime.domain.model.ConnectorSharingScope;

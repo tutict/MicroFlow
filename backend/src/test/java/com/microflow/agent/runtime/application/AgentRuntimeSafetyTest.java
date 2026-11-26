@@ -9,7 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnGateway;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnResult;
 import com.microflow.agent.runtime.domain.gateway.ProviderCapability;

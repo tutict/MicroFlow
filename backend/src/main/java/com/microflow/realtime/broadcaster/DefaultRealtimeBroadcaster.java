@@ -1,6 +1,6 @@
 package com.microflow.realtime.broadcaster;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.realtime.protocol.RealtimeEvent;
 import com.microflow.realtime.session.WebSocketSessionRegistry;
 import jakarta.enterprise.context.ApplicationScoped;

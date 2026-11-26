@@ -1,6 +1,6 @@
 package com.microflow.agent.runtime.api.mapper;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.runtime.api.dto.AgentApprovalResponse;
 import com.microflow.agent.runtime.api.dto.AgentArtifactResponse;
 import com.microflow.agent.runtime.api.dto.AgentContextSourceResponse;

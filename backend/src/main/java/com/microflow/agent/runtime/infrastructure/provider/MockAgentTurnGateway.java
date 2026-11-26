@@ -1,7 +1,7 @@
 package com.microflow.agent.runtime.infrastructure.provider;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnRequest;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnResult;
 import com.microflow.agent.runtime.domain.gateway.ProviderCapability;
@@ -56,7 +56,7 @@ public class MockAgentTurnGateway {
             return AgentTurnResult.text(defaultText(request));
         }
         var scripted = turns.get(index);
-        var text = scripted.path("text").asText(null);
+        var text = scripted.path("text").asString(null);
         var calls = readCalls(scripted.path("toolCalls"));
         if (!calls.isEmpty()) {
             return AgentTurnResult.toolCalls(calls, text);
@@ -88,11 +88,11 @@ public class MockAgentTurnGateway {
         }
         var calls = new ArrayList<ToolCallRequest>();
         for (var item : node) {
-            var toolKey = item.path("toolKey").asText(null);
+            var toolKey = item.path("toolKey").asString(null);
             if (toolKey == null || toolKey.isBlank()) {
                 continue;
             }
-            var callId = item.path("callId").asText("call_mock_" + UUID.randomUUID());
+            var callId = item.path("callId").asString("call_mock_" + UUID.randomUUID());
             calls.add(new ToolCallRequest(callId, toolKey, readInput(item.path("input"))));
         }
         return calls;

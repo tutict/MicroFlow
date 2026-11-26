@@ -1,7 +1,7 @@
 package com.microflow.agent.config;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -180,7 +180,7 @@ public class DeploymentAgentCatalog {
 
     private String readText(JsonNode node, String fieldName) {
         var value = node == null ? null : node.get(fieldName);
-        return value == null || value.isNull() ? null : value.asText(null);
+        return value == null || value.isNull() ? null : value.asString(null);
     }
 
     private String readTextOrEmpty(JsonNode node, String fieldName) {
@@ -195,7 +195,7 @@ public class DeploymentAgentCatalog {
         var values = new ArrayList<String>();
         for (var entry : node) {
             if (entry != null && !entry.isNull()) {
-                values.add(entry.asText());
+                values.add(entry.asString());
             }
         }
         return values;

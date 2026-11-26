@@ -1,7 +1,7 @@
 package com.microflow.agent.runtime.application;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.domain.model.AgentDescriptor;
 import com.microflow.agent.infrastructure.persistence.JdbcAgentRepository;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnGateway;
@@ -1014,7 +1014,7 @@ public class AgentRuntimeService {
         }
         try {
             Map<String, Object> input = objectMapper.readerFor(new TypeReference<LinkedHashMap<String, Object>>() { })
-                    .with(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                    .with(tools.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
                     .readValue(inputJson);
             if (input == null) {
                 throw new IllegalArgumentException("Stored tool input must be a JSON object");

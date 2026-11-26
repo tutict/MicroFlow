@@ -46,7 +46,7 @@ public class QuarkusRestTemplate {
         if (entity == null) {
             return spec;
         }
-        for (var entry : entity.getHeaders().entrySet()) {
+        for (var entry : entity.getHeaders().headerSet()) {
             for (var value : entry.getValue()) {
                 spec.header(entry.getKey(), value);
             }

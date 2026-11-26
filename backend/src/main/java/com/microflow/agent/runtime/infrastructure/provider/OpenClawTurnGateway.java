@@ -1,8 +1,8 @@
 package com.microflow.agent.runtime.infrastructure.provider;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.domain.model.AgentExecutionTarget;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnRequest;
 import com.microflow.agent.runtime.domain.gateway.AgentTurnResult;
@@ -225,15 +225,15 @@ public class OpenClawTurnGateway {
         var ids = new HashSet<String>();
         for (var item : node) {
             var function = item.path("function");
-            var name = function.path("name").asText(null);
+            var name = function.path("name").asString(null);
             if (name == null || name.isBlank()) {
                 throw new IllegalArgumentException("Provider tool call requires a function name");
             }
             var id = item.path("id");
-            if (!id.isTextual() || id.asText().isBlank()) {
+            if (!id.isTextual() || id.asString().isBlank()) {
                 throw new IllegalArgumentException("Provider tool call requires a nonblank string call ID");
             }
-            var callId = id.asText();
+            var callId = id.asString();
             if (!ids.add(callId)) {
                 throw new IllegalArgumentException("Provider returned duplicate tool call IDs");
             }
@@ -246,7 +246,7 @@ public class OpenClawTurnGateway {
         if (node.isMissingNode() || node.isNull()) {
             return List.of();
         }
-        var name = node.path("name").asText(null);
+        var name = node.path("name").asString(null);
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Provider function call requires a function name");
         }
@@ -261,12 +261,12 @@ public class OpenClawTurnGateway {
         if (node.isObject()) {
             return objectMapper.convertValue(node, LinkedHashMap.class);
         }
-        if (!node.isTextual() || node.asText().isBlank()) {
+        if (!node.isTextual() || node.asString().isBlank()) {
             throw new IllegalArgumentException("Provider tool arguments must be a JSON object");
         }
         try {
             JsonNode parsed = objectMapper.reader().with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
-                    .readTree(node.asText());
+                    .readTree(node.asString());
             if (parsed == null || !parsed.isObject()) {
                 throw new IllegalArgumentException("Provider tool arguments must be a JSON object");
             }
@@ -281,13 +281,13 @@ public class OpenClawTurnGateway {
             return null;
         }
         if (content.isTextual()) {
-            return content.asText();
+            return content.asString();
         }
         if (content.isArray()) {
             var text = new StringBuilder();
             for (var item : content) {
-                if ("text".equals(item.path("type").asText())) {
-                    text.append(item.path("text").asText(""));
+                if ("text".equals(item.path("type").asString())) {
+                    text.append(item.path("text").asString(""));
                 }
             }
             return text.toString();

@@ -2,7 +2,7 @@ package com.microflow.agent.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.testing.MicroFlowApiTestSupport;
 import com.microflow.testing.QuarkusRestTemplate;
 import io.quarkus.test.junit.QuarkusTest;

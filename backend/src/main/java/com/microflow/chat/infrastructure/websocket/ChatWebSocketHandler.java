@@ -1,6 +1,6 @@
 package com.microflow.chat.infrastructure.websocket;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.auth.infrastructure.security.JwtPrincipal;
 import com.microflow.auth.infrastructure.security.WebSocketTicketService;
 import com.microflow.chat.api.ws.SocketSendMessagePayload;

@@ -109,10 +109,6 @@ scriptDir="$(dirname "$0")"
 scriptName="$(basename "$0")"
 MAVEN_USER_HOME="${MAVEN_USER_HOME:-$scriptDir/.mvn/wrapper-home}"
 
-if command -v mvn >/dev/null 2>&1; then
-  exec mvn "$@"
-fi
-
 # parse distributionUrl and optional distributionSha256Sum, requires .mvn/wrapper/maven-wrapper.properties
 while IFS="=" read -r key value; do
   case "${key-}" in

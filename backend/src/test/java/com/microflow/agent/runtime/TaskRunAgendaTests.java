@@ -2,7 +2,7 @@ package com.microflow.agent.runtime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.runtime.domain.model.AgentRunSession;
 import com.microflow.agent.runtime.domain.model.AgentRunStatus;
 import com.microflow.agent.runtime.infrastructure.persistence.JdbcAgentRuntimeRepository;

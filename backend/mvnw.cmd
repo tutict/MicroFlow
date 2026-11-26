@@ -52,12 +52,6 @@ if ($env:MVNW_VERBOSE -eq "true") {
 if (-not $env:MAVEN_USER_HOME) {
   $env:MAVEN_USER_HOME = Join-Path $scriptDir ".mvn\wrapper-home"
 }
-$systemMaven = Get-Command mvn -ErrorAction SilentlyContinue
-if ($systemMaven) {
-  Write-Output "MVN_CMD=$($systemMaven.Source)"
-  exit 0
-}
-
 # calculate distributionUrl, requires .mvn/wrapper/maven-wrapper.properties
 $distributionUrl = (Get-Content -Raw "$scriptDir/.mvn/wrapper/maven-wrapper.properties" | ConvertFrom-StringData).distributionUrl
 if (!$distributionUrl) {

@@ -9,6 +9,6 @@ import java.util.List;
 public record CreateAccountingVoucherRequest(
         @NotBlank @Size(max = 10) String voucherDate,
         @Size(max = 500) String description,
-        @Valid @NotEmpty List<CreateAccountingVoucherLineRequest> lines
+        @NotEmpty List<@Valid CreateAccountingVoucherLineRequest> lines
 ) {
 }

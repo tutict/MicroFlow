@@ -1,7 +1,7 @@
 package com.microflow.agent.infrastructure.provider.openclaw;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.domain.model.AgentExecutionRequest;
 import com.microflow.agent.domain.model.AgentExecutionResult;
 import com.microflow.agent.domain.model.AgentExecutionTarget;
@@ -112,13 +112,13 @@ public class OpenClawHttpAgentGateway {
             return null;
         }
         if (content.isTextual()) {
-            return content.asText();
+            return content.asString();
         }
         if (content.isArray()) {
             var text = new StringBuilder();
             for (JsonNode item : content) {
-                if (item.path("type").asText("").equals("text")) {
-                    text.append(item.path("text").asText(""));
+                if (item.path("type").asString("").equals("text")) {
+                    text.append(item.path("text").asString(""));
                 }
             }
             return text.toString();

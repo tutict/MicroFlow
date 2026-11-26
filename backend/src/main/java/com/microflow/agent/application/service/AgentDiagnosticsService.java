@@ -1,7 +1,7 @@
 package com.microflow.agent.application.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.agent.domain.model.AgentDiagnostic;
 import com.microflow.agent.domain.model.ConfiguredAgent;
 import com.microflow.agent.infrastructure.persistence.JdbcAgentRepository;
@@ -217,10 +217,10 @@ public class AgentDiagnosticsService {
         try {
             JsonNode root = objectMapper.readTree(body);
             if (root.hasNonNull("status")) {
-                return root.get("status").asText();
+                return root.get("status").asString();
             }
             if (root.hasNonNull("ok")) {
-                return "ok=" + root.get("ok").asText();
+                return "ok=" + root.get("ok").asString();
             }
         } catch (Exception ignored) {
             // fall through to plain text summary

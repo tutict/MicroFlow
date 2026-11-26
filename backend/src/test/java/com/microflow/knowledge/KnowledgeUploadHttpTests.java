@@ -3,7 +3,7 @@ package com.microflow.knowledge;
 import static org.assertj.core.api.Assertions.assertThat;
 import static io.restassured.RestAssured.given;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.microflow.testing.MicroFlowApiTestSupport;
 import com.microflow.testing.QuarkusRestTemplate;
 import io.quarkus.test.junit.QuarkusTest;

@@ -12,8 +12,8 @@ import com.microflow.agent.runtime.domain.model.AgentRunStatus;
 import com.microflow.agent.runtime.domain.model.AgentRunStep;
 import com.microflow.agent.runtime.domain.model.AgentToolInvocation;
 import com.microflow.agent.runtime.domain.model.ToolCallRequest;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -590,7 +590,7 @@ public class JdbcAgentRuntimeRepository {
         }
         try {
             List<ToolCallRequest> calls = objectMapper.readerFor(new TypeReference<List<ToolCallRequest>>() { })
-                    .with(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+                    .with(tools.jackson.databind.DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
                     .readValue(json);
             if (calls == null || calls.stream().anyMatch(call -> call == null
                     || call.callId() == null || call.callId().isBlank()

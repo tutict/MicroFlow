@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import com.microflow.common.jdbc.JdbcTemplate;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.sqlite.SQLiteDataSource;
 
 class AgentContextSourceRepairTest {
     @TempDir Path directory;
@@ -35,7 +35,9 @@ class AgentContextSourceRepairTest {
 
     @BeforeEach
     void initialize() {
-        jdbc = new JdbcTemplate(new DriverManagerDataSource("jdbc:sqlite:" + directory.resolve("context.db")));
+        var dataSource = new SQLiteDataSource();
+        dataSource.setUrl("jdbc:sqlite:" + directory.resolve("context.db"));
+        jdbc = new JdbcTemplate(dataSource);
         // Real SQL sorting with just the tables needed by this read-only fixture.
         jdbc.execute("CREATE TABLE users (id TEXT PRIMARY KEY, display_name TEXT)");
         jdbc.execute("CREATE TABLE task_decisions (id TEXT, workspace_id TEXT, task_id TEXT, sequence_no INTEGER, "
