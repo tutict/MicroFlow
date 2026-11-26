@@ -62,9 +62,9 @@
 
 | 分层 | 技术方案 |
 | --- | --- |
-| 后端 | Quarkus 3.35、RESTEasy、WebSocket、Hibernate Validator、JDBC |
+| 后端 | Quarkus 4.0、Jackson 3、RESTEasy、WebSocket、Hibernate Validator、JDBC |
 | 数据存储 | SQLite |
-| 客户端 | Flutter、Dart 3、Riverpod |
+| 客户端 | Flutter、Dart 3、Material UI、Cupertino UI、Riverpod |
 | 通信 | HTTP API、WebSocket |
 | 安全 | JWT、WebSocket Ticket、登录限流、Host/CORS 校验、AES-GCM 消息加密 |
 | 部署 | 本地启动、Docker Compose、GraalVM Native Image |
@@ -119,8 +119,10 @@ MicroFlow
 
 - JDK 21+
 - Maven 3.9+
-- Flutter 3+
+- Flutter 3.47+ / Dart 3.13+（本轮使用 Flutter 3.47.5 验证）
 - Docker（可选，用于本地编排）
+
+依赖升级版本、迁移说明和验证结果见 [依赖升级记录](docs/dependency-upgrade.md)。
 
 ### 一键 debug 预览
 
