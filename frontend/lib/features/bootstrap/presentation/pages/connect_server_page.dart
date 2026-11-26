@@ -25,6 +25,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
   late final FocusNode _serverFocus;
   late final FocusNode _codeFocus;
   bool _showManualForm = false;
+  bool _isSubmitting = false;
   String? _errorText;
 
   @override
@@ -60,6 +61,7 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
     required String serverUrl,
     required String pairingCode,
   }) async {
+    if (_isSubmitting) return;
     if (serverUrl.isEmpty || pairingCode.isEmpty) {
       setState(() {
         _errorText = serverUrl.isEmpty
@@ -70,7 +72,10 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
       return;
     }
 
-    setState(() => _errorText = null);
+    setState(() {
+      _isSubmitting = true;
+      _errorText = null;
+    });
     try {
       await ref.read(authSessionControllerProvider.notifier).signOut();
       await ref
@@ -84,6 +89,8 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
         (_serverUrlController.text.trim().isEmpty ? _serverFocus : _codeFocus)
             .requestFocus();
       }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -130,7 +137,11 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
   }
 
   Future<void> _activate(ServerConnection connection) async {
-    setState(() => _errorText = null);
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+      _errorText = null;
+    });
     try {
       await ref.read(authSessionControllerProvider.notifier).signOut();
       await ref
@@ -140,10 +151,13 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
       Navigator.of(context).pushReplacementNamed(AppRoutes.signIn);
     } catch (error) {
       if (mounted) setState(() => _errorText = error.toString());
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   Future<void> _remove(ServerConnection connection) async {
+    if (_isSubmitting) return;
     final copy = _ConnectCopy.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
@@ -170,16 +184,21 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
         );
       },
     );
-    if (confirmed != true || !mounted) {
+    if (confirmed != true || !mounted || _isSubmitting) {
       return;
     }
-    setState(() => _errorText = null);
+    setState(() {
+      _isSubmitting = true;
+      _errorText = null;
+    });
     try {
       await ref
           .read(serverConnectionControllerProvider.notifier)
           .removeConnection(connection.id);
     } catch (error) {
       if (mounted) setState(() => _errorText = error.toString());
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -188,7 +207,8 @@ class _ConnectServerPageState extends ConsumerState<ConnectServerPage> {
     final copy = _ConnectCopy.of(context);
     final connectionAsync = ref.watch(serverConnectionControllerProvider);
     final catalog = connectionAsync.value ?? const ServerConnectionCatalog();
-    final isBusy = connectionAsync.isLoading;
+    final isBusy =
+        _isSubmitting || connectionAsync.isLoading || catalog.isUpdating;
     final compact = MediaQuery.sizeOf(context).width < 600;
     final canScanQr =
         !kIsWeb &&

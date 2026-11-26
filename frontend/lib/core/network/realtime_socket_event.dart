@@ -20,6 +20,7 @@ class RealtimeSocketEvent {
 
   factory RealtimeSocketEvent.fromJson(Map<String, Object?> json) {
     final rawType = json['type'] as String? ?? '';
+    final rawPayload = json['payload'];
     return RealtimeSocketEvent(
       type: switch (rawType) {
         'MESSAGE_CREATED' => RealtimeSocketEventType.messageCreated,
@@ -35,7 +36,9 @@ class RealtimeSocketEvent {
         'ERROR' => RealtimeSocketEventType.error,
         _ => RealtimeSocketEventType.unknown,
       },
-      payload: (json['payload'] as Map?)?.cast<String, Object?>(),
+      payload: rawType == 'ERROR' && rawPayload is String
+          ? {'message': rawPayload}
+          : (rawPayload as Map?)?.cast<String, Object?>(),
     );
   }
 }
